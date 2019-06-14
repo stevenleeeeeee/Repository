@@ -1,0 +1,48 @@
+---
+defaults:
+  domain: elasticsearch.local.arnoldbechtoldt.com
+  base_box: puppetlabs/centos-6.6-64-nocm
+  base_box_basedir: ../../../vagrant-devenv/shared/boxes
+  osfam: rhel
+  synced_folders:
+    # Common folders
+    - src: assets/scripts/provision
+      dst: /vagrant/scripts
+    - src: ../shared/misc
+      dst: /vagrant/shared/misc
+
+    # Salt related folders
+    - src: ../shared/salt/devenv
+      dst: /vagrant/shared/salt/devenv
+    - src: ../../../salt
+      dst: /vagrant/src/salt
+    - src: ../../../salt-modules/_modules
+      dst: /vagrant/salt/_modules
+    - src: ../../../salt-modules/_states
+      dst: /vagrant/salt/_states
+  provision:
+    - name: basic
+    - name: saltstack_install_bootstrap
+      env:
+        params: '-Z,-P,-M,git,v2015.8.0'
+    - name: saltstack_formulas
+      formulas:
+        - name: elasticsearch
+          base_dir: ../..
+        - name: bash
+          base_dir: ../../../saltstack-bash-formula
+        - name: java
+          base_dir: ../../../saltstack-java-formula
+        - name: repos
+          base_dir: ../../../saltstack-repos-formula
+        - name: sysctl
+          base_dir: ../../../saltstack-sysctl-formula
+        - name: users
+          base_dir: ../../../saltstack-users-formula
+        - name: zsh
+          base_dir: ../../../saltstack-zsh-formula
+    - name: saltstack_config
+    - name: saltstack_services
+nodes:
+  master1: {}
+  client1: {}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Flask Blog</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--boostrap css-->
+    <link rel="stylesheet" type="text/css" href="{{url_for( 'static',filename='css/bootstrap.css' )}}">
+    <link rel="stylesheet" type="text/css" href="{{url_for( 'static',filename='css/bootstrap-responsive.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{url_for( 'static', filename='css/addtext.css')}}">
+
+  </head>
+
+  <body data-spy='scroll' >
+    <!--navbar-->
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+          </button>
+          <a class="brand" href="/">Flask blog</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li>
+                <a href="/">首页</a>
+              </li>
+              <li>
+                <a href="/addblog">添加文章</a>
+              </li>
+              <li>
+                <a href="/showblog">显示文章</a>
+              </li>
+
+              {% if username %}
+              <li>
+                <a href="#">{{username}}</a>
+              </li>
+              <li>
+                <a href="{{ url_for('logout') }}">退出</a>
+              </li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!--content-->
+    {% block content %}{% endblock %}
+  </body>
+</html>

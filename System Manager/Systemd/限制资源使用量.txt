@@ -1,0 +1,24 @@
+参考：https://blog.csdn.net/ahilll/article/details/82109008
+
+
+执行：systemctl set-property toptest.service CPUShares=600 MemoryLimit=500M
+
+# 查看限制信息：
+# /sys/fs/cgroup/memory/test.slice
+# /sys/fs/cgroup/cpu/test.slice
+
+查看cgroups资源限制：systemcd-cgtop
+
+
+
+
+vim  /lib/systemd/system/xxx.service    #通过配置文件修改 cgroup
+..................
+[service]
+CPUShares=600
+MemoryLimit=500M
+..................
+
+# 查看限制信息：
+# /sys/fs/cgroup/memory/system.slice/xxx.service/memory.limit_in_bytes
+# /sys/fs/cgroup/cpu/system.slice/xxx.service/cpu.shares

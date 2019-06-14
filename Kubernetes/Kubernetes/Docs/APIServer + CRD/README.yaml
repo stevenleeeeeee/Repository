@@ -1,0 +1,84 @@
+#CustomResourceDefinition (CRD) 是v1.7+新增的无需改变代码就可以扩展Kubernetes API的机制，用来实现自定义资源对象
+#自定义资源是对APIServer的扩展，在集群内，自定义资源可通过动态注册出现和消失，集群管理员可独立于集群本身更新自定义资源
+#CRD仅仅是资源定义，而Controller可以去监听CRD的CRUD事件来添加自定义的业务逻辑。Operator=CRD+Controller
+#如果只是对CRD实例进行CRUD的话，那么不需要Controller也可以实现，只是这样只有数据，而没有针对数据进行的任何操作
+
+#Example:
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: foos.samplecontroller.k8s.io
+spec:
+  group: samplecontroller.k8s.io    #定义所属组
+  version: v1alpha1                 #定义组版本
+  names:
+    kind: Foo                       #属于此组的资源名称 "Foo" ( 在没修改任何代码条件下仅通过定义 CRD 类型就完成了 )
+    plural: foos                    #复数形式
+    singular: Foo                   #单数形式
+    shortNames:                     #短名称
+      - fo    
+  scope: Namespaced                 #该资源隶属于名称空间级别/集群级别 ( Namespaced or Cluster )
+
+#这样新的命名空间 RESTful API 端点就创建了
+#以上示例的自定义资源地址为: /apis/samplecontroller.k8s.io/v1alpha1/namespaces/*/foos/...
+
+--- 
+
+#执行kubectl get CustomResourceDefinitions可以获取创建的所有CRD
+#针对新建的Foo资源创建一个实例对象 ( 自定义对象实例可以类似K8S的常用对象如 Deployment、Service 等进行相同的CURD操作 )
+#自定义对象可包含自定义字段，这些字段可以包含任意JSON，具体的字段要根据对象去定义，主要是spec区域!
+
+apiVersion: samplecontroller.k8s.io/v1alpha1    #API组/版本
+kind: Foo                           #组/版本下支持的类型
+metadata:
+  name: example-foo                 #实例名称
+spec:
+  deploymentName: example-foo
+  replicas: 1
+
+#ref： https://blog.csdn.net/aixiaoyang168/article/details/81875907
+
+--- #定义这个种类的CRD的验证schema:
+
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: foos.samplecontroller.k8s.io
+spec:
+  group: samplecontroller.k8s.io
+  version: v1alpha1
+  names:
+    kind: Foo
+    plural: foos
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            replicas:
+              type: integer
+              minimum: 1
+              maximum: 10
+
+#查询所有CRD: kubectl  get crd
+
+---
+
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:  # name must match the spec fields below, and be in the form: <plural>.<group>
+  name: crontabs.stable.example.com
+spec:
+  group: stable.example.com   # group name to use for REST API: /apis/<group>/<version>
+  versions:   # list of versions supported by this CustomResourceDefinition
+    - name: v1
+      served: true    # Each version can be enabled/disabled by Served flag.
+      storage: true   # One and only one version must be marked as the storage version.
+  scope: Namespaced   # either Namespaced or Cluster
+  names:
+    plural: crontabs    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    singular: crontab    # singular name to be used as an alias on the CLI and for display
+    kind: CronTab    # kind is normally the CamelCased singular type. Your resource manifests use this.
+    shortNames:    # shortNames allow shorter string to match your resource on the CLI
+    - ct

@@ -1,0 +1,74 @@
+#ref:
+#https://blog.gmem.cc/prometheus-study-note
+
+#在Prometheus所有的Target实例中，都包含一些默认的Metadata标签信息。可通过Promdash的Targets页面中查看Metadata
+
+#一般Target中以"__"为前缀的标签是在系统内部使用的，因此这些标签不会被写入到样本数据
+#不过这里有些例外，所有通过Prometheus采集的样本数据中都会包含名为instance的标签
+#该标签的内容对应到Target实例的__address__，这实际上是发生了一次标签的重写处理
+#这种发生在采集样本数据之前对Target实例的标签进行重写的机制在Prometheus被称为：Relabeling
+
+#注意! 默认当Prometheus加载完配置文件中的Target实例后会包含一些默认标签：
+#这些标签将会告诉Prometheus如何从该Target实例中获取监控数据
+    __address__：       当前Target实例的访问地址<host>:<port>
+    __scheme__：        采集目标服务访问地址的HTTP Scheme，HTTP或者HTTPS
+    __metrics_path__：  采集目标服务访问地址的访问路径
+    __param_<name>：    采集任务目标服务的中包含的请求参数
+
+
+node lables
+__meta_kubernetes_node_name: 节点名称
+__meta_kubernetes_node_label_<labelname>: node的labels
+__meta_kubernetes_node_annotation_<annotationname>: node的annotation
+__meta_kubernetes_node_address_<address_type>: 
+    如果存在四个值中(NodeInternalIP, NodeExternalIP, NodeLegacyHostIP, and NodeHostName)的一个
+
+
+service labels
+__meta_kubernetes_namespace: service所处的namespace
+__meta_kubernetes_service_name: serviceName.
+__meta_kubernetes_service_label_<labelname>: service 的label
+__meta_kubernetes_service_annotation_<annotationname>: service的annotationname
+__meta_kubernetes_service_port_name: service的portName
+__meta_kubernetes_service_port_number: service的端口
+__meta_kubernetes_service_port_protocol: 协议
+
+
+Pod labels
+__meta_kubernetes_namespace: The namespace of the pod object.
+__meta_kubernetes_pod_name: The name of the pod object.
+__meta_kubernetes_pod_ip: The pod IP of the pod object.
+__meta_kubernetes_pod_label_<labelname>: Each label from the pod object.
+__meta_kubernetes_pod_labelpresent_<labelname>: truefor each label from the pod object.
+__meta_kubernetes_pod_annotation_<annotationname>: Each annotation from the pod object.
+__meta_kubernetes_pod_annotationpresent_<annotationname>: true for each annotation from the pod object.
+__meta_kubernetes_pod_container_name: Name of the container the target address points to.
+__meta_kubernetes_pod_container_port_name: Name of the container port.
+__meta_kubernetes_pod_container_port_number: Number of the container port.
+__meta_kubernetes_pod_container_port_protocol: Protocol of the container port.
+__meta_kubernetes_pod_ready: Set to true or false for the pod's ready state.
+__meta_kubernetes_pod_phase: Set to Pending, Running, Succeeded, Failed or Unknown in the lifecycle.
+__meta_kubernetes_pod_node_name: The name of the node the pod is scheduled onto.
+__meta_kubernetes_pod_host_ip: The current host IP of the pod object.
+__meta_kubernetes_pod_uid: The UID of the pod object.
+__meta_kubernetes_pod_controller_kind: Object kind of the pod controller.
+__meta_kubernetes_pod_controller_name: Name of the pod controller.
+
+
+endpoints
+__meta_kubernetes_namespace: endpoints的namespace.
+__meta_kubernetes_endpoints_name: endpoints的name.
+__meta_kubernetes_endpoint_ready: endpoint状态 true false 
+__meta_kubernetes_endpoint_port_name: endpoint port Name 
+__meta_kubernetes_endpoint_port_protocol: 协议.
+
+
+ingress
+__meta_kubernetes_namespace: ingress的namespace.
+__meta_kubernetes_ingress_name: ingressName.
+__meta_kubernetes_ingress_label_<labelname>: ingress 的label
+__meta_kubernetes_ingress_annotation_<annotationname>: ingress 的annotation
+__meta_kubernetes_ingress_scheme:默认是http, https 
+__meta_kubernetes_ingress_path: Path from ingress spec. Defaults to /.
+
+

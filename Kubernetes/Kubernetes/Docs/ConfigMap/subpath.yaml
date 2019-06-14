@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-lamp-site
+spec:
+    containers:
+    - name: php
+      image: php:7.0-apache
+      volumeMounts:
+      - mountPath: /var/www/html/index.php
+        name: index
+        subPath: index.php    #仅挂载子路径，绕过AUFS
+        #readOnly: false
+    volumes:
+    - name: index
+      configMap:
+        defaultMode: 0777
+        name: php-index
+        items:
+          - key: index.php
+            path: index.php

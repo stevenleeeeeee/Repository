@@ -1,0 +1,11 @@
+#PDB只对自愿中断的资源负责，某些如硬件失败这种错误，PDB无法起作用
+
+apiVersion: policy/v1beta1  
+ kind: PodDisruptionBudget  
+ metadata:  
+   name: app-a-pdb  
+ spec:  
+   minAvailable: 2  
+   selector:  
+       matchLabels:   
+         app: app-a   #确定是否一个deployment可以关联到这个PDB

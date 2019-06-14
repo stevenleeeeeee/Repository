@@ -1,0 +1,392 @@
+#prometheus下载地址：https://prometheus.io/download/
+
+#prometheus.yml中主要的3个部分：
+# 1.global：           全局配置
+# 2.rule_files：       指定希望Prometheus加载的任何告警规则文件的路径
+# 3.scrape_configs：   控制Prometheus监视的资源
+
+#启动：
+./prometheus --config.file=prometheus.yml --storage.tsdb.path="/data"  #默认运行需3GB内存，监听9090端口
+
+#参考：https://stackoverflow.com/questions/53365191/monitor-custom-kubernetes-pod-metrics-using-prometheus
+#在kubernetes中若Pod资源中运行的应用提供了用户自定义指标需被监控，则需对Pod添加如下注释：
+#  annotations:
+#    prometheus.io/probe: "true"
+#    prometheus.io/scrape: 'true'
+#    prometheus.io/path: '/data/metrics'
+#    prometheus.io/port: '80
+
+#------------------------------------------------------------------------------------------------------------
+- job_name: 'kubernetes-pods'
+  # https://github.com/prometheus/prometheus/blob/master/documentation/examples/prometheus-kubernetes.yml#L119
+  kubernetes_sd_configs:
+  - role: pod
+  relabel_configs:    #"relabel_config"用来重新编辑标签（标签是附属在每个监控目标的各个指标内的维度标记）
+  #可在Prometheus采集数据之前通过Target实例的Metadata信息实现动态的重新写入Label值、或自定义采集/忽略信息
+  #有些双下划线开头的标签，如"__address__"这样的标签是内置并且有特殊意义的，这样的标签不会附加在监控指标中
+  #通过标签改写可非常灵活地定义URL：
+  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+    action: keep      #当需要决定是过滤、保留Target时其action类型为: keep/drop
+    regex: true       #
+  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+    action: replace   #默认action行为是replace：replace根据regex匹配source_labels标签中的值
+    regex: (.+)
+    target_label: __metrics_path__      #将匹配的值写入到target_label中，若有多个匹配组，可用"${分组号}"指定
+  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+    action: replace                     #要针对匹配的Metadata进行的操作类型，这里是替换
+    regex: ([^:]+)(?::\d+)?;(\d+)       #使用正则对匹配的Metadata进行匹配
+    replacement: $1:$2                  #选择regex表达式匹配到的分组
+    target_label: __address__           #使用replacement匹配的内容重写__address__的值
+  - action: labelmap  #labelmap根据regex匹配所有Pod-Target中的标签名，以匹配内容为新标签名，值为新标签值
+    regex: __meta_kubernetes_pod_label_(.+)       #
+  - source_labels: [__meta_kubernetes_namespace]  #将匹配住的标签Metadata名称改名为kubernetes_namespace
+    action: replace
+    target_label: kubernetes_namespace
+  - source_labels: [__meta_kubernetes_pod_name]   #将匹配住的标签Metadata名称改名为kubernetes_pod_name
+    action: replace                               #允许用户根据Metadata标签重写或者写入新的标签键值对
+    target_label: kubernetes_pod_name             #可帮助用户添加与环境相关的特征维度从而更好的对数据聚合
+
+  # This scrape config scrapes kubelets
+  - job_name: 'kubernetes-nodes'
+    kubernetes_sd_configs:
+      - role: node
+    tls_config:
+      insecure_skip_verify: true
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+    - target_label: __scheme__
+      replacement: https
+    - source_labels: [__meta_kubernetes_node_label_kubernetes_io_hostname]   
+      target_label: instance
+
+  # Promethues relabel_configs:
+  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_port] #http://10.52.9.79:8080;8888
+      #separator: ';'                   #指定分隔符 (多个source_label的值会按separator进行拼接)
+      action: replace
+      regex: ([^:]+)(?::\d+)?;(\d+)     #第1：//10.52.9.79，第2：有原始端口的非捕获组（如果存在）#第3：带注释的端口
+      replacement: ${1}:${2}            #将正则匹配住的内容替换为第一个分组和第二个分组的内容
+      target_label: __address__         #将值赋给__address__字段
+
+----------------------------------------
+
+#规则文件语法检查：
+#在没有启动Prometheus前，可通过安装和运行Prometheus的promtool命令行工具检验规则文件的语法是否正确:
+go get github.com/prometheus/prometheus/cmd/promtool
+promtool check-rules /path/to/examples.rules
+
+#------------------------------------------------------------------------------------------------------------
+#下面这3个标签组合成完整的URL，它就是监控目标，通过这个URL读取到指标数据：
+  __address__         #检测目标的地址
+  __scheme__          #http/https
+  __metrics_path__    #指标采集路径
+  __param_<name>      #采集任务目标服务中包含的请求参数
+
+#在每个不同的服务发现配置中还会定义与特定的服务相关的内置指标：
+#如：基于kubernetes_sd_config动态发现的node类型中存在以下Metadata
+  __meta_kubernetes_node_name:                            #节点对象名称
+  __meta_kubernetes_node_label_<labelname>:               #节点对象所有标签
+  __meta_kubernetes_node_annotation_<annotationname>:     #节点对象所有注释
+  __meta_kubernetes_node_address_<address_type>:          #节点地址类型的第一个地址（如果存在）
+
+#relabel_config是个很强大的功能，除了修改标签，还可以为采集的指标添加上新标签：
+   - source_labels: [__meta_kubernetes_node_name]
+      regex: (.+)
+      replacement: hello_${1}
+      target_label: label_add_by_m    #为所有指标都被添加了名为"label_add_by_me"的标签
+
+#------------------------------------------------------------------------------------------------------------
+
+global:
+  scrape_interval: 30s        #收集信息的频率
+  evaluation_interval: 15s    #评估规则的频率（使用规则创建新的时间序列并生成警报）使用此频率周期性评估rule_files
+  scrape_timeout: 10s         #每次收集数据的超时时间
+
+external_labels:              #当Prometheus和外部系统 (联邦/远程存储/Alertmanager) 通信时添加标签到任意时间序列或报警
+  monitor: codelab
+  key-name: key-value
+
+rule_files:                   #告警规则配置，建议在单独的文件中定义，然后在prometheus.yml中引用
+  # - "first.rules"           #引入外部规则文件，可使用通配符，文件中每行可表示一个规则
+  # - "second.rules"          #其首次读取默认加载，之后根据evaluation_interval设定的周期加载
+  #- "my/*.rules"             #注意: 还需要在prometheus.yml的alerting段配置alertmanager地址
+
+############################### rules文件格式如下：########################
+# groups:
+# - name: rule1-http_requst_total
+#   rules:
+#   - alert:  HTTP_REQUEST_TOTAL
+#     expr: http_requests_total > 100
+#     for: 1m
+#     labels:
+#       severity: page
+#     annotations:
+#       summary: Http request total reach limit
+##########################################################################
+
+alerting:                                         #Alertmanager相关
+  alertmanagers:
+  - static_configs:
+    - targets:                                    #设定alertmanager和prometheus交互的接口，即alertmanager监听地址
+      - "1.2.3.4:9093"
+      - "1.2.3.5:9093"
+
+remote_write:                 #远程写入功能相关的设置，即使用外部存储
+  - url: http://remote1/push  #当前Prometheus支持本地存储样本数据，同时也支持发送数据到远程系统。如：TSDBs/ES
+    write_relabel_configs:
+    - source_labels: [__name__] 
+      regex: expensive.*
+      action: drop
+  - url: http://remote2/push
+
+remote_read:                  #远程读取相关功能的设置，即读取外部存储
+  - url: http://remote1/read
+    read_recent: true
+  - url: http://remote3/read
+    read_recent: false
+    required_matchers:
+      job: special
+
+scrape_configs:               #由于Prometheus还将自己的数据公开为HTTP端点，因此它可以抓取并监控自身的健康状况
+  - job_name: prometheus      #目标所属的已配置任务名称，在指标中会增加该标签!!!，表示该指标所属job, 必须唯一
+                              #job名会增加到拉取到的所有mstric中，同时还有名为instance的目标服务的host:port标签
+    honor_labels: true        #标签冲突时若true则以抓取的数据为准并忽略服务器的, 若false为通过重命名来解决冲突
+    metrics_path: /metrics    #默认，这是Exporter暴露的HTTP服务地址
+    scheme: http              #默认
+    scrape_interval: 5s       #覆盖global端的抓取周期设置，这里的拉取间隔为5s
+    static_configs:           #静态方式配置的监控目标，访问格式：http://localhost:9090/metrics
+      - targets: ['localhost:9090']   
+  
+    file_sd_configs:              #文件服务发现配置，从这些文件中提取目标
+      - files:                    #
+        - foo/*.slow.json
+        - foo/*.slow.yml
+        - single/file.yml
+        refresh_interval: 10m     #刷新文件间隔
+      - files:
+        - bar/*.yaml
+    
+    static_configs:               #使用job名作为label的静态配置目录的列表（抓取目标可以是动态/静态，此处是静态）
+      - targets: ['localhost:9090', 'localhost:9191']
+        labels:                   #pull拉取采样点的端点称之为instance。多个这样pull拉取采样点的instance构成一个job
+          my:   label             #定制标签，用于普罗米修斯对数据进行relable...(类似于filebeat对日志数据打标签)
+          your: label
+
+    #目标节点重打标签，重标记是功能强大的工具，可在抓取目标之前动态重写目标的标签集。注意: 其按先后顺序应用
+    relabel_configs:                              #抓取之前的标签重构配置列表
+      - source_labels: [job, __meta_dns_name]     #从现有的标签中选择源标签, 最后会被替换、保持、丢弃
+        regex:  (.*)some-[regex]                  #正则表达式, 将会提取source_labels中匹配的值
+        replacement:   foo-${1}                   #如果正则表达匹配则替换此值. 可以使用正则表达中的捕获组
+        target_label:  job                        #在替换动作中将结果值写入此标签的值
+      - source_labels: [abc]                      #将abc标签的内容复制到cde标签中
+        target_label:  cde
+      - replacement:   static
+        target_label:  abc
+
+  - job_name: service-x
+    scheme: https                                 #配置用于请求的协议方案
+    basic_auth:                                   # HTTP basic 认证
+      username: admin_name
+      password: "multiline\nmysecret\ntest"
+    scrape_timeout:  5s
+    sample_limit: 1000                            #每次收集样本数据的限制. 0为不限制
+    metrics_path: /my_path                        #从目标获取数据的 HTTP 路径
+
+    dns_sd_configs:                               #DNS服务发现配置
+    - refresh_interval: 15s
+      names:                                      #要查询的DNS域名列表
+      - first.dns.address.domain.com
+      - second.dns.address.domain.com
+    - names:
+      - first.dns.address.domain.com
+
+    metric_relabel_configs:                       #metric重新打标签的配置列表
+    - source_labels: [__name__]
+      regex: expensive_metric.*
+      action: drop
+
+  - job_name: service-kubernetes                  #K8S服务发现列表，这里自动探测kubernetes中endpoints的变化并监控
+    kubernetes_sd_configs:    
+    - role: endpoints                             #可以是 endpoints、service、pod、node、ingress
+      api_server: 'https://localhost:1234'        #Apiserver地址
+      namespaces:                                 #可选的命名空间发现, 若省略则所有命名空间都会被其发现
+        names:
+          - default
+      scheme: https
+      tls_config:
+        ca_file:   /opt/app/k8s/admin/cert/ca/ca.pem
+        cert_file: /opt/app/k8s/admin/cert/apiserver-client/cert.pem
+        key_file:  /opt/app/k8s/admin/cert/apiserver-client/key.pem
+      bearer_token_file: /opt/app/k8s/apiserver/cert/token.csv
+      #basic_auth:                                 # HTTP basic
+      #  username: 'myusername'
+      #  password: 'mysecret'
+
+#-------------------------------------------------------------------------------------
+
+#指标的格式: 
+#HELP ...... 帮助信息 .....   eg: HELP process_open_fds Number of open file descriptors.
+#TYPE ...... 类型说明 .....   eg: TYPE process_open_fds gauge
+<metric name>{<label name>=<label value>, ...}  <metric value>
+
+#度量及标签：
+#度量内部包含的键值对标签是度量的标签属性列表。在此基础上使用PromQL可轻松地执行过滤，分组和匹配等操作
+#标签提供了Prometheus的多维数据模型：对于相同的度量名称，通过不同标签列表的结合会形成特定的度量维度!
+#标签名为ASCII字母、数字、下划线。它们必须匹配正则表达式[a-zA-Z_][a-zA-Z0-9_]*。带有_下划线的标签名被保留作为内部使用
+
+#Example:
+  api_http_requests_total{method="POST", handler="/messages"}
+  #度量指标名称：api_http_requests_total
+  #标签为名称为：method="POST", handler="/messages"
+
+#------------------------------------------------------------------------------------- 指标类型
+
+counter   #是累计型度量指标，是只能递增的数值。计数器主要用于统计服务请求数、任务完成数和错误出现次数等递增指标
+gauge     #是度量指标，表示既可递增又可递减的值。主要用于测量类似于温度、当前内存使用量等
+Summary   #类似histogram柱状图，summary是采样点分位图统计(通常使用场景为：请求持续时间和响应大小)
+histogram #是柱状图，在PromQL中有3种作用：
+          #对每个采样点进行统计，打到各个分类值中：bucket
+          #对每个采样点值累计和：sum
+          #对采样点的次数累计和：count
+
+#-------------------------------------------------------------------------------------
+
+#指标表达式：
+#要使用Prometheus的内置表达式浏览器，到 http://localhost:9090/graph 并在"Graph"选项卡中选择"Console"视图
+
+#计算返回的特定时间序列总数：( 参考：https://prometheus.io/docs/prometheus/latest/querying/basics/ )
+count(promhttp_metric_handler_requests_total{code="200"})
+
+#若实例是健康的即可达，为0则抓取失败：  
+up{job="<job-name>", instance="<instance-id>"}
+
+#获取数据时的持续时间:  
+scrape_duration_seconds{job="<job-name>", instance="<instance-id>"}
+
+#目标暴露的样本数:  
+scrape_samples_scraped{job="<job-name>", instance="<instance-id>"}
+
+#绘制表达式图表
+#状态代码200的每秒HTTP请求率:   
+rate(promhttp_metric_handler_requests_total{code="200"}[1m])
+
+#系统模式下每秒平均花费的CPU时间：  
+rate(node_cpu_seconds_total{mode="system"}[1m])
+
+#非root用户可用的文件系统空间：
+node_filesystem_avail_bytes
+
+#每秒接收的平均网络流量： 
+rate(node_network_receive_bytes_total[1m])
+
+#记录在5分钟的窗口内测量的rpc_durations_seconds_count所有实例（但保留job和service维度）的平均每秒实例RPC()的速率
+avg(rate(rpc_durations_seconds_count[5m])) by (job, service)
+
+-------------------------------------------------------------------------------------
+
+#将多组端点添加到单个作业中，为每组目标添加额外的标签
+......
+    static_configs:
+      - targets: ['localhost:8080', 'localhost:8081']
+        labels:
+          group: 'production'           #额外标签
+      - targets: ['localhost:8082']
+        labels:
+          group: 'canary'               #额外标签
+
+#基于DNS的服务发现: ( 定期查询以发现目标列表。从中读取要联系的DNS服务器 )
+#此服务发现方法仅支持基本的DNS A，AAAA和SRV查询，不支持RFC6763中指定的高级DNS-SD方法
+# dns_sd_config:
+#   names:
+#   [ type: <query_type> | default = 'SRV' ]    # The type of DNS query to perform.
+#   [ port: <number>]   # The port number used if the query type is not SRV.
+#   [ refresh_interval: <duration> | default = 30s ]  # The time after which the provided names are refreshed.
+
+#通过Consul动态发现并Pull指标：
+# scrape_configs:
+#   - job_name: consul_sd
+#     metrics_path: /metrics
+#     scheme: http
+#     consul_sd_configs:
+#       - server: consul:8500   #指定Consul访问地址
+#         scheme: http
+#         services:             #注册到Consul中的实例信息
+#           - node_exporter
+#           - cadvisor 
+
+#-------------------------------------------------------------------------------------
+
+<kubernetes_sd_config>:
+#这个是以角色(role)来定义收集的，如: node,service,pod,endpoints,ingress 等 
+
+node:
+#默认就是取kubelet的http端口号
+#可以从NodeInternalIP, NodeExternalIP, NodeLegacyHostIP, and NodeHostName这里取IP地址,组成NodeInternalIP:Port模式
+labels:
+__meta_kubernetes_node_name: #节点名称
+__meta_kubernetes_node_label_<labelname>: #node的labels
+__meta_kubernetes_node_annotation_<annotationname>: #node的annotation
+__meta_kubernetes_node_address_<address_type>: 
+#如果存在四个值中(NodeInternalIP, NodeExternalIP, NodeLegacyHostIP, and NodeHostName)的一个
+
+service 
+kubeDNS加端口 
+labels
+#__meta_kubernetes_namespace: service所处的namespace
+__meta_kubernetes_service_name: serviceName.
+__meta_kubernetes_service_label_<labelname>: #service 的label
+__meta_kubernetes_service_annotation_<annotationname>: #service的annotationname
+__meta_kubernetes_service_port_name: #service的portName
+__meta_kubernetes_service_port_number: #service的端口
+__meta_kubernetes_service_port_protocol: #协议
+
+
+pod:
+__meta_kubernetes_namespace: #pod所在的namespace.
+__meta_kubernetes_pod_name: #podName
+__meta_kubernetes_pod_ip: #podIP
+__meta_kubernetes_pod_label_<labelname>: #pod的label.
+__meta_kubernetes_pod_annotation_<annotationname>: #pod的annotation 
+__meta_kubernetes_pod_container_name: #容器名称
+__meta_kubernetes_pod_container_port_name: #容器端口名称.
+__meta_kubernetes_pod_container_port_number: #容器端口号.
+__meta_kubernetes_pod_container_port_protocol: #容器的协议
+__meta_kubernetes_pod_ready: #pod的状态 ture false
+__meta_kubernetes_pod_node_name: #所在的节点名称
+__meta_kubernetes_pod_host_ip: #pod所在节点的IP.
+__meta_kubernetes_pod_uid: #pod的UUID.
+
+endpoints：
+__meta_kubernetes_namespace: #endpoints的namespace.
+__meta_kubernetes_endpoints_name: #endpoints的name.
+__meta_kubernetes_endpoint_ready: #endpoint状态 true false 
+__meta_kubernetes_endpoint_port_name: #endpoint port Name 
+__meta_kubernetes_endpoint_port_protocol: #协议
+
+
+ingress：
+__meta_kubernetes_namespace: #ingress的namespace.
+__meta_kubernetes_ingress_name: #ingressName.
+__meta_kubernetes_ingress_label_<labelname>: #ingress 的label
+__meta_kubernetes_ingress_annotation_<annotationname>: #ingress 的annotation
+__meta_kubernetes_ingress_scheme: #默认是http, https 
+__meta_kubernetes_ingress_path:   #Path from ingress spec. Defaults to /.
+
+#配置规则：
+#Prometheus支持可以配置，然后定期执行的两种规则: recording rules(记录规则)、alerting rules(警告规则)
+#为了在Prometheus中载入规则，需要创建包含规则语句的文件，并在Prometheus的rule_fields字段加载这个记录规则文件
+#这些规则文件可通过像Prometheus服务发送SIGNUP信号实时重载。如果所有的记录规则有正确的格式和语法则这它们能生效
+
+#记录规则：
+#记录规则允许你预先计算经常需要的，或者计算复杂度高的表达式，并将结果保存为一组新的时间序列数据。
+#查询预计算结果通常比需要时进行计算表达式快得多。对于dashboard是非常有用的，因为dashboard需要实时刷新查询表达式的结果
+#为了增加一个新记录规则，增加下面的记录规则到你的规则文件中：
+<new time series name>[{<label overrides>}] = <expression to record>
+#例：
+#计算每个job的http请求总数，保存到新的度量指标中
+job:http_inprogree_requests:sum = sum(http_inprogress_requests) by (job)
+
+#放弃老标签，写入新标签的结果时间序列数据：
+new_time_series{label_to_change="new_value", label_to_drop=""} = old_time_series
+
+#记录规则的执行周期由Prometheus的配置文件中的evaluate_interval指定
+#规则语句的右侧表达式一旦被执行，则新的时间戳key为当前时间，value为右边表达式的值，新的度量指标名称和标签列表为左边名称

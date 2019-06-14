@@ -1,0 +1,118 @@
+视图：View
+分析：Analyze
+统计：Statistics
+捕获：Capture
+
+捕获另存为：        File  >  Save as
+加入旧报文：        File  >  Merge
+查找数据包：        Ctrl+F：  <正则|MAC|主机名>
+为规则设置颜色：    View >  Coloring rules  >  Edit  > 
+设置时间格式：         View  >  Time display Format
+为IP地址备注：        报文右键  >  Manually Resolve Address > 名字
+标记报文：        选择报文  >  Ctrl+M （前后切换：Shift+Ctrl N/B，标记的报文数量在抓包统计信息：Summary中显示）
+跟踪数据流：        报文右键  >   <Follw tcp Stream | Follw udp Stream | Follw sslStream>
+修改其分析器：        报文右键  >  Decode （端口/协议对应关系）
+统计信息 - Statistics：
+    抓包统计信息：        Summary                如平均速率，总包数，抓包时间，持续时间等信息...
+    各节点流量统计：    Endpoints            可追踪到具体节点，查看其网速，带宽（以网络中特定的节点为统计对象，不以会话为单位）
+    各节点会话查看：    Conversation            与Endpoints类似，但其以会话为单位（一行为一个会话）并附带刘追踪和图形化展示的功能
+    协议分层统计：        protocol hierarchy        使用户对网络流量有较直观的了解，如哪类协议下的流量占用比例较多
+    I/O情况：             I/O   Graph            实现吞吐量的实时显示（Input/Output）常使用正则过滤若干指定流量/协议进行分析
+    流图表：            Flow Graph            将双方通信过程以图形化展示出来
+    双向时间图：         TCP Stream Graph  >  Round Trip time Graph
+    包长度情况：         packet lengths  >  正则  >  Create stat
+接口捕获设置：
+    Capture filter：    正则过滤器
+    Capture file：        自动保存为文件
+    自动滚动列表：        Automatic scrolling in live capture
+    N个时间保存1份：    Next file every # minutes/hour/day
+
+---------------------------------------------------------------------------------------------------------
+参数：        dst / src / host / port / ether host / 协议 / brodcast    
+逻辑：        &&  ||  !（dst/src即可用于地址也可用于端口）
+过滤协议：    tcp，udp，arp，icmp，http，smtp，ftp，dns，msnms，ip，ssl，oicq（协议均通过“.”访问其属性）
+
+过滤MAC
+    eth.dst == A0:00:00:04:C5:84 || eth.src == A0:00:00:04:C5:84
+    eth.addr eq A0:00:00:04:C5:84     过滤来源MAC和目标MAC都等于A0:00:00:04:C5:84的
+过滤地址：
+    ip.src eq 192.168.1.107 || ip.dst eq 192.168.1.107       <--->    ip.addr eq 192.168.1.107
+    ip.src == 10.230.0.0/16             过滤网段
+    ip.addr == 192.168.1.1 && ! ip.addr == 192.168.1.2
+    ip.addr != 192.168.1.1 && ( ip.addr == 192.168.1.2 || ip.addr == 192.168.1.3 )
+TCP参数过滤：
+    tcp.flags                        显示包含TCP标志的封包
+    tcp.flags.syn == 0x02               显示包含TCP SYN标志的封包    
+    tcp.window_size == 0 && tcp.flags.reset != 1
+过滤端口：
+    tcp.port eq 80    <--->    tcp.port == 80
+    tcp.port eq 80 || udp.port eq 80
+    tcp.port >= 1 && tcp.port <= 80                过滤端口范围
+    tcp.port == 23 && ip.addr == 192.168.1.1        匹配IP和端口
+    源或目标端口过滤：
+        tcp.dstport == 80
+        tcp.srcport == 80
+包长度过滤：
+    udp.length == 26         此长度指udp自身固定长度8加上udp内数据之和
+    tcp.len >= 7               指的是tcp内的数据包而不包括其本身
+    ip.len == 94            除以太网头固定长度14之外的，即从ip本身到最后
+    frame.len == 119         整个数据包长度，从eth开始到最后
+HTTP模式过滤：
+    过滤协议的请求方式：
+        http.request.method == “GET”
+        http.request.method == “POST”
+    过滤请求/响应包：
+        http.response==1
+        http.request==1 
+    过滤URI：
+        http.request.uri == “/img/logo-edu.gif”            取值是域名后的部分
+        http.request.full_uri==”http://www.baidu.com/1/2”    过滤含域名的整个url
+        http contains “GET”
+        http contains “HTTP/1.”
+    过滤HTTP状态码：
+        http.response.code==200
+
+Wireshark中以下含义相同：
+    lt         <
+    le        <=
+    eq        ==
+    gt        >
+    ge        >=
+    not        !
+    and        &&    
+    or        ||
+
+------------------------------------------------------------------------------------------- tcpdump
+[root@localhost ~]# ifconfig <interface> promisc        #设置网卡为混杂模式
+[root@localhost ~]# ifconfig <interface> -promisc       #取消网卡的混杂模式
+
+参数：
+    -A        内容以ASCII显示
+    -X        内容以16进制（hex）与ASCII格式显示
+    -nn        以IP及端口号显示而非主机或服务名（IP&Port不解析）
+    -t        不显示时间戳
+    -q        列出较简短的包信息
+    -i/o        网卡的in/out方向
+    -c         指定要监听的包量
+    -w/r        保存/读取文件（-w *.cap ---> wireshark）
+    udp/tcp    协议...（常见如：fddi,ip,arp,rarp,tcp,udp）
+    src/dst    源/目的（需指定端口或是主机），如：src host 192.168.1.1 and src net 192.168.2.0/24
+    -s 0        默认抓取长度为68字节，此参数可抓到完整数据包
+
+    类型：    host，net，port, 例：host 210.27.48.2，net 202.0.0.0 ，port 23（缺省类型是host）
+    方向：    src , dst（缺省所有）
+    协议：    fddi, ip, arp, rarp, tcp, udp等（默认监听所有）
+    逻辑：     not  !  and  &&  or ||
+
+实例：
+    tcpdump host 210.27.48.1 and \ (210.27.48.2 or 210.27.48.3 \)
+    tcpdump ip host 210.27.48.1 and ! 210.27.48.2
+    tcpdump tcp port 23 host 210.27.48.1                
+    tcpdump -i eth0 host hostname and dst port 80 
+    tcpdump -i eth0 host ! 211.161.223.70 and ! 211.161.223.71 and dst port 80
+    tcpdump -i eth0 ' \( tcp port ! 22 \) and  src host 192.168.1.1 and dst net 192.168.2.0/24 '
+    tcpdump udp port 123 -nn -X
+    tcpdump tcp -i eth1 -t -s 0 -c 100 and dst port ! 22 and src net 192.168.1.0/24 -w ./target.cap  "cap由wireshark处理"
+    tcpdump -i eth0 src host 192.168.10.1 and udp port !80
+    tcpdump 'icmp[icmptype] != icmp-echo and icmp[icmptype] != icmp-echoreply'
+    tcpdump 'tcp[tcpflags] & (tcp-syn|tcp-fin) != 0 and not src and dst net localnet'

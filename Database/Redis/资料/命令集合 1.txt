@@ -1,0 +1,174 @@
+
+修改：
+    临时设置：config set
+    永久设置：config rewrite    将目前服务器的参数配置写入redis conf.
+
+密码：
+    设置密码（或直接在其配置文件中指定：requirepass 密码）
+    config set requirepass [密码]
+
+    验证密码（否则不能进行操作）或：启动时使用-a参数指定面： redis-cli -a 密码
+    auth 密码
+
+性能测试：     redis-benchmark -n 100000
+
+获取慢查询（结果为查询ID、发生时间、运行时长和原命令）：
+    SLOWLOG GET 10
+
+
+主从复制：
+    特点：Slave间可互联（用于当M挂掉时另一台连接所有S设备的S可升为M）
+    配置从服务器：
+        > slaveof 主服务器地址 端口
+        > masterauth 密码            若主服务器需密码验证则此处输入密码
+
+两种持久化操作：
+    snapshotting（快照）        将数据存储到文件中（默认的方式）
+    Append-only file（aof）        将操作存储到文件中
+
+        snapshotting（快照）
+        将内存中数据以快照方式写入到二进制文件，默认文件名为dump.rdb
+        > save 900 1        九百秒内若超过1个key被修改则发起快照保存（直接save可直接写入磁盘中，路径查看：config get dir）
+        > save 60 6000     ..........
+
+        Append-only file（aof）   
+        将每个收到的写命令都通过write函数追加到文件中，让服务重启时会通过新执行文件中保存的写命令来在内存中重建整个数据库的内容（生成的文件名为：appendonly.aof）
+        修改配置文件：
+            appendonly yes        开启
+            三种子选项：
+                appendf always        收到写命令即立即写入磁盘，最慢，但保证完全的持久化
+                appendfsunc everysec    每秒钟写入磁盘一次，在性能与持久化中保持折中
+                appendfsync no/yes    是否完全依赖OS，若no则性能最好但持久化没保障
+
+订阅、推送：
+    > subscribe wodepindaoming    监听指定频道（可多个）
+    > puplish wpdepindaoming #$%^&$%^&*        向指定频道发送信息，其他监听的人都能收到
+    > unsubscribe [channel [channel ...]]     退订频道
+    > psubscribe pattern [pattern ...]             订阅一个或多个符合给定模式的频道。
+    > pubsub subcommand [argument [argument ...]]         查看订阅与发布系统状态。
+
+虚拟内存(交换空间)：即将不常访问的数据交换到磁盘上：
+    修改配置文件：
+        vm-enabled yes                    开启vm功能
+        readlly-use-vm yes                确认使用虚拟内存
+        vm-swap-file /tmp/redis.swap    交换出的Value的保存路径
+        vm-max-memory 1000000            Redis使用的最大内存上限
+        vm-page-size 32                    每个页面的大小 32字节
+        vm-pages 13443243                最多使用多少页面
+        vm-max-threads 4                用于执行Value对象换入换出的工作线程数量
+
+日志位置在/redis/log下，redis.log为redis主日志，sentinel.log为sentinel监控日志。
+
+事务：
+     打开事务：multi
+     。。。。。。。。。。。。。。。。。。此处一堆命令
+     结束事务开始执行：exec
+
+
+
+操作：
+    redis> keys *            返回所有键
+    redis> keys MY*            返回以MY开头的所有键
+    redis> exists name      确认指定的键是否存在，若存在返回1
+    redis> persist name     移除指定的键的过期时间
+    redis> del name            删除一个键
+    redis> expire name 10     设置键的过期时间为10秒
+    redis> select [0-15]    选择使用0~15中的数据库（其数据库名按数字指定）
+    redis> move name 1        将当前数据库中指定的key转移到其他库
+    redis> randomkey        随机返回数据库中的一个键
+    redis> rename name1 name2 对键重命名
+    redis> type name        返回键的数据类型
+
+    redis> ping        若返回PONG表示连接是存活的
+    redis> echo "123123"    输出
+    redis> quit             退出连接
+    redis> dbsize            返回当前数据库中所有key的数量
+    redis> info             查看服务器信息
+    redis> shutdown         关闭服务器
+    redis> config get dir            config get 不指定则获取服务器所有配置信息。            config get *：查看所有配置
+    redis> flushdb            清空当前数据库
+    redis> flushall            清空所有数据库
+
+string类型：可存储任意类型的数据，如：jpg
+    $ ./redis-cli            客户端命令：redis-cli
+    redis> set foo bar        添加键值对：set 键 值
+    OK
+    redis> get foo           
+    "bar"
+    redis> setnx foo bar        若键已经存在则不插入且返回0
+    redis> setex 键 <秒> 值        指定键值和有效期
+    redis> setrange 键 <下标> 值    从键的值中第N个字符开始替换其指定的值
+    redis> mset    键1 值1  键2 值2        一次性设置多个值
+    redis> msetnx                    与setnx目标相同
+    redis> getset 键 值            获得值的同事设置新的键值
+    redis> getrange 键 0 5         获得从下标0到下标5的值范围         
+    redis> mget 键 键 键 键 ...
+    redis> incr 键                自增+1
+    redis> incrby 键 <num>            以指定的数自增，若不存在则自动创建并默认为0(可用正负号进行加减)
+    redis> decrby 键 <num>
+    redis> append 键 值            给指定的键追加进入一个值
+    redis> strlen    键            返回键长度
+
+hashes类型：
+    适用于存储对象，将对象存贮在hash中占用更少的内存
+    redis> hset user:wy name wangyu        hset 哈希表名称 哈希表的字段 字段的值
+    redis> hget user:wy name            获得哈希表wy的name值
+    redis> hsetnx ............            若不存在则创建
+    redis> hmset user:wy name wangyu age 25        批量
+    redis> hmget user:wy name age             获取多个的键的值
+    redis> hincrby user:wy age 5            按指定的值自增
+    redis> hexists user:wy name                判断表中字段是否存在
+    redis> hlen user:wy                    返回表中所有字段的数量
+    redis> hkeys user:wy            返回哈西表中所有的字段
+    redis> hvals user:wy            返回哈西表中所有的值
+    redis> hdel    user:wy age                删除表中字段的值
+    redis> hkgetall user:wy            返回哈西表中所有的字段及所有值
+
+list类型是个链表结构：操作中的key理解为链表的名字，可通过push、pop操作从链表的头或尾添加、删除元素，即可作为栈又可作为队列
+    栈：    先进后出（U形）下面是栈头，上面是栈尾
+    队列：    先进先出（||）
+    redis> lpush name "world1"    向头部添加字串元素
+    redis> lpush name "world2"    向头部添加字串元素
+    redis> rpush name "world1"    向尾部添加字串元素
+    redis> rpush name "world2"  向尾部添加字串元素
+    redis> lrange name 0 -1        取所有元素：0从头部的第一个元素，-1到最后一个元素（即：取出所有元素）
+    redis> linsert name before "world1" VALUE    在"world1"的前面插入数据
+    redis> lset name 1 "world3"    将指定位置的元素修改其值
+    redis> lrem name 2 "world3"    删除其中2个和"world3"相同的值
+    redis> ltrim name 0 -1        删除从第1个到最后一个元素
+    redis> lpop name            从其头部弹出一个元素（即：返回并删除）
+    redis> rpoplpush name1 name2    从列表的尾部移除元素并添加到第二个列表的头部
+    redis> lindex name 3            返回列表中指定元素的索引位置的元素（相当于通过下标访问）
+    redis> llen    name1                返回链表的元素数量
+
+
+sets类型是一个集合：是string类型的无序集合，复杂度0（1）
+    redis> sadd MYSET "one"
+    redis> sadd MYSET "two"        向集合添加两个元素
+    redis> smembers MYSET        查看集合的成员
+    redis> srem MYSET "one"        删除集合中的元素，返回1表示成功
+    redis> spop MYSET             随机弹出一个元素（sets类型是无需集合）
+    redis> sdiff MYSET1 MYSET2    以MYSET1为标准返回两个集合的差集（MYSET2中的MYSET1没有的元素）
+    redis> sdiffstore MYSET4 MYSET1 MYSET2    将 MYSET1 MYSET2的差集存储到 MYSET4
+    redis> sinter MYSET1 MYSET2    返回交集
+    redis> sinterstore MYSET4 MYSET1 MYSET2    将 MYSET1 MYSET2的交集存储到 MYSET4
+    redis> sunion MYSET1 MYSET2            返回两者并集
+    redis> sunionstore MYSET4 MYSET1 MYSET2    将1和2的并集存储到4
+    redis> smove MYSET1 MYSET2 linux    将MYSET1中的linux元素移动到MYSET2   
+    redis> scard MYSET1        返回集合元素个数
+    redis> srandmember     MYSET1 随机返回集合中的一个元素
+
+sorted sets类型是set的升级版，其在set基础上增加了顺序属性
+    redis> zadd MYSET 1 one        向有序元素集合中的指定位置增加value值
+    redis> zadd MYSET 2 two
+    redis> zadd MYSET 3 two        因集合中不允许有相同元素，则此操作将位置2更新为位置3
+    redis> zrange MYSET 0 -1 withscores    输出指定位置的元素并附加顺序号（withscores）
+    redis> zrem MYSET   one     删除有序集合中的元素
+    redis> zincrby    MYSET1 -3 one    若元素已经存在则其增加指定值，否则添加此元素并且其顺序值为指定值
+    redis> zrank MYSET one            返回排序后指定元素的索引值（即顺序值）
+    redis> .............
+    redis> .............
+    redis> .............
+    redis> .............
+    redis> .............
+    redis> .............

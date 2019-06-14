@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: mem-limit-range
+spec:
+  limits:
+  - default:
+      memory: 512Mi   #创建Pod时使用的默认的资源限制
+    defaultRequest:
+      memory: 256Mi   #创建Pod时使用的默认的请求资源
+    type: Container
+
+#kubectl create -f https://k8s.io/examples/admin/resource/memory-defaults.yaml --namespace=default-mem-example
+
+#如果在default-mem-example命名空间中创建了Container
+#并且Container没有为内存请求和内存限制指定自己的值，则会向Container提供256 MiB的默认内存请求，默认内存限制为512 MiB 。
+
+
+#如果创建的Pod中指明了需要1G的内存 (大于512Mi) ，则在此配置的情况下其Limit若不设置则默认也是1G
+#如果创建的Pod中指明了需要200Mi的内存 (小于512Mi) ，则在此配置的情况下其requests为200Mi,Limit为512Mi

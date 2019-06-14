@@ -1,0 +1,79 @@
+curl -XPOST "http://192.168.100.106:9200/_template/errorlog_template" -H 'Content-Type: application/json' -d'{
+    "order": 0,
+    "template": "errorlogs_*",
+    "settings": {
+      "index": {
+        "search": {
+          "slowlog": {
+            "threshold": {
+              "fetch": {
+                "warn": "1800ms",
+                "info": "1s"
+              },
+              "query": {
+                "warn": "10s",
+                "info": "6s"
+              }
+            }
+          }
+        },
+        "refresh_interval": "30s",
+        "number_of_shards": "10",
+        "number_of_replicas": "1"
+      }
+    },
+    "mappings": {
+      "errorlogs": {
+        "dynamic": false,
+        "properties": {
+          "traceId": {
+            "type": "keyword"
+          },
+          "instanceName": {
+            "type": "keyword"
+          },
+          "hostIp": {
+            "type": "keyword"
+          },
+          "appName": {
+            "type": "keyword"
+          },
+          "opId": {
+            "type": "keyword"
+          },
+          "interStartTime": {
+              "type": "date",
+              "format": "yyyyMMddHH:mm:ssSSS||yyyyMMddHH:mm:ss||date_time"
+          },
+          "errorCode": { 
+            "type": "keyword"
+          },
+          "serviceName": {
+            "type": "keyword"
+          },
+          "errorMsg": {
+            "analyzer": "ik_max_word",
+            "type": "text"
+          },
+          "browserType": {
+            "type": "keyword"
+          },
+          "errorTime": {
+            "format": "yyyyMMddHHmmss",
+            "type": "date"
+          },
+          "exceptionStack": {
+            "analyzer": "ik_max_word",
+            "type": "text"
+          },
+          "province": {
+            "type": "keyword"
+          },
+          "systemCode": {
+            "type": "keyword"
+          }
+        }
+      }
+    },
+    "aliases": {}
+}'

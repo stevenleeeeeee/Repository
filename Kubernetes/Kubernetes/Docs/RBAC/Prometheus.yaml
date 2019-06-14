@@ -1,0 +1,43 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole             #不需要指定命名空间，ClusterRole属于全局
+metadata:
+  name: prometheus
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: default
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+- kind: ServiceAccount        #将RBAC处理妥当后再指定Prometheus使用这个ServiceAccount创建Pod实例
+  name: prometheus
+  namespace: default

@@ -1,0 +1,30 @@
+<configuration>
+  <property>
+    <name>hbase.rootdir</name>
+    <value>hdfs://192.168.2.131:9000/hbase</value>                      <?-- 分布式集群使用共享存储? --?>
+  </property>
+  <property>
+    <name>hbase.master</name>                                           <?-- Hbase的master地址 --?>
+    <value>192.168.2.131</value>
+  </property>
+  <property>
+    <name>hbase.cluster.distributed</name>                              <?-- 使用Hbase的分布式集群 --?>
+    <value>true</value>
+  </property>
+  <property>
+    <name>hbase.zookeeper.quorum</name>                                 <?-- zookeeper集群地址列表 --?>
+    <value>192.168.2.131,192.168.2.132,192.168.2.133</value>
+  </property>
+  <property>
+    <name>hbase.zookeeper.property.clientPort</name>                    <?-- zookeeper端口 --?>
+    <value>2181</value>
+  </property>
+  <property>
+    <name>zookeeper.session.timeout</name>  
+    <value>200000</value>
+  </property>
+  <property>
+    <name>dfs.support.append</name>
+    <value>true</value>
+  </property>
+</configuration>

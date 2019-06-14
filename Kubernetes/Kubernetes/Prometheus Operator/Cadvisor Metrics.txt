@@ -1,0 +1,1930 @@
+CAdvisor中的典型度量指标：
+
+container_cpu_load_average_10s          gauge       过去10秒容器CPU的平均负载
+container_cpu_usage_seconds_total       counter     容器在每个CPU内核上的累积占用时间 (单位：秒)
+container_cpu_system_seconds_total      counter     System CPU累积占用时间（单位：秒）
+container_cpu_user_seconds_total        counter     User CPU累积占用时间（单位：秒）
+container_fs_usage_bytes                gauge       容器中文件系统的使用量(单位：字节)
+container_fs_limit_bytes                gauge       容器可以使用的文件系统总量(单位：字节)
+container_fs_reads_bytes_total          counter     容器累积读取数据的总量(单位：字节)
+container_fs_writes_bytes_total         counter     容器累积写入数据的总量(单位：字节)
+container_memory_max_usage_bytes        gauge       容器的最大内存使用量（单位：字节）
+container_memory_usage_bytes            gauge       容器当前的内存使用量（单位：字节
+container_spec_memory_limit_bytes       gauge       容器的内存使用量限制
+machine_memory_bytes                    gauge       当前主机的内存总量
+container_network_receive_bytes_total   counter     容器网络累积接收数据总量（单位：字节）
+container_network_transmit_bytes_total  counter     容器网络累积传输数据总量（单位：字节）
+
+计算容器的CPU使用率：
+sum(irate(container_cpu_usage_seconds_total{image!=""}[1m])) without (cpu)
+
+查询容器内存使用量（单位：字节）:
+container_memory_usage_bytes{image!=""}
+
+查询容器网络接收量速率（单位：字节/秒）：
+sum(rate(container_network_receive_bytes_total{image!=""}[1m])) without (interface)
+
+查询容器网络传输量速率（单位：字节/秒）：
+sum(rate(container_network_transmit_bytes_total{image!=""}[1m])) without (interface)
+
+查询容器文件系统读取速率（单位：字节/秒）：
+sum(rate(container_fs_reads_bytes_total{image!=""}[1m])) without (device)
+
+查询容器文件系统写入速率（单位：字节/秒）：
+sum(rate(container_fs_writes_bytes_total{image!=""}[1m])) without (device)
+
+------------------------------------------------------------------------------------------
+
+# HELP cadvisor_version_info A metric with a constant '1' value labeled by kernel version, OS version, docker version, cadvisor version & cadvisor revision.
+# TYPE cadvisor_version_info gauge
+cadvisor_version_info{cadvisorRevision="8949c822",cadvisorVersion="v0.32.0",dockerVersion="18.09.5",kernelVersion="3.10.0-327.el7.x86_64",osVersion="Alpine Linux v3.7"} 1
+# HELP container_cpu_load_average_10s Value of container cpu load average over the last 10 seconds.
+# TYPE container_cpu_load_average_10s gauge
+container_cpu_load_average_10s{id="/",image="",name=""} 0
+container_cpu_load_average_10s{id="/docker",image="",name=""} 0
+container_cpu_load_average_10s{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_cpu_load_average_10s{id="/system.slice",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/NetworkManager.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/auditd.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/chronyd.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/containerd.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/crond.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/dbus.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/docker.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/irqbalance.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/network.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/polkit.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/postfix.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/rsyslog.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/sshd.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/system-getty.slice",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-journald.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-logind.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/tuned.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_cpu_load_average_10s{id="/user.slice",image="",name=""} 0
+# HELP container_cpu_system_seconds_total Cumulative system cpu time consumed in seconds.
+# TYPE container_cpu_system_seconds_total counter
+container_cpu_system_seconds_total{id="/",image="",name=""} 838.26
+container_cpu_system_seconds_total{id="/docker",image="",name=""} 64.35
+container_cpu_system_seconds_total{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 2.46
+container_cpu_system_seconds_total{id="/system.slice",image="",name=""} 297.54
+container_cpu_system_seconds_total{id="/system.slice/NetworkManager.service",image="",name=""} 0.56
+container_cpu_system_seconds_total{id="/system.slice/auditd.service",image="",name=""} 0.04
+container_cpu_system_seconds_total{id="/system.slice/chronyd.service",image="",name=""} 0.19
+container_cpu_system_seconds_total{id="/system.slice/containerd.service",image="",name=""} 22.15
+container_cpu_system_seconds_total{id="/system.slice/crond.service",image="",name=""} 0.12
+container_cpu_system_seconds_total{id="/system.slice/dbus.service",image="",name=""} 0.32
+container_cpu_system_seconds_total{id="/system.slice/docker.service",image="",name=""} 254.6
+container_cpu_system_seconds_total{id="/system.slice/irqbalance.service",image="",name=""} 2.35
+container_cpu_system_seconds_total{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/network.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/polkit.service",image="",name=""} 0.08
+container_cpu_system_seconds_total{id="/system.slice/postfix.service",image="",name=""} 0.93
+container_cpu_system_seconds_total{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/rsyslog.service",image="",name=""} 0.11
+container_cpu_system_seconds_total{id="/system.slice/sshd.service",image="",name=""} 0.12
+container_cpu_system_seconds_total{id="/system.slice/system-getty.slice",image="",name=""} 0.01
+container_cpu_system_seconds_total{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0.15
+container_cpu_system_seconds_total{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-journald.service",image="",name=""} 0.35
+container_cpu_system_seconds_total{id="/system.slice/systemd-logind.service",image="",name=""} 0.12
+container_cpu_system_seconds_total{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-udevd.service",image="",name=""} 13.77
+container_cpu_system_seconds_total{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_cpu_system_seconds_total{id="/system.slice/tuned.service",image="",name=""} 0.45
+container_cpu_system_seconds_total{id="/system.slice/wpa_supplicant.service",image="",name=""} 0.02
+container_cpu_system_seconds_total{id="/user.slice",image="",name=""} 158.07
+# HELP container_cpu_usage_seconds_total Cumulative cpu time consumed in seconds.
+# TYPE container_cpu_usage_seconds_total counter
+container_cpu_usage_seconds_total{cpu="cpu00",id="/",image="",name=""} 411.03074579
+container_cpu_usage_seconds_total{cpu="cpu00",id="/docker",image="",name=""} 109.217311902
+container_cpu_usage_seconds_total{cpu="cpu00",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 2.150580589
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice",image="",name=""} 150.848561137
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/NetworkManager.service",image="",name=""} 0.315027101
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/auditd.service",image="",name=""} 0.038427561
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/chronyd.service",image="",name=""} 0.031421514
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/containerd.service",image="",name=""} 24.336743578
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/crond.service",image="",name=""} 0.041181216
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/dbus.service",image="",name=""} 0.209029579
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/docker.service",image="",name=""} 118.121980019
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0.000585492
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/polkit.service",image="",name=""} 0.058787872
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/postfix.service",image="",name=""} 0.279406912
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/rsyslog.service",image="",name=""} 0.13817503
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/sshd.service",image="",name=""} 0.010877909
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/system-getty.slice",image="",name=""} 0.002061655
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0.001010104
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/systemd-journald.service",image="",name=""} 0.142466311
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/systemd-logind.service",image="",name=""} 0.096762035
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/systemd-udevd.service",image="",name=""} 4.477325598
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/tuned.service",image="",name=""} 2.109145095
+container_cpu_usage_seconds_total{cpu="cpu00",id="/system.slice/wpa_supplicant.service",image="",name=""} 0.002580088
+container_cpu_usage_seconds_total{cpu="cpu00",id="/user.slice",image="",name=""} 30.079220956
+container_cpu_usage_seconds_total{cpu="cpu01",id="/",image="",name=""} 427.114560639
+container_cpu_usage_seconds_total{cpu="cpu01",id="/docker",image="",name=""} 112.779444291
+container_cpu_usage_seconds_total{cpu="cpu01",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 2.085175055
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice",image="",name=""} 154.131844744
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/NetworkManager.service",image="",name=""} 0.209334735
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/auditd.service",image="",name=""} 0.039700977
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/chronyd.service",image="",name=""} 0.047454505
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/containerd.service",image="",name=""} 25.884031597
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/crond.service",image="",name=""} 0.10023348
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/dbus.service",image="",name=""} 0.123936681
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/docker.service",image="",name=""} 117.880536226
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/irqbalance.service",image="",name=""} 0.018826947
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0.004293671
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/polkit.service",image="",name=""} 0.046075112
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/postfix.service",image="",name=""} 0.311255686
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/rsyslog.service",image="",name=""} 0.112531688
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/sshd.service",image="",name=""} 0.021813163
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/system-getty.slice",image="",name=""} 0.000199023
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0.050766292
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0.000628094
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/systemd-journald.service",image="",name=""} 0.154441428
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/systemd-logind.service",image="",name=""} 0.129150943
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/systemd-udevd.service",image="",name=""} 5.417360099
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/tuned.service",image="",name=""} 3.040055336
+container_cpu_usage_seconds_total{cpu="cpu01",id="/system.slice/wpa_supplicant.service",image="",name=""} 0.005205324
+container_cpu_usage_seconds_total{cpu="cpu01",id="/user.slice",image="",name=""} 26.812463535
+container_cpu_usage_seconds_total{cpu="cpu02",id="/",image="",name=""} 482.090379536
+container_cpu_usage_seconds_total{cpu="cpu02",id="/docker",image="",name=""} 104.637334598
+container_cpu_usage_seconds_total{cpu="cpu02",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 1.482170212
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice",image="",name=""} 153.761562665
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/NetworkManager.service",image="",name=""} 0.164822039
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/auditd.service",image="",name=""} 0.0283603
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/chronyd.service",image="",name=""} 0.137461069
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/containerd.service",image="",name=""} 22.148844197
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/crond.service",image="",name=""} 0.067487546
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/dbus.service",image="",name=""} 0.221397289
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/docker.service",image="",name=""} 119.755597955
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/irqbalance.service",image="",name=""} 2.870303569
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0.000617774
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/polkit.service",image="",name=""} 0.018026335
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/postfix.service",image="",name=""} 0.493523594
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/rsyslog.service",image="",name=""} 0.111903548
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/sshd.service",image="",name=""} 0.143473131
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/system-getty.slice",image="",name=""} 0.001889915
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0.032791849
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0.004267402
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/systemd-journald.service",image="",name=""} 0.211820102
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/systemd-logind.service",image="",name=""} 0.064831923
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/systemd-udevd.service",image="",name=""} 4.36585353
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/tuned.service",image="",name=""} 2.762342152
+container_cpu_usage_seconds_total{cpu="cpu02",id="/system.slice/wpa_supplicant.service",image="",name=""} 0.018507076
+container_cpu_usage_seconds_total{cpu="cpu02",id="/user.slice",image="",name=""} 126.121493625
+container_cpu_usage_seconds_total{cpu="cpu03",id="/",image="",name=""} 409.54962631
+container_cpu_usage_seconds_total{cpu="cpu03",id="/docker",image="",name=""} 99.664437256
+container_cpu_usage_seconds_total{cpu="cpu03",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 1.34704356
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice",image="",name=""} 148.270925029
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/NetworkManager.service",image="",name=""} 0.222420813
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/auditd.service",image="",name=""} 0.026249418
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/chronyd.service",image="",name=""} 0.063043139
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/containerd.service",image="",name=""} 23.982992367
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/crond.service",image="",name=""} 0.048578273
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/dbus.service",image="",name=""} 0.202885753
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/docker.service",image="",name=""} 114.275048776
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/irqbalance.service",image="",name=""} 1.601287503
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0.000631306
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/polkit.service",image="",name=""} 0.01746008
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/postfix.service",image="",name=""} 0.526417283
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/rsyslog.service",image="",name=""} 0.120862321
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/sshd.service",image="",name=""} 0.100753946
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/system-getty.slice",image="",name=""} 0.025871978
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0.090830644
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0.004136613
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/systemd-journald.service",image="",name=""} 0.193815756
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/systemd-logind.service",image="",name=""} 0.076495587
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/systemd-udevd.service",image="",name=""} 4.890773104
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/tuned.service",image="",name=""} 1.525510689
+container_cpu_usage_seconds_total{cpu="cpu03",id="/system.slice/wpa_supplicant.service",image="",name=""} 0.001953828
+container_cpu_usage_seconds_total{cpu="cpu03",id="/user.slice",image="",name=""} 70.046070153
+# HELP container_cpu_user_seconds_total Cumulative user cpu time consumed in seconds.
+# TYPE container_cpu_user_seconds_total counter
+container_cpu_user_seconds_total{id="/",image="",name=""} 449.1
+container_cpu_user_seconds_total{id="/docker",image="",name=""} 304.91
+container_cpu_user_seconds_total{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 2.37
+container_cpu_user_seconds_total{id="/system.slice",image="",name=""} 102.93
+container_cpu_user_seconds_total{id="/system.slice/NetworkManager.service",image="",name=""} 0.15
+container_cpu_user_seconds_total{id="/system.slice/auditd.service",image="",name=""} 0.01
+container_cpu_user_seconds_total{id="/system.slice/chronyd.service",image="",name=""} 0.02
+container_cpu_user_seconds_total{id="/system.slice/containerd.service",image="",name=""} 7.07
+container_cpu_user_seconds_total{id="/system.slice/crond.service",image="",name=""} 0.02
+container_cpu_user_seconds_total{id="/system.slice/dbus.service",image="",name=""} 0.19
+container_cpu_user_seconds_total{id="/system.slice/docker.service",image="",name=""} 89.92
+container_cpu_user_seconds_total{id="/system.slice/irqbalance.service",image="",name=""} 0.14
+container_cpu_user_seconds_total{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/network.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/polkit.service",image="",name=""} 0.02
+container_cpu_user_seconds_total{id="/system.slice/postfix.service",image="",name=""} 0.28
+container_cpu_user_seconds_total{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/rsyslog.service",image="",name=""} 0.09
+container_cpu_user_seconds_total{id="/system.slice/sshd.service",image="",name=""} 0.11
+container_cpu_user_seconds_total{id="/system.slice/system-getty.slice",image="",name=""} 0.01
+container_cpu_user_seconds_total{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-journald.service",image="",name=""} 0.09
+container_cpu_user_seconds_total{id="/system.slice/systemd-logind.service",image="",name=""} 0.04
+container_cpu_user_seconds_total{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-udevd.service",image="",name=""} 3.57
+container_cpu_user_seconds_total{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/system.slice/tuned.service",image="",name=""} 0.89
+container_cpu_user_seconds_total{id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_cpu_user_seconds_total{id="/user.slice",image="",name=""} 39.56
+# HELP container_fs_inodes_free Number of available Inodes
+# TYPE container_fs_inodes_free gauge
+container_fs_inodes_free{device="/dev/mapper/centos-root",id="/",image="",name=""} 2.7719068e+07
+container_fs_inodes_free{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 1.0483413e+07
+container_fs_inodes_free{device="/dev/sda1",id="/",image="",name=""} 511671
+container_fs_inodes_free{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_inodes_free{device="shm",id="/",image="",name=""} 503975
+container_fs_inodes_free{device="tmpfs",id="/",image="",name=""} 503960
+# HELP container_fs_inodes_total Number of Inodes
+# TYPE container_fs_inodes_total gauge
+container_fs_inodes_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 2.7754496e+07
+container_fs_inodes_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 1.0484736e+07
+container_fs_inodes_total{device="/dev/sda1",id="/",image="",name=""} 512000
+container_fs_inodes_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_inodes_total{device="shm",id="/",image="",name=""} 503976
+container_fs_inodes_total{device="tmpfs",id="/",image="",name=""} 503976
+# HELP container_fs_io_current Number of I/Os currently in progress
+# TYPE container_fs_io_current gauge
+container_fs_io_current{device="",id="/",image="",name=""} 0
+container_fs_io_current{device="",id="/system.slice",image="",name=""} 0
+container_fs_io_current{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_fs_io_current{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_io_current{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_io_current{device="/dev/sda1",id="/",image="",name=""} 0
+container_fs_io_current{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_io_current{device="shm",id="/",image="",name=""} 0
+container_fs_io_current{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_io_time_seconds_total Cumulative count of seconds spent doing I/Os
+# TYPE container_fs_io_time_seconds_total counter
+container_fs_io_time_seconds_total{device="",id="/",image="",name=""} 0.063926207
+container_fs_io_time_seconds_total{device="",id="/system.slice",image="",name=""} 0.063926207
+container_fs_io_time_seconds_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 0.063926207
+container_fs_io_time_seconds_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_io_time_seconds_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_io_time_seconds_total{device="/dev/sda1",id="/",image="",name=""} 8.08e-07
+container_fs_io_time_seconds_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_io_time_seconds_total{device="shm",id="/",image="",name=""} 0
+container_fs_io_time_seconds_total{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_io_time_weighted_seconds_total Cumulative weighted I/O time in seconds
+# TYPE container_fs_io_time_weighted_seconds_total counter
+container_fs_io_time_weighted_seconds_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_io_time_weighted_seconds_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_io_time_weighted_seconds_total{device="/dev/sda1",id="/",image="",name=""} 8.24e-07
+container_fs_io_time_weighted_seconds_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_io_time_weighted_seconds_total{device="shm",id="/",image="",name=""} 0
+container_fs_io_time_weighted_seconds_total{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_limit_bytes Number of bytes that can be consumed by the container on this filesystem.
+# TYPE container_fs_limit_bytes gauge
+container_fs_limit_bytes{device="/dev/mapper/centos-root",id="/",image="",name=""} 2.8406726656e+10
+container_fs_limit_bytes{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 1.0725883904e+10
+container_fs_limit_bytes{device="/dev/sda1",id="/",image="",name=""} 5.20794112e+08
+container_fs_limit_bytes{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_limit_bytes{device="shm",id="/",image="",name=""} 6.7108864e+07
+container_fs_limit_bytes{device="tmpfs",id="/",image="",name=""} 6.7108864e+07
+# HELP container_fs_read_seconds_total Cumulative count of seconds spent reading
+# TYPE container_fs_read_seconds_total counter
+container_fs_read_seconds_total{device="",id="/",image="",name=""} 0.063926207
+container_fs_read_seconds_total{device="",id="/system.slice",image="",name=""} 0.063926207
+container_fs_read_seconds_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 0.063926207
+container_fs_read_seconds_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_read_seconds_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_read_seconds_total{device="/dev/sda1",id="/",image="",name=""} 5.64e-07
+container_fs_read_seconds_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_read_seconds_total{device="shm",id="/",image="",name=""} 0
+container_fs_read_seconds_total{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_reads_bytes_total Cumulative count of bytes read
+# TYPE container_fs_reads_bytes_total counter
+container_fs_reads_bytes_total{device="",id="/",image="",name=""} 45056
+container_fs_reads_bytes_total{device="",id="/docker",image="",name=""} 0
+container_fs_reads_bytes_total{device="",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 4096
+container_fs_reads_bytes_total{device="",id="/system.slice",image="",name=""} 45056
+container_fs_reads_bytes_total{device="",id="/system.slice/docker.service",image="",name=""} 6.843146752e+09
+container_fs_reads_bytes_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 45056
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/docker",image="",name=""} 0
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 237568
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/NetworkManager.service",image="",name=""} 1.3722624e+07
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/auditd.service",image="",name=""} 2.540032e+06
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/chronyd.service",image="",name=""} 741376
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/containerd.service",image="",name=""} 8.16328704e+08
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/crond.service",image="",name=""} 1.601536e+06
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/dbus.service",image="",name=""} 909312
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/docker.service",image="",name=""} 8.59416576e+09
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/irqbalance.service",image="",name=""} 90112
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 69632
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/polkit.service",image="",name=""} 5.869568e+06
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/postfix.service",image="",name=""} 2.0103168e+07
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/rsyslog.service",image="",name=""} 1.4336e+06
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/sshd.service",image="",name=""} 7.163904e+06
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/system-getty.slice",image="",name=""} 1.39264e+06
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 995328
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 155648
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/systemd-journald.service",image="",name=""} 1.028096e+06
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/systemd-logind.service",image="",name=""} 692224
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/tuned.service",image="",name=""} 7.8848e+06
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/system.slice/wpa_supplicant.service",image="",name=""} 2.891776e+06
+container_fs_reads_bytes_total{device="/dev/dm-0",id="/user.slice",image="",name=""} 9.629335552e+09
+container_fs_reads_bytes_total{device="/dev/dm-1",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 131072
+container_fs_reads_bytes_total{device="/dev/dm-2",id="/docker",image="",name=""} 0
+container_fs_reads_bytes_total{device="/dev/dm-2",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 4096
+container_fs_reads_bytes_total{device="/dev/dm-2",id="/system.slice/docker.service",image="",name=""} 6.843146752e+09
+container_fs_reads_bytes_total{device="/dev/dm-3",id="/docker",image="",name=""} 0
+container_fs_reads_bytes_total{device="/dev/dm-3",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 2.9263872e+07
+container_fs_reads_bytes_total{device="/dev/dm-3",id="/system.slice/docker.service",image="",name=""} 3.254272e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/docker",image="",name=""} 0
+container_fs_reads_bytes_total{device="/dev/sda",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 237568
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/NetworkManager.service",image="",name=""} 1.3722624e+07
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/auditd.service",image="",name=""} 2.540032e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/chronyd.service",image="",name=""} 741376
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/containerd.service",image="",name=""} 8.16328704e+08
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/crond.service",image="",name=""} 1.601536e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/dbus.service",image="",name=""} 909312
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/docker.service",image="",name=""} 8.59416576e+09
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/irqbalance.service",image="",name=""} 90112
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 69632
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/polkit.service",image="",name=""} 5.869568e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/postfix.service",image="",name=""} 2.0103168e+07
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/rsyslog.service",image="",name=""} 1.4336e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/sshd.service",image="",name=""} 7.163904e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/system-getty.slice",image="",name=""} 1.39264e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 1.912832e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 155648
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/systemd-journald.service",image="",name=""} 1.028096e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/systemd-logind.service",image="",name=""} 692224
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/tuned.service",image="",name=""} 7.8848e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/system.slice/wpa_supplicant.service",image="",name=""} 2.891776e+06
+container_fs_reads_bytes_total{device="/dev/sda",id="/user.slice",image="",name=""} 9.629335552e+09
+# HELP container_fs_reads_merged_total Cumulative count of reads merged
+# TYPE container_fs_reads_merged_total counter
+container_fs_reads_merged_total{device="",id="/",image="",name=""} 0
+container_fs_reads_merged_total{device="",id="/system.slice",image="",name=""} 0
+container_fs_reads_merged_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_fs_reads_merged_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_reads_merged_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_reads_merged_total{device="/dev/sda1",id="/",image="",name=""} 0
+container_fs_reads_merged_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_reads_merged_total{device="shm",id="/",image="",name=""} 0
+container_fs_reads_merged_total{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_reads_total Cumulative count of reads completed
+# TYPE container_fs_reads_total counter
+container_fs_reads_total{device="",id="/",image="",name=""} 11
+container_fs_reads_total{device="",id="/docker",image="",name=""} 0
+container_fs_reads_total{device="",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 1
+container_fs_reads_total{device="",id="/system.slice",image="",name=""} 11
+container_fs_reads_total{device="",id="/system.slice/docker.service",image="",name=""} 153501
+container_fs_reads_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 11
+container_fs_reads_total{device="/dev/dm-0",id="/docker",image="",name=""} 0
+container_fs_reads_total{device="/dev/dm-0",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 7
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/NetworkManager.service",image="",name=""} 375
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/auditd.service",image="",name=""} 68
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/chronyd.service",image="",name=""} 30
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/containerd.service",image="",name=""} 8049
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/crond.service",image="",name=""} 97
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/dbus.service",image="",name=""} 58
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/docker.service",image="",name=""} 180170
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/irqbalance.service",image="",name=""} 3
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 2
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/polkit.service",image="",name=""} 79
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/postfix.service",image="",name=""} 196
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/rsyslog.service",image="",name=""} 41
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/sshd.service",image="",name=""} 133
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/system-getty.slice",image="",name=""} 53
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 15
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 11
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/systemd-journald.service",image="",name=""} 26
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/systemd-logind.service",image="",name=""} 15
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/tuned.service",image="",name=""} 422
+container_fs_reads_total{device="/dev/dm-0",id="/system.slice/wpa_supplicant.service",image="",name=""} 32
+container_fs_reads_total{device="/dev/dm-0",id="/user.slice",image="",name=""} 37746
+container_fs_reads_total{device="/dev/dm-1",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 1
+container_fs_reads_total{device="/dev/dm-2",id="/docker",image="",name=""} 0
+container_fs_reads_total{device="/dev/dm-2",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 1
+container_fs_reads_total{device="/dev/dm-2",id="/system.slice/docker.service",image="",name=""} 153501
+container_fs_reads_total{device="/dev/dm-3",id="/docker",image="",name=""} 0
+container_fs_reads_total{device="/dev/dm-3",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 511
+container_fs_reads_total{device="/dev/dm-3",id="/system.slice/docker.service",image="",name=""} 202
+container_fs_reads_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_reads_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_reads_total{device="/dev/sda",id="/docker",image="",name=""} 0
+container_fs_reads_total{device="/dev/sda",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 7
+container_fs_reads_total{device="/dev/sda",id="/system.slice/NetworkManager.service",image="",name=""} 375
+container_fs_reads_total{device="/dev/sda",id="/system.slice/auditd.service",image="",name=""} 68
+container_fs_reads_total{device="/dev/sda",id="/system.slice/chronyd.service",image="",name=""} 30
+container_fs_reads_total{device="/dev/sda",id="/system.slice/containerd.service",image="",name=""} 8049
+container_fs_reads_total{device="/dev/sda",id="/system.slice/crond.service",image="",name=""} 97
+container_fs_reads_total{device="/dev/sda",id="/system.slice/dbus.service",image="",name=""} 58
+container_fs_reads_total{device="/dev/sda",id="/system.slice/docker.service",image="",name=""} 180170
+container_fs_reads_total{device="/dev/sda",id="/system.slice/irqbalance.service",image="",name=""} 3
+container_fs_reads_total{device="/dev/sda",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 2
+container_fs_reads_total{device="/dev/sda",id="/system.slice/polkit.service",image="",name=""} 79
+container_fs_reads_total{device="/dev/sda",id="/system.slice/postfix.service",image="",name=""} 196
+container_fs_reads_total{device="/dev/sda",id="/system.slice/rsyslog.service",image="",name=""} 41
+container_fs_reads_total{device="/dev/sda",id="/system.slice/sshd.service",image="",name=""} 133
+container_fs_reads_total{device="/dev/sda",id="/system.slice/system-getty.slice",image="",name=""} 53
+container_fs_reads_total{device="/dev/sda",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 22
+container_fs_reads_total{device="/dev/sda",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 11
+container_fs_reads_total{device="/dev/sda",id="/system.slice/systemd-journald.service",image="",name=""} 26
+container_fs_reads_total{device="/dev/sda",id="/system.slice/systemd-logind.service",image="",name=""} 15
+container_fs_reads_total{device="/dev/sda",id="/system.slice/tuned.service",image="",name=""} 422
+container_fs_reads_total{device="/dev/sda",id="/system.slice/wpa_supplicant.service",image="",name=""} 32
+container_fs_reads_total{device="/dev/sda",id="/user.slice",image="",name=""} 37746
+container_fs_reads_total{device="/dev/sda1",id="/",image="",name=""} 1875
+container_fs_reads_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_reads_total{device="shm",id="/",image="",name=""} 0
+container_fs_reads_total{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_sector_reads_total Cumulative count of sector reads completed
+# TYPE container_fs_sector_reads_total counter
+container_fs_sector_reads_total{device="",id="/",image="",name=""} 0
+container_fs_sector_reads_total{device="",id="/system.slice",image="",name=""} 0
+container_fs_sector_reads_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_fs_sector_reads_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_sector_reads_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_sector_reads_total{device="/dev/sda1",id="/",image="",name=""} 9779
+container_fs_sector_reads_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_sector_reads_total{device="shm",id="/",image="",name=""} 0
+container_fs_sector_reads_total{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_sector_writes_total Cumulative count of sector writes completed
+# TYPE container_fs_sector_writes_total counter
+container_fs_sector_writes_total{device="",id="/",image="",name=""} 0
+container_fs_sector_writes_total{device="",id="/system.slice",image="",name=""} 0
+container_fs_sector_writes_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_fs_sector_writes_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_sector_writes_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_sector_writes_total{device="/dev/sda1",id="/",image="",name=""} 4096
+container_fs_sector_writes_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_sector_writes_total{device="shm",id="/",image="",name=""} 0
+container_fs_sector_writes_total{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_usage_bytes Number of bytes that are consumed by the container on this filesystem.
+# TYPE container_fs_usage_bytes gauge
+container_fs_usage_bytes{device="/dev/mapper/centos-root",id="/",image="",name=""} 1.3986869248e+10
+container_fs_usage_bytes{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 1.05054208e+08
+container_fs_usage_bytes{device="/dev/sda1",id="/",image="",name=""} 1.12443392e+08
+container_fs_usage_bytes{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_usage_bytes{device="shm",id="/",image="",name=""} 0
+container_fs_usage_bytes{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_write_seconds_total Cumulative count of seconds spent writing
+# TYPE container_fs_write_seconds_total counter
+container_fs_write_seconds_total{device="",id="/",image="",name=""} 0
+container_fs_write_seconds_total{device="",id="/system.slice",image="",name=""} 0
+container_fs_write_seconds_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_fs_write_seconds_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_write_seconds_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_write_seconds_total{device="/dev/sda1",id="/",image="",name=""} 2.6e-07
+container_fs_write_seconds_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_write_seconds_total{device="shm",id="/",image="",name=""} 0
+container_fs_write_seconds_total{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_writes_bytes_total Cumulative count of bytes written
+# TYPE container_fs_writes_bytes_total counter
+container_fs_writes_bytes_total{device="",id="/",image="",name=""} 0
+container_fs_writes_bytes_total{device="",id="/docker",image="",name=""} 0
+container_fs_writes_bytes_total{device="",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_bytes_total{device="",id="/system.slice",image="",name=""} 0
+container_fs_writes_bytes_total{device="",id="/system.slice/docker.service",image="",name=""} 8.9063424e+07
+container_fs_writes_bytes_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/docker",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/NetworkManager.service",image="",name=""} 90112
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/auditd.service",image="",name=""} 139776
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/chronyd.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/containerd.service",image="",name=""} 2.614272e+06
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/crond.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/dbus.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/docker.service",image="",name=""} 1.9117568e+07
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/irqbalance.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/polkit.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/postfix.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/rsyslog.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/sshd.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/system-getty.slice",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/systemd-journald.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/systemd-logind.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/tuned.service",image="",name=""} 4096
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-0",id="/user.slice",image="",name=""} 5.30432e+06
+container_fs_writes_bytes_total{device="/dev/dm-1",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-2",id="/docker",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-2",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_bytes_total{device="/dev/dm-2",id="/system.slice/docker.service",image="",name=""} 8.9063424e+07
+container_fs_writes_bytes_total{device="/dev/dm-3",id="/docker",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/dm-3",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_bytes_total{device="/dev/dm-3",id="/system.slice/docker.service",image="",name=""} 2.097152e+06
+container_fs_writes_bytes_total{device="/dev/sda",id="/docker",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/NetworkManager.service",image="",name=""} 90112
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/auditd.service",image="",name=""} 139776
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/chronyd.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/containerd.service",image="",name=""} 2.614272e+06
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/crond.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/dbus.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/docker.service",image="",name=""} 1.9117568e+07
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/irqbalance.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/polkit.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/postfix.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/rsyslog.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/sshd.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/system-getty.slice",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/systemd-journald.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/systemd-logind.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/tuned.service",image="",name=""} 4096
+container_fs_writes_bytes_total{device="/dev/sda",id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_fs_writes_bytes_total{device="/dev/sda",id="/user.slice",image="",name=""} 5.30432e+06
+# HELP container_fs_writes_merged_total Cumulative count of writes merged
+# TYPE container_fs_writes_merged_total counter
+container_fs_writes_merged_total{device="",id="/",image="",name=""} 0
+container_fs_writes_merged_total{device="",id="/system.slice",image="",name=""} 0
+container_fs_writes_merged_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_fs_writes_merged_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_writes_merged_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_writes_merged_total{device="/dev/sda1",id="/",image="",name=""} 0
+container_fs_writes_merged_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_merged_total{device="shm",id="/",image="",name=""} 0
+container_fs_writes_merged_total{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_fs_writes_total Cumulative count of writes completed
+# TYPE container_fs_writes_total counter
+container_fs_writes_total{device="",id="/",image="",name=""} 0
+container_fs_writes_total{device="",id="/docker",image="",name=""} 0
+container_fs_writes_total{device="",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_total{device="",id="/system.slice",image="",name=""} 0
+container_fs_writes_total{device="",id="/system.slice/docker.service",image="",name=""} 1359
+container_fs_writes_total{device="",id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/docker",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/NetworkManager.service",image="",name=""} 12
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/auditd.service",image="",name=""} 25
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/chronyd.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/containerd.service",image="",name=""} 400
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/crond.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/dbus.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/docker.service",image="",name=""} 3719
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/irqbalance.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/polkit.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/postfix.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/rsyslog.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/sshd.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/system-getty.slice",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/systemd-journald.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/systemd-logind.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/tuned.service",image="",name=""} 1
+container_fs_writes_total{device="/dev/dm-0",id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-0",id="/user.slice",image="",name=""} 891
+container_fs_writes_total{device="/dev/dm-1",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-2",id="/docker",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-2",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_total{device="/dev/dm-2",id="/system.slice/docker.service",image="",name=""} 1359
+container_fs_writes_total{device="/dev/dm-3",id="/docker",image="",name=""} 0
+container_fs_writes_total{device="/dev/dm-3",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_total{device="/dev/dm-3",id="/system.slice/docker.service",image="",name=""} 32
+container_fs_writes_total{device="/dev/mapper/centos-root",id="/",image="",name=""} 0
+container_fs_writes_total{device="/dev/mapper/docker-253:0-34121543-fed966fcc854339ab58259b30fc1ac0b3c91f958cb097662385c0e648093d947",id="/",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/docker",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/NetworkManager.service",image="",name=""} 12
+container_fs_writes_total{device="/dev/sda",id="/system.slice/auditd.service",image="",name=""} 25
+container_fs_writes_total{device="/dev/sda",id="/system.slice/chronyd.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/containerd.service",image="",name=""} 400
+container_fs_writes_total{device="/dev/sda",id="/system.slice/crond.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/dbus.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/docker.service",image="",name=""} 3719
+container_fs_writes_total{device="/dev/sda",id="/system.slice/irqbalance.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/polkit.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/postfix.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/rsyslog.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/sshd.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/system-getty.slice",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/systemd-journald.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/systemd-logind.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/system.slice/tuned.service",image="",name=""} 1
+container_fs_writes_total{device="/dev/sda",id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_fs_writes_total{device="/dev/sda",id="/user.slice",image="",name=""} 891
+container_fs_writes_total{device="/dev/sda1",id="/",image="",name=""} 2049
+container_fs_writes_total{device="docker-253:0-34121543-pool",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_fs_writes_total{device="shm",id="/",image="",name=""} 0
+container_fs_writes_total{device="tmpfs",id="/",image="",name=""} 0
+# HELP container_last_seen Last time a container was seen by the exporter
+# TYPE container_last_seen gauge
+container_last_seen{id="/",image="",name=""} 1.556689472e+09
+container_last_seen{id="/docker",image="",name=""} 1.556689472e+09
+container_last_seen{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 1.556689472e+09
+container_last_seen{id="/system.slice",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/NetworkManager.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/auditd.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/chronyd.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/containerd.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/crond.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/dbus.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/docker.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/irqbalance.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/kmod-static-nodes.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/lvm2-monitor.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/network.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/polkit.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/postfix.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/rhel-dmesg.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/rhel-import-state.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/rhel-readonly.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/rsyslog.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/sshd.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/system-getty.slice",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-fsck-root.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-journal-flush.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-journald.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-logind.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-random-seed.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-remount-fs.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-sysctl.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-udevd.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-update-utmp.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-user-sessions.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/tuned.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/system.slice/wpa_supplicant.service",image="",name=""} 1.556689472e+09
+container_last_seen{id="/user.slice",image="",name=""} 1.556689472e+09
+# HELP container_memory_cache Number of bytes of page cache memory.
+# TYPE container_memory_cache gauge
+container_memory_cache{id="/",image="",name=""} 1.70780672e+09
+container_memory_cache{id="/docker",image="",name=""} 2.926592e+07
+container_memory_cache{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 2.9261824e+07
+container_memory_cache{id="/system.slice",image="",name=""} 1.71368448e+08
+container_memory_cache{id="/system.slice/NetworkManager.service",image="",name=""} 4.411392e+06
+container_memory_cache{id="/system.slice/auditd.service",image="",name=""} 479232
+container_memory_cache{id="/system.slice/chronyd.service",image="",name=""} 471040
+container_memory_cache{id="/system.slice/containerd.service",image="",name=""} 6.217728e+07
+container_memory_cache{id="/system.slice/crond.service",image="",name=""} 1.37216e+06
+container_memory_cache{id="/system.slice/dbus.service",image="",name=""} 454656
+container_memory_cache{id="/system.slice/docker.service",image="",name=""} 7.665664e+07
+container_memory_cache{id="/system.slice/irqbalance.service",image="",name=""} 98304
+container_memory_cache{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 73728
+container_memory_cache{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/network.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/polkit.service",image="",name=""} 696320
+container_memory_cache{id="/system.slice/postfix.service",image="",name=""} 6.92224e+06
+container_memory_cache{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/rsyslog.service",image="",name=""} 671744
+container_memory_cache{id="/system.slice/sshd.service",image="",name=""} 5.603328e+06
+container_memory_cache{id="/system.slice/system-getty.slice",image="",name=""} 253952
+container_memory_cache{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 401408
+container_memory_cache{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_memory_cache{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 81920
+container_memory_cache{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/systemd-journald.service",image="",name=""} 544768
+container_memory_cache{id="/system.slice/systemd-logind.service",image="",name=""} 491520
+container_memory_cache{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/systemd-udevd.service",image="",name=""} 4.079616e+06
+container_memory_cache{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_memory_cache{id="/system.slice/tuned.service",image="",name=""} 1.089536e+06
+container_memory_cache{id="/system.slice/wpa_supplicant.service",image="",name=""} 430080
+container_memory_cache{id="/user.slice",image="",name=""} 1.126805504e+09
+# HELP container_memory_failcnt Number of memory usage hits limits
+# TYPE container_memory_failcnt counter
+container_memory_failcnt{id="/",image="",name=""} 0
+container_memory_failcnt{id="/docker",image="",name=""} 0
+container_memory_failcnt{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_memory_failcnt{id="/system.slice",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/NetworkManager.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/auditd.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/chronyd.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/containerd.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/crond.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/dbus.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/docker.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/irqbalance.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/network.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/polkit.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/postfix.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/rsyslog.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/sshd.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/system-getty.slice",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-journald.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-logind.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/tuned.service",image="",name=""} 0
+container_memory_failcnt{id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_memory_failcnt{id="/user.slice",image="",name=""} 0
+# HELP container_memory_failures_total Cumulative count of memory allocation failures.
+# TYPE container_memory_failures_total counter
+container_memory_failures_total{failure_type="pgfault",id="/",image="",name="",scope="container"} 947743
+container_memory_failures_total{failure_type="pgfault",id="/",image="",name="",scope="hierarchy"} 947743
+container_memory_failures_total{failure_type="pgfault",id="/docker",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/docker",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor",scope="container"} 10170
+container_memory_failures_total{failure_type="pgfault",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor",scope="hierarchy"} 10170
+container_memory_failures_total{failure_type="pgfault",id="/system.slice",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/NetworkManager.service",image="",name="",scope="container"} 7783
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/NetworkManager.service",image="",name="",scope="hierarchy"} 7783
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/auditd.service",image="",name="",scope="container"} 4625
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/auditd.service",image="",name="",scope="hierarchy"} 4625
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/chronyd.service",image="",name="",scope="container"} 1556
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/chronyd.service",image="",name="",scope="hierarchy"} 1556
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/containerd.service",image="",name="",scope="container"} 968594
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/containerd.service",image="",name="",scope="hierarchy"} 968594
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/crond.service",image="",name="",scope="container"} 13433
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/crond.service",image="",name="",scope="hierarchy"} 13433
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/dbus.service",image="",name="",scope="container"} 531
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/dbus.service",image="",name="",scope="hierarchy"} 531
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/docker.service",image="",name="",scope="container"} 1.385622e+06
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/docker.service",image="",name="",scope="hierarchy"} 1.385622e+06
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/irqbalance.service",image="",name="",scope="container"} 17053
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/irqbalance.service",image="",name="",scope="hierarchy"} 17053
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/kmod-static-nodes.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/kmod-static-nodes.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/lvm2-lvmetad.service",image="",name="",scope="container"} 440
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/lvm2-lvmetad.service",image="",name="",scope="hierarchy"} 440
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/lvm2-monitor.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/lvm2-monitor.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/network.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/network.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/polkit.service",image="",name="",scope="container"} 2214
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/polkit.service",image="",name="",scope="hierarchy"} 2214
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/postfix.service",image="",name="",scope="container"} 70382
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/postfix.service",image="",name="",scope="hierarchy"} 70382
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/rhel-autorelabel-mark.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/rhel-autorelabel-mark.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/rhel-dmesg.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/rhel-dmesg.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/rhel-import-state.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/rhel-import-state.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/rhel-readonly.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/rhel-readonly.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/rsyslog.service",image="",name="",scope="container"} 1463
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/rsyslog.service",image="",name="",scope="hierarchy"} 1463
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/sshd.service",image="",name="",scope="container"} 7775
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/sshd.service",image="",name="",scope="hierarchy"} 7775
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/system-getty.slice",image="",name="",scope="container"} 1088
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/system-getty.slice",image="",name="",scope="hierarchy"} 1088
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name="",scope="container"} 4072
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name="",scope="hierarchy"} 4072
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name="",scope="container"} 742
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name="",scope="hierarchy"} 742
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-fsck-root.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-fsck-root.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-journal-flush.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-journal-flush.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-journald.service",image="",name="",scope="container"} 6395
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-journald.service",image="",name="",scope="hierarchy"} 6395
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-logind.service",image="",name="",scope="container"} 883
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-logind.service",image="",name="",scope="hierarchy"} 883
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-random-seed.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-random-seed.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-remount-fs.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-remount-fs.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-sysctl.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-sysctl.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-tmpfiles-setup.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-tmpfiles-setup.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-udev-trigger.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-udev-trigger.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-udevd.service",image="",name="",scope="container"} 2.109547e+06
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-udevd.service",image="",name="",scope="hierarchy"} 2.109547e+06
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-update-utmp.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-update-utmp.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-user-sessions.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-user-sessions.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-vconsole-setup.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/systemd-vconsole-setup.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/tuned.service",image="",name="",scope="container"} 17851
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/tuned.service",image="",name="",scope="hierarchy"} 17851
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/wpa_supplicant.service",image="",name="",scope="container"} 769
+container_memory_failures_total{failure_type="pgfault",id="/system.slice/wpa_supplicant.service",image="",name="",scope="hierarchy"} 769
+container_memory_failures_total{failure_type="pgfault",id="/user.slice",image="",name="",scope="container"} 2.667424e+06
+container_memory_failures_total{failure_type="pgfault",id="/user.slice",image="",name="",scope="hierarchy"} 2.667424e+06
+container_memory_failures_total{failure_type="pgmajfault",id="/",image="",name="",scope="container"} 140
+container_memory_failures_total{failure_type="pgmajfault",id="/",image="",name="",scope="hierarchy"} 140
+container_memory_failures_total{failure_type="pgmajfault",id="/docker",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/docker",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor",scope="container"} 24
+container_memory_failures_total{failure_type="pgmajfault",id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor",scope="hierarchy"} 24
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/NetworkManager.service",image="",name="",scope="container"} 140
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/NetworkManager.service",image="",name="",scope="hierarchy"} 140
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/auditd.service",image="",name="",scope="container"} 24
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/auditd.service",image="",name="",scope="hierarchy"} 24
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/chronyd.service",image="",name="",scope="container"} 7
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/chronyd.service",image="",name="",scope="hierarchy"} 7
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/containerd.service",image="",name="",scope="container"} 740
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/containerd.service",image="",name="",scope="hierarchy"} 740
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/crond.service",image="",name="",scope="container"} 23
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/crond.service",image="",name="",scope="hierarchy"} 23
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/dbus.service",image="",name="",scope="container"} 4
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/dbus.service",image="",name="",scope="hierarchy"} 4
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/docker.service",image="",name="",scope="container"} 857
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/docker.service",image="",name="",scope="hierarchy"} 857
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/irqbalance.service",image="",name="",scope="container"} 2
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/irqbalance.service",image="",name="",scope="hierarchy"} 2
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/kmod-static-nodes.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/kmod-static-nodes.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/lvm2-lvmetad.service",image="",name="",scope="container"} 1
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/lvm2-lvmetad.service",image="",name="",scope="hierarchy"} 1
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/lvm2-monitor.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/lvm2-monitor.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/network.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/network.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/polkit.service",image="",name="",scope="container"} 48
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/polkit.service",image="",name="",scope="hierarchy"} 48
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/postfix.service",image="",name="",scope="container"} 49
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/postfix.service",image="",name="",scope="hierarchy"} 49
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/rhel-autorelabel-mark.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/rhel-autorelabel-mark.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/rhel-dmesg.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/rhel-dmesg.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/rhel-import-state.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/rhel-import-state.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/rhel-readonly.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/rhel-readonly.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/rsyslog.service",image="",name="",scope="container"} 13
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/rsyslog.service",image="",name="",scope="hierarchy"} 13
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/sshd.service",image="",name="",scope="container"} 42
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/sshd.service",image="",name="",scope="hierarchy"} 42
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/system-getty.slice",image="",name="",scope="container"} 11
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/system-getty.slice",image="",name="",scope="hierarchy"} 11
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name="",scope="container"} 1
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name="",scope="hierarchy"} 1
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name="",scope="container"} 3
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/system-systemd\\x2drfkill.slice",image="",name="",scope="hierarchy"} 3
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-fsck-root.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-fsck-root.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-journal-flush.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-journal-flush.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-journald.service",image="",name="",scope="container"} 7
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-journald.service",image="",name="",scope="hierarchy"} 7
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-logind.service",image="",name="",scope="container"} 5
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-logind.service",image="",name="",scope="hierarchy"} 5
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-random-seed.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-random-seed.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-remount-fs.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-remount-fs.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-sysctl.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-sysctl.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-tmpfiles-setup.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-tmpfiles-setup.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-udev-trigger.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-udev-trigger.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-udevd.service",image="",name="",scope="container"} 289
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-udevd.service",image="",name="",scope="hierarchy"} 289
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-update-utmp.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-update-utmp.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-user-sessions.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-user-sessions.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-vconsole-setup.service",image="",name="",scope="container"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/systemd-vconsole-setup.service",image="",name="",scope="hierarchy"} 0
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/tuned.service",image="",name="",scope="container"} 62
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/tuned.service",image="",name="",scope="hierarchy"} 62
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/wpa_supplicant.service",image="",name="",scope="container"} 20
+container_memory_failures_total{failure_type="pgmajfault",id="/system.slice/wpa_supplicant.service",image="",name="",scope="hierarchy"} 20
+container_memory_failures_total{failure_type="pgmajfault",id="/user.slice",image="",name="",scope="container"} 437
+container_memory_failures_total{failure_type="pgmajfault",id="/user.slice",image="",name="",scope="hierarchy"} 437
+# HELP container_memory_mapped_file Size of memory mapped files in bytes.
+# TYPE container_memory_mapped_file gauge
+container_memory_mapped_file{id="/",image="",name=""} 4.2463232e+07
+container_memory_mapped_file{id="/docker",image="",name=""} 1.0231808e+07
+container_memory_mapped_file{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 1.0231808e+07
+container_memory_mapped_file{id="/system.slice",image="",name=""} 2.476032e+07
+container_memory_mapped_file{id="/system.slice/NetworkManager.service",image="",name=""} 1.871872e+06
+container_memory_mapped_file{id="/system.slice/auditd.service",image="",name=""} 360448
+container_memory_mapped_file{id="/system.slice/chronyd.service",image="",name=""} 335872
+container_memory_mapped_file{id="/system.slice/containerd.service",image="",name=""} 6.057984e+06
+container_memory_mapped_file{id="/system.slice/crond.service",image="",name=""} 167936
+container_memory_mapped_file{id="/system.slice/dbus.service",image="",name=""} 413696
+container_memory_mapped_file{id="/system.slice/docker.service",image="",name=""} 9.424896e+06
+container_memory_mapped_file{id="/system.slice/irqbalance.service",image="",name=""} 69632
+container_memory_mapped_file{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 61440
+container_memory_mapped_file{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/network.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/polkit.service",image="",name=""} 630784
+container_memory_mapped_file{id="/system.slice/postfix.service",image="",name=""} 974848
+container_memory_mapped_file{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/rsyslog.service",image="",name=""} 466944
+container_memory_mapped_file{id="/system.slice/sshd.service",image="",name=""} 1.314816e+06
+container_memory_mapped_file{id="/system.slice/system-getty.slice",image="",name=""} 253952
+container_memory_mapped_file{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 57344
+container_memory_mapped_file{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 8192
+container_memory_mapped_file{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/systemd-journald.service",image="",name=""} 364544
+container_memory_mapped_file{id="/system.slice/systemd-logind.service",image="",name=""} 405504
+container_memory_mapped_file{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/systemd-udevd.service",image="",name=""} 262144
+container_memory_mapped_file{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_memory_mapped_file{id="/system.slice/tuned.service",image="",name=""} 819200
+container_memory_mapped_file{id="/system.slice/wpa_supplicant.service",image="",name=""} 348160
+container_memory_mapped_file{id="/user.slice",image="",name=""} 831488
+# HELP container_memory_max_usage_bytes Maximum memory usage recorded in bytes
+# TYPE container_memory_max_usage_bytes gauge
+container_memory_max_usage_bytes{id="/",image="",name=""} 3.460304896e+09
+container_memory_max_usage_bytes{id="/docker",image="",name=""} 2.273026048e+09
+container_memory_max_usage_bytes{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 7.2347648e+07
+container_memory_max_usage_bytes{id="/system.slice",image="",name=""} 2.308046848e+09
+container_memory_max_usage_bytes{id="/system.slice/NetworkManager.service",image="",name=""} 1.6908288e+07
+container_memory_max_usage_bytes{id="/system.slice/auditd.service",image="",name=""} 3.637248e+06
+container_memory_max_usage_bytes{id="/system.slice/chronyd.service",image="",name=""} 1.441792e+06
+container_memory_max_usage_bytes{id="/system.slice/containerd.service",image="",name=""} 1.6183296e+08
+container_memory_max_usage_bytes{id="/system.slice/crond.service",image="",name=""} 2.711552e+06
+container_memory_max_usage_bytes{id="/system.slice/dbus.service",image="",name=""} 1.39264e+06
+container_memory_max_usage_bytes{id="/system.slice/docker.service",image="",name=""} 2.217893888e+09
+container_memory_max_usage_bytes{id="/system.slice/irqbalance.service",image="",name=""} 659456
+container_memory_max_usage_bytes{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 638976
+container_memory_max_usage_bytes{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/network.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/polkit.service",image="",name=""} 1.4024704e+07
+container_memory_max_usage_bytes{id="/system.slice/postfix.service",image="",name=""} 1.3746176e+07
+container_memory_max_usage_bytes{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/rsyslog.service",image="",name=""} 2.932736e+06
+container_memory_max_usage_bytes{id="/system.slice/sshd.service",image="",name=""} 9.732096e+06
+container_memory_max_usage_bytes{id="/system.slice/system-getty.slice",image="",name=""} 2.326528e+06
+container_memory_max_usage_bytes{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 1.9357696e+07
+container_memory_max_usage_bytes{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 446464
+container_memory_max_usage_bytes{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/systemd-journald.service",image="",name=""} 1.59744e+06
+container_memory_max_usage_bytes{id="/system.slice/systemd-logind.service",image="",name=""} 1.241088e+06
+container_memory_max_usage_bytes{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/systemd-udevd.service",image="",name=""} 2.0475904e+07
+container_memory_max_usage_bytes{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_memory_max_usage_bytes{id="/system.slice/tuned.service",image="",name=""} 1.90464e+07
+container_memory_max_usage_bytes{id="/system.slice/wpa_supplicant.service",image="",name=""} 3.743744e+06
+container_memory_max_usage_bytes{id="/user.slice",image="",name=""} 2.51203584e+09
+# HELP container_memory_rss Size of RSS in bytes.
+# TYPE container_memory_rss gauge
+container_memory_rss{id="/",image="",name=""} 1.7764352e+08
+container_memory_rss{id="/docker",image="",name=""} 4.2635264e+07
+container_memory_rss{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 4.2631168e+07
+container_memory_rss{id="/system.slice",image="",name=""} 1.32190208e+08
+container_memory_rss{id="/system.slice/NetworkManager.service",image="",name=""} 4.05504e+06
+container_memory_rss{id="/system.slice/auditd.service",image="",name=""} 446464
+container_memory_rss{id="/system.slice/chronyd.service",image="",name=""} 417792
+container_memory_rss{id="/system.slice/containerd.service",image="",name=""} 2.2994944e+07
+container_memory_rss{id="/system.slice/crond.service",image="",name=""} 630784
+container_memory_rss{id="/system.slice/dbus.service",image="",name=""} 503808
+container_memory_rss{id="/system.slice/docker.service",image="",name=""} 7.4080256e+07
+container_memory_rss{id="/system.slice/irqbalance.service",image="",name=""} 299008
+container_memory_rss{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 421888
+container_memory_rss{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/network.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/polkit.service",image="",name=""} 7.630848e+06
+container_memory_rss{id="/system.slice/postfix.service",image="",name=""} 3.072e+06
+container_memory_rss{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/rsyslog.service",image="",name=""} 819200
+container_memory_rss{id="/system.slice/sshd.service",image="",name=""} 3.362816e+06
+container_memory_rss{id="/system.slice/system-getty.slice",image="",name=""} 638976
+container_memory_rss{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_memory_rss{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_memory_rss{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-journald.service",image="",name=""} 331776
+container_memory_rss{id="/system.slice/systemd-logind.service",image="",name=""} 331776
+container_memory_rss{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-udevd.service",image="",name=""} 593920
+container_memory_rss{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_memory_rss{id="/system.slice/tuned.service",image="",name=""} 1.09568e+07
+container_memory_rss{id="/system.slice/wpa_supplicant.service",image="",name=""} 602112
+container_memory_rss{id="/user.slice",image="",name=""} 1.560576e+06
+# HELP container_memory_swap Container swap usage in bytes.
+# TYPE container_memory_swap gauge
+container_memory_swap{id="/",image="",name=""} 0
+container_memory_swap{id="/docker",image="",name=""} 0
+container_memory_swap{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_memory_swap{id="/system.slice",image="",name=""} 0
+container_memory_swap{id="/system.slice/NetworkManager.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/auditd.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/chronyd.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/containerd.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/crond.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/dbus.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/docker.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/irqbalance.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/network.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/polkit.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/postfix.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/rsyslog.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/sshd.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/system-getty.slice",image="",name=""} 0
+container_memory_swap{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_memory_swap{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_memory_swap{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-journald.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-logind.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/tuned.service",image="",name=""} 0
+container_memory_swap{id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_memory_swap{id="/user.slice",image="",name=""} 0
+# HELP container_memory_usage_bytes Current memory usage in bytes, including all memory regardless of when it was accessed
+# TYPE container_memory_usage_bytes gauge
+container_memory_usage_bytes{id="/",image="",name=""} 1.88545024e+09
+container_memory_usage_bytes{id="/docker",image="",name=""} 7.2118272e+07
+container_memory_usage_bytes{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 7.2114176e+07
+container_memory_usage_bytes{id="/system.slice",image="",name=""} 3.03681536e+08
+container_memory_usage_bytes{id="/system.slice/NetworkManager.service",image="",name=""} 8.466432e+06
+container_memory_usage_bytes{id="/system.slice/auditd.service",image="",name=""} 925696
+container_memory_usage_bytes{id="/system.slice/chronyd.service",image="",name=""} 888832
+container_memory_usage_bytes{id="/system.slice/containerd.service",image="",name=""} 8.5172224e+07
+container_memory_usage_bytes{id="/system.slice/crond.service",image="",name=""} 2.002944e+06
+container_memory_usage_bytes{id="/system.slice/dbus.service",image="",name=""} 958464
+container_memory_usage_bytes{id="/system.slice/docker.service",image="",name=""} 1.50736896e+08
+container_memory_usage_bytes{id="/system.slice/irqbalance.service",image="",name=""} 520192
+container_memory_usage_bytes{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 495616
+container_memory_usage_bytes{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/network.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/polkit.service",image="",name=""} 8.327168e+06
+container_memory_usage_bytes{id="/system.slice/postfix.service",image="",name=""} 9.99424e+06
+container_memory_usage_bytes{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/rsyslog.service",image="",name=""} 1.490944e+06
+container_memory_usage_bytes{id="/system.slice/sshd.service",image="",name=""} 8.966144e+06
+container_memory_usage_bytes{id="/system.slice/system-getty.slice",image="",name=""} 892928
+container_memory_usage_bytes{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 401408
+container_memory_usage_bytes{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 81920
+container_memory_usage_bytes{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/systemd-journald.service",image="",name=""} 876544
+container_memory_usage_bytes{id="/system.slice/systemd-logind.service",image="",name=""} 823296
+container_memory_usage_bytes{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/systemd-udevd.service",image="",name=""} 4.673536e+06
+container_memory_usage_bytes{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_memory_usage_bytes{id="/system.slice/tuned.service",image="",name=""} 1.2046336e+07
+container_memory_usage_bytes{id="/system.slice/wpa_supplicant.service",image="",name=""} 1.032192e+06
+container_memory_usage_bytes{id="/user.slice",image="",name=""} 1.12836608e+09
+# HELP container_memory_working_set_bytes Current working set in bytes.
+# TYPE container_memory_working_set_bytes gauge
+container_memory_working_set_bytes{id="/",image="",name=""} 4.18492416e+08
+container_memory_working_set_bytes{id="/docker",image="",name=""} 4.3413504e+07
+container_memory_working_set_bytes{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 4.3409408e+07
+container_memory_working_set_bytes{id="/system.slice",image="",name=""} 1.88891136e+08
+container_memory_working_set_bytes{id="/system.slice/NetworkManager.service",image="",name=""} 5.562368e+06
+container_memory_working_set_bytes{id="/system.slice/auditd.service",image="",name=""} 847872
+container_memory_working_set_bytes{id="/system.slice/chronyd.service",image="",name=""} 667648
+container_memory_working_set_bytes{id="/system.slice/containerd.service",image="",name=""} 4.4716032e+07
+container_memory_working_set_bytes{id="/system.slice/crond.service",image="",name=""} 839680
+container_memory_working_set_bytes{id="/system.slice/dbus.service",image="",name=""} 745472
+container_memory_working_set_bytes{id="/system.slice/docker.service",image="",name=""} 9.6940032e+07
+container_memory_working_set_bytes{id="/system.slice/irqbalance.service",image="",name=""} 458752
+container_memory_working_set_bytes{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 430080
+container_memory_working_set_bytes{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/network.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/polkit.service",image="",name=""} 8.040448e+06
+container_memory_working_set_bytes{id="/system.slice/postfix.service",image="",name=""} 4.120576e+06
+container_memory_working_set_bytes{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/rsyslog.service",image="",name=""} 1.257472e+06
+container_memory_working_set_bytes{id="/system.slice/sshd.service",image="",name=""} 5.931008e+06
+container_memory_working_set_bytes{id="/system.slice/system-getty.slice",image="",name=""} 892928
+container_memory_working_set_bytes{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 225280
+container_memory_working_set_bytes{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 53248
+container_memory_working_set_bytes{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/systemd-journald.service",image="",name=""} 675840
+container_memory_working_set_bytes{id="/system.slice/systemd-logind.service",image="",name=""} 585728
+container_memory_working_set_bytes{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/systemd-udevd.service",image="",name=""} 2.424832e+06
+container_memory_working_set_bytes{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_memory_working_set_bytes{id="/system.slice/tuned.service",image="",name=""} 1.1513856e+07
+container_memory_working_set_bytes{id="/system.slice/wpa_supplicant.service",image="",name=""} 929792
+container_memory_working_set_bytes{id="/user.slice",image="",name=""} 2.3949312e+07
+# HELP container_network_receive_bytes_total Cumulative count of bytes received
+# TYPE container_network_receive_bytes_total counter
+container_network_receive_bytes_total{id="/",image="",interface="eno16777736",name=""} 1.715765548e+09
+container_network_receive_bytes_total{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",interface="eth0",name="cadvisor"} 373547
+# HELP container_network_receive_errors_total Cumulative count of errors encountered while receiving
+# TYPE container_network_receive_errors_total counter
+container_network_receive_errors_total{id="/",image="",interface="eno16777736",name=""} 0
+container_network_receive_errors_total{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",interface="eth0",name="cadvisor"} 0
+# HELP container_network_receive_packets_dropped_total Cumulative count of packets dropped while receiving
+# TYPE container_network_receive_packets_dropped_total counter
+container_network_receive_packets_dropped_total{id="/",image="",interface="eno16777736",name=""} 0
+container_network_receive_packets_dropped_total{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",interface="eth0",name="cadvisor"} 0
+# HELP container_network_receive_packets_total Cumulative count of packets received
+# TYPE container_network_receive_packets_total counter
+container_network_receive_packets_total{id="/",image="",interface="eno16777736",name=""} 1.497803e+06
+container_network_receive_packets_total{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",interface="eth0",name="cadvisor"} 4586
+# HELP container_network_transmit_bytes_total Cumulative count of bytes transmitted
+# TYPE container_network_transmit_bytes_total counter
+container_network_transmit_bytes_total{id="/",image="",interface="eno16777736",name=""} 6.936220716e+09
+container_network_transmit_bytes_total{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",interface="eth0",name="cadvisor"} 5.2596899e+07
+# HELP container_network_transmit_errors_total Cumulative count of errors encountered while transmitting
+# TYPE container_network_transmit_errors_total counter
+container_network_transmit_errors_total{id="/",image="",interface="eno16777736",name=""} 0
+container_network_transmit_errors_total{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",interface="eth0",name="cadvisor"} 0
+# HELP container_network_transmit_packets_dropped_total Cumulative count of packets dropped while transmitting
+# TYPE container_network_transmit_packets_dropped_total counter
+container_network_transmit_packets_dropped_total{id="/",image="",interface="eno16777736",name=""} 0
+container_network_transmit_packets_dropped_total{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",interface="eth0",name="cadvisor"} 0
+# HELP container_network_transmit_packets_total Cumulative count of packets transmitted
+# TYPE container_network_transmit_packets_total counter
+container_network_transmit_packets_total{id="/",image="",interface="eno16777736",name=""} 2.661308e+06
+container_network_transmit_packets_total{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",interface="eth0",name="cadvisor"} 2777
+# HELP container_scrape_error 1 if there was an error while getting container metrics, 0 otherwise
+# TYPE container_scrape_error gauge
+container_scrape_error 0
+# HELP container_spec_cpu_period CPU period of the container.
+# TYPE container_spec_cpu_period gauge
+container_spec_cpu_period{id="/",image="",name=""} 100000
+container_spec_cpu_period{id="/docker",image="",name=""} 100000
+container_spec_cpu_period{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 100000
+container_spec_cpu_period{id="/system.slice",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/NetworkManager.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/auditd.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/chronyd.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/containerd.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/crond.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/dbus.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/docker.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/irqbalance.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/kmod-static-nodes.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/lvm2-monitor.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/network.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/polkit.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/postfix.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/rhel-dmesg.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/rhel-import-state.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/rhel-readonly.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/rsyslog.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/sshd.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/system-getty.slice",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-fsck-root.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-journal-flush.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-journald.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-logind.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-random-seed.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-remount-fs.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-sysctl.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-udevd.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-update-utmp.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-user-sessions.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/tuned.service",image="",name=""} 100000
+container_spec_cpu_period{id="/system.slice/wpa_supplicant.service",image="",name=""} 100000
+container_spec_cpu_period{id="/user.slice",image="",name=""} 100000
+# HELP container_spec_cpu_shares CPU share of the container.
+# TYPE container_spec_cpu_shares gauge
+container_spec_cpu_shares{id="/",image="",name=""} 1024
+container_spec_cpu_shares{id="/docker",image="",name=""} 1024
+container_spec_cpu_shares{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 1024
+container_spec_cpu_shares{id="/system.slice",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/NetworkManager.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/auditd.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/chronyd.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/containerd.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/crond.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/dbus.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/docker.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/irqbalance.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/kmod-static-nodes.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/lvm2-monitor.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/network.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/polkit.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/postfix.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/rhel-dmesg.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/rhel-import-state.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/rhel-readonly.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/rsyslog.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/sshd.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/system-getty.slice",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-fsck-root.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-journal-flush.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-journald.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-logind.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-random-seed.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-remount-fs.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-sysctl.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-udevd.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-update-utmp.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-user-sessions.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/tuned.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/system.slice/wpa_supplicant.service",image="",name=""} 1024
+container_spec_cpu_shares{id="/user.slice",image="",name=""} 1024
+# HELP container_spec_memory_limit_bytes Memory limit for the container.
+# TYPE container_spec_memory_limit_bytes gauge
+container_spec_memory_limit_bytes{id="/",image="",name=""} 4.128575488e+09
+container_spec_memory_limit_bytes{id="/docker",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_spec_memory_limit_bytes{id="/system.slice",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/NetworkManager.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/auditd.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/chronyd.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/containerd.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/crond.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/dbus.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/docker.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/irqbalance.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/network.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/polkit.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/postfix.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/rsyslog.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/sshd.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/system-getty.slice",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-journald.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-logind.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/tuned.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_spec_memory_limit_bytes{id="/user.slice",image="",name=""} 0
+# HELP container_spec_memory_reservation_limit_bytes Memory reservation limit for the container.
+# TYPE container_spec_memory_reservation_limit_bytes gauge
+container_spec_memory_reservation_limit_bytes{id="/",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/docker",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/NetworkManager.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/auditd.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/chronyd.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/containerd.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/crond.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/dbus.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/docker.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/irqbalance.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/network.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/polkit.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/postfix.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/rsyslog.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/sshd.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/system-getty.slice",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-journald.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-logind.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/tuned.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_spec_memory_reservation_limit_bytes{id="/user.slice",image="",name=""} 0
+# HELP container_spec_memory_swap_limit_bytes Memory swap limit for the container.
+# TYPE container_spec_memory_swap_limit_bytes gauge
+container_spec_memory_swap_limit_bytes{id="/",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/docker",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/NetworkManager.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/auditd.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/chronyd.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/containerd.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/crond.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/dbus.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/docker.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/irqbalance.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/kmod-static-nodes.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/lvm2-monitor.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/network.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/polkit.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/postfix.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/rhel-dmesg.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/rhel-import-state.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/rhel-readonly.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/rsyslog.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/sshd.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/system-getty.slice",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-fsck-root.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-journal-flush.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-journald.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-logind.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-random-seed.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-remount-fs.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-sysctl.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-udevd.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-update-utmp.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-user-sessions.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/tuned.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/system.slice/wpa_supplicant.service",image="",name=""} 0
+container_spec_memory_swap_limit_bytes{id="/user.slice",image="",name=""} 0
+# HELP container_start_time_seconds Start time of the container since unix epoch in seconds.
+# TYPE container_start_time_seconds gauge
+container_start_time_seconds{id="/",image="",name=""} 1.556607375e+09
+container_start_time_seconds{id="/docker",image="",name=""} 1.556607633e+09
+container_start_time_seconds{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor"} 1.556689155e+09
+container_start_time_seconds{id="/system.slice",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/NetworkManager.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/auditd.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/chronyd.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/containerd.service",image="",name=""} 1.556607389e+09
+container_start_time_seconds{id="/system.slice/crond.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/dbus.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/docker.service",image="",name=""} 1.556607389e+09
+container_start_time_seconds{id="/system.slice/irqbalance.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/kmod-static-nodes.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/lvm2-lvmetad.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/lvm2-monitor.service",image="",name=""} 1.556607381e+09
+container_start_time_seconds{id="/system.slice/network.service",image="",name=""} 1.556607389e+09
+container_start_time_seconds{id="/system.slice/polkit.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/postfix.service",image="",name=""} 1.556607389e+09
+container_start_time_seconds{id="/system.slice/rhel-autorelabel-mark.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/rhel-dmesg.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/rhel-import-state.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/rhel-readonly.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/rsyslog.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/sshd.service",image="",name=""} 1.556607389e+09
+container_start_time_seconds{id="/system.slice/system-getty.slice",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name=""} 1.556607381e+09
+container_start_time_seconds{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name=""} 1.556607382e+09
+container_start_time_seconds{id="/system.slice/systemd-fsck-root.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/systemd-journal-flush.service",image="",name=""} 1.556607381e+09
+container_start_time_seconds{id="/system.slice/systemd-journald.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/systemd-logind.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/systemd-random-seed.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/systemd-remount-fs.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/systemd-sysctl.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/systemd-tmpfiles-setup.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/systemd-udev-trigger.service",image="",name=""} 1.556607381e+09
+container_start_time_seconds{id="/system.slice/systemd-udevd.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/systemd-update-utmp.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/systemd-user-sessions.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/system.slice/systemd-vconsole-setup.service",image="",name=""} 1.556607378e+09
+container_start_time_seconds{id="/system.slice/tuned.service",image="",name=""} 1.556607389e+09
+container_start_time_seconds{id="/system.slice/wpa_supplicant.service",image="",name=""} 1.556607383e+09
+container_start_time_seconds{id="/user.slice",image="",name=""} 1.556607378e+09
+# HELP container_tasks_state Number of tasks in given state
+# TYPE container_tasks_state gauge
+container_tasks_state{id="/",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/",image="",name="",state="running"} 0
+container_tasks_state{id="/",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/",image="",name="",state="stopped"} 0
+container_tasks_state{id="/",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/docker",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/docker",image="",name="",state="running"} 0
+container_tasks_state{id="/docker",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/docker",image="",name="",state="stopped"} 0
+container_tasks_state{id="/docker",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor",state="iowaiting"} 0
+container_tasks_state{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor",state="running"} 0
+container_tasks_state{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor",state="sleeping"} 0
+container_tasks_state{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor",state="stopped"} 0
+container_tasks_state{id="/docker/c5c58ca627fe15122811dae2eaf5da06a169bf2317a22de1bf09fbaca10bbaed",image="google/cadvisor:latest",name="cadvisor",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/NetworkManager.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/NetworkManager.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/NetworkManager.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/NetworkManager.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/NetworkManager.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/auditd.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/auditd.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/auditd.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/auditd.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/auditd.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/chronyd.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/chronyd.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/chronyd.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/chronyd.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/chronyd.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/containerd.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/containerd.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/containerd.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/containerd.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/containerd.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/crond.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/crond.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/crond.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/crond.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/crond.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/dbus.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/dbus.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/dbus.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/dbus.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/dbus.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/docker.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/docker.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/docker.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/docker.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/docker.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/irqbalance.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/irqbalance.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/irqbalance.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/irqbalance.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/irqbalance.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/kmod-static-nodes.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/kmod-static-nodes.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/kmod-static-nodes.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/kmod-static-nodes.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/kmod-static-nodes.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/lvm2-lvmetad.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/lvm2-lvmetad.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/lvm2-lvmetad.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/lvm2-lvmetad.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/lvm2-lvmetad.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/lvm2-monitor.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/lvm2-monitor.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/lvm2-monitor.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/lvm2-monitor.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/lvm2-monitor.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/network.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/network.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/network.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/network.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/network.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/polkit.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/polkit.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/polkit.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/polkit.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/polkit.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/postfix.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/postfix.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/postfix.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/postfix.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/postfix.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/rhel-autorelabel-mark.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/rhel-autorelabel-mark.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/rhel-autorelabel-mark.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/rhel-autorelabel-mark.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/rhel-autorelabel-mark.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/rhel-dmesg.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/rhel-dmesg.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/rhel-dmesg.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/rhel-dmesg.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/rhel-dmesg.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/rhel-import-state.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/rhel-import-state.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/rhel-import-state.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/rhel-import-state.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/rhel-import-state.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/rhel-readonly.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/rhel-readonly.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/rhel-readonly.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/rhel-readonly.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/rhel-readonly.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/rsyslog.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/rsyslog.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/rsyslog.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/rsyslog.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/rsyslog.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/sshd.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/sshd.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/sshd.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/sshd.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/sshd.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/system-getty.slice",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/system-getty.slice",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/system-getty.slice",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/system-getty.slice",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/system-getty.slice",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/system-lvm2\\x2dpvscan.slice",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/system-selinux\\x2dpolicy\\x2dmigrate\\x2dlocal\\x2dchanges.slice",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/system-systemd\\x2drfkill.slice",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-fsck-root.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-fsck-root.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-fsck-root.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-fsck-root.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-fsck-root.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-journal-flush.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-journal-flush.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-journal-flush.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-journal-flush.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-journal-flush.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-journald.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-journald.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-journald.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-journald.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-journald.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-logind.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-logind.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-logind.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-logind.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-logind.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-random-seed.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-random-seed.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-random-seed.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-random-seed.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-random-seed.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-remount-fs.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-remount-fs.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-remount-fs.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-remount-fs.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-remount-fs.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-sysctl.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-sysctl.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-sysctl.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-sysctl.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-sysctl.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-tmpfiles-setup-dev.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-tmpfiles-setup.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-tmpfiles-setup.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-tmpfiles-setup.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-tmpfiles-setup.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-tmpfiles-setup.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-udev-trigger.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-udev-trigger.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-udev-trigger.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-udev-trigger.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-udev-trigger.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-udevd.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-udevd.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-udevd.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-udevd.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-udevd.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-update-utmp.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-update-utmp.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-update-utmp.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-update-utmp.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-update-utmp.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-user-sessions.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-user-sessions.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-user-sessions.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-user-sessions.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-user-sessions.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/systemd-vconsole-setup.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/systemd-vconsole-setup.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/systemd-vconsole-setup.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/systemd-vconsole-setup.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/systemd-vconsole-setup.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/tuned.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/tuned.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/tuned.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/tuned.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/tuned.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/system.slice/wpa_supplicant.service",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/system.slice/wpa_supplicant.service",image="",name="",state="running"} 0
+container_tasks_state{id="/system.slice/wpa_supplicant.service",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/system.slice/wpa_supplicant.service",image="",name="",state="stopped"} 0
+container_tasks_state{id="/system.slice/wpa_supplicant.service",image="",name="",state="uninterruptible"} 0
+container_tasks_state{id="/user.slice",image="",name="",state="iowaiting"} 0
+container_tasks_state{id="/user.slice",image="",name="",state="running"} 0
+container_tasks_state{id="/user.slice",image="",name="",state="sleeping"} 0
+container_tasks_state{id="/user.slice",image="",name="",state="stopped"} 0
+container_tasks_state{id="/user.slice",image="",name="",state="uninterruptible"} 0
+# HELP go_gc_duration_seconds A summary of the GC invocation durations.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 6.2639e-05
+go_gc_duration_seconds{quantile="0.25"} 0.000137752
+go_gc_duration_seconds{quantile="0.5"} 0.000192538
+go_gc_duration_seconds{quantile="0.75"} 0.000391653
+go_gc_duration_seconds{quantile="1"} 0.007536633
+go_gc_duration_seconds_sum 0.043447254
+go_gc_duration_seconds_count 80
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 71
+# HELP go_memstats_alloc_bytes Number of bytes allocated and still in use.
+# TYPE go_memstats_alloc_bytes gauge
+go_memstats_alloc_bytes 1.8393168e+07
+# HELP go_memstats_alloc_bytes_total Total number of bytes allocated, even if freed.
+# TYPE go_memstats_alloc_bytes_total counter
+go_memstats_alloc_bytes_total 5.5220324e+08
+# HELP go_memstats_buck_hash_sys_bytes Number of bytes used by the profiling bucket hash table.
+# TYPE go_memstats_buck_hash_sys_bytes gauge
+go_memstats_buck_hash_sys_bytes 1.54593e+06
+# HELP go_memstats_frees_total Total number of frees.
+# TYPE go_memstats_frees_total counter
+go_memstats_frees_total 3.427085e+06
+# HELP go_memstats_gc_cpu_fraction The fraction of this program's available CPU time used by the GC since the program started.
+# TYPE go_memstats_gc_cpu_fraction gauge
+go_memstats_gc_cpu_fraction 0.0004528425620975929
+# HELP go_memstats_gc_sys_bytes Number of bytes used for garbage collection system metadata.
+# TYPE go_memstats_gc_sys_bytes gauge
+go_memstats_gc_sys_bytes 2.408448e+06
+# HELP go_memstats_heap_alloc_bytes Number of heap bytes allocated and still in use.
+# TYPE go_memstats_heap_alloc_bytes gauge
+go_memstats_heap_alloc_bytes 1.8393168e+07
+# HELP go_memstats_heap_idle_bytes Number of heap bytes waiting to be used.
+# TYPE go_memstats_heap_idle_bytes gauge
+go_memstats_heap_idle_bytes 4.5006848e+07
+# HELP go_memstats_heap_inuse_bytes Number of heap bytes that are in use.
+# TYPE go_memstats_heap_inuse_bytes gauge
+go_memstats_heap_inuse_bytes 2.0463616e+07
+# HELP go_memstats_heap_objects Number of allocated objects.
+# TYPE go_memstats_heap_objects gauge
+go_memstats_heap_objects 139927
+# HELP go_memstats_heap_released_bytes Number of heap bytes released to OS.
+# TYPE go_memstats_heap_released_bytes gauge
+go_memstats_heap_released_bytes 0
+# HELP go_memstats_heap_sys_bytes Number of heap bytes obtained from system.
+# TYPE go_memstats_heap_sys_bytes gauge
+go_memstats_heap_sys_bytes 6.5470464e+07
+# HELP go_memstats_last_gc_time_seconds Number of seconds since 1970 of last garbage collection.
+# TYPE go_memstats_last_gc_time_seconds gauge
+go_memstats_last_gc_time_seconds 1.5566894621980484e+09
+# HELP go_memstats_lookups_total Total number of pointer lookups.
+# TYPE go_memstats_lookups_total counter
+go_memstats_lookups_total 0
+# HELP go_memstats_mallocs_total Total number of mallocs.
+# TYPE go_memstats_mallocs_total counter
+go_memstats_mallocs_total 3.567012e+06
+# HELP go_memstats_mcache_inuse_bytes Number of bytes in use by mcache structures.
+# TYPE go_memstats_mcache_inuse_bytes gauge
+go_memstats_mcache_inuse_bytes 6912
+# HELP go_memstats_mcache_sys_bytes Number of bytes used for mcache structures obtained from system.
+# TYPE go_memstats_mcache_sys_bytes gauge
+go_memstats_mcache_sys_bytes 16384
+# HELP go_memstats_mspan_inuse_bytes Number of bytes in use by mspan structures.
+# TYPE go_memstats_mspan_inuse_bytes gauge
+go_memstats_mspan_inuse_bytes 330752
+# HELP go_memstats_mspan_sys_bytes Number of bytes used for mspan structures obtained from system.
+# TYPE go_memstats_mspan_sys_bytes gauge
+go_memstats_mspan_sys_bytes 360448
+# HELP go_memstats_next_gc_bytes Number of heap bytes when next garbage collection will take place.
+# TYPE go_memstats_next_gc_bytes gauge
+go_memstats_next_gc_bytes 2.1657936e+07
+# HELP go_memstats_other_sys_bytes Number of bytes used for other system allocations.
+# TYPE go_memstats_other_sys_bytes gauge
+go_memstats_other_sys_bytes 844334
+# HELP go_memstats_stack_inuse_bytes Number of bytes in use by the stack allocator.
+# TYPE go_memstats_stack_inuse_bytes gauge
+go_memstats_stack_inuse_bytes 1.6384e+06
+# HELP go_memstats_stack_sys_bytes Number of bytes obtained from system for stack allocator.
+# TYPE go_memstats_stack_sys_bytes gauge
+go_memstats_stack_sys_bytes 1.6384e+06
+# HELP go_memstats_sys_bytes Number of bytes obtained from system.
+# TYPE go_memstats_sys_bytes gauge
+go_memstats_sys_bytes 7.2284408e+07
+# HELP go_threads Number of OS threads created
+# TYPE go_threads gauge
+go_threads 19
+# HELP machine_cpu_cores Number of CPU cores on the machine.
+# TYPE machine_cpu_cores gauge
+machine_cpu_cores 4
+# HELP machine_memory_bytes Amount of memory installed on the machine.
+# TYPE machine_memory_bytes gauge
+machine_memory_bytes 4.128575488e+09
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 6.96
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1.048576e+06
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 16
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 5.1195904e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.5566891556e+09
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 1.42573568e+09
+

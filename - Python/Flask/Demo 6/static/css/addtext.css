@@ -1,0 +1,30 @@
+
+td div #LeftHeaderNav{
+	background-color: #6B86B3;
+	border-bottom: 1px solid #666666;
+	border-top: 1px solid #666666;
+	color: #FFFFFF;
+	font-size: 12px;
+	text-transform: uppercase;
+	height: 17px;
+	margin-top: 23px;
+	padding-top: 4px;
+	text-align: center;
+	width: auto;
+	font-weight: bold;
+	letter-spacing: 20px;
+}
+
+div .titleShow{
+	background-color: #6B86B3;
+	border-bottom: 1px solid #666666;
+	margin-top: 1px;
+	color: #FFFFFF;
+}
+
+div .textShow{
+	background-color: rgb(152, 155, 152);
+	border-bottom: 1px solid #666666;
+	margin-top: 1px;
+	font-size: 10px;
+}

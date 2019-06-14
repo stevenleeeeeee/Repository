@@ -1,0 +1,404 @@
+
+
+ansible-doc -l  查看ansible所有模块
+ansible-doc -s copy   查看copy模块帮助信息
+ansible --list-hosts tmp  只打印有哪些主机会执行这个playbook文件，不是实际执行该playbook
+
+
+user 、 group  添加用户、组模块
+ansible all -m user -a 'name="user1"'
+
+name  : 指明的创建的用户的名字
+ansible test -m user -a 'name=mysql uid=306 system=yes group=mysql'
+
+删除用户
+ansible all -m user -a 'name="user1" state=absent'
+
+添加用户组
+ansible test -m group -a 'name=mysql gid=306 system=yes'
+
+
+
+cron 执行计划模块：
+ansible test -m cron -a 'minute="*/10" job="/bin/echo hello" name="test cron job" state="present"'
+minute="*/10"    : 每10分钟执行一次。小时，日，月，周，没有指定，默认为*
+job="/bin/echo hello"    :写在执行计划里的内容。
+name="test cron job"    :为这个job起个名字，无实际意义，在crontab里会以 #test cron job显示
+state="present"    :安装cron任务。state有两种状态，一种是present（安装），一种是absent(移除)，默认为present
+
+
+copy    :    拷贝文件模块：
+ansible all -m copy -a 'src=/tmp/1.txt dest=/tmp/1.txt owner=root group=root mode=755'
+src : 定义本地源文件路径
+dest : 定义远程目标文件路径
+ansible test -m copy -a 'content="heool ansible\nhi this is a test" dest=/tmp/test.ansible'
+content:取代src，表示直接用此处指定的信息生成目标文件内容（如果目标文件存在，则会将目标文件内容清空）
+
+
+file模块  ：对远程主机文件修改权限：
+ansible all -m file -a 'owner=test group=test mode=755 path=/tmp/fstab.ansible'
+path : 远程主机的路径。path也可以用dest或name替代
+对远程主机主件设置软连接：
+ansible all -m file -a 'src=/tmp/fstab.ansible path=/tmp/fstab.link state=link'
+src : 指明源文件
+path : 指明符号链接文件路径
+
+
+service 模块：指定服务运行状态
+ansible test -m service -a 'enabled=true name=httpd state=started'
+enabled : 是否设置开机自动启动，取值为true 或 false。相当于在远程主机上执行chkconfig httpd on命令
+name : 需要启动的服务名称
+state : 服务状态，取值有started,stopped,restarted
+
+
+script 模块 :将本地脚本复制到远程主机上并运行之
+ansible test -m script -a 'test.sh'
+注意：要使用相对路径指定脚本
+
+
+yum 模块 ：安装程序包
+ansible test -m yum -a 'name=httpd'
+name : 指明要安装的程序包，可以带上版本号，否则则安装最新版本
+state= : present, latest表示安装，absent表示卸载
+
+
+setup 模块 : 收集远程主机的facts
+ansible test -m setup
+每个被管理节点在接收并运行管理命令之行，会将自己主机相关信息，如操作系统版本，IP地址等报告给远程的ansible主机。
+ansible tmp -m setup -a "filter=ansible_eth0"
+(ansible-playbook中 gather_facts: yes or no 指定是否收集这些信息)
+
+
+
+--------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+
+
+Playbooks:
+
+Tasks:任务，即调用模块完成的某操作
+Variables: 变量
+Templates:模板
+Handlers:触发器，由某事件触发执行的操作
+Roles:角色
+
+
+tasks:
+  - name: make sure apache is running
+    service: name=httpd state=started
+
+
+
+handlers
+用于当关注的资源发生变化时采取一定的操作。
+“notify”这个action可用于在每个play的最后被触发这样可以避免多次有改变发生时每次都执行指定的操作取而代之仅在所有的变化发生完成后一次性地执行指定操作。在notify中列出的操作称为handler也即notify中调用handler中定义的操作。
+- name: template configuration file
+  template: src=template.j2 dest=/etc/foo.conf
+  notify:
+   - restart memcached
+   - restart apache    
+ 
+#handler是task列表这些task与前述的task并没有本质上的不同。
+ 
+handlers:
+ - name: restart memcached
+   service:  name=memcached state=restarted
+ - name: restart apache
+   service: name=apache state=restarted
+
+简单示例：
+- hosts: tmp
+  remote_user: root
+  tasks:
+  - name: install httpd package
+    yum: name=httpd state=latest
+  - name:
+    copy: src=/root/conf/httpd.conf dest=/etc/httpd/conf/httpd.conf
+    notify:
+    - restart httpd
+  - name: start httpd service
+    service: enabled=true name=httpd state=started
+  handlers:
+  - name: restart httpd
+    service: name=httpd state=restarted
+
+
+
+迭代： 简单示例
+#当有需要重复性执行的任务时，可以使用迭代机制，其使用格式为将需要迭代的内容定义为item变量引用，并通过with_items语句来指明迭代的元素列表即可
+#例如：
+- name: add several users
+  user: name={{ item }} state=present groups=wheel
+  with_items:
+  - testuser1
+  - testuser2
+
+#上面的语句的功能等同于下面的语句：
+- name: add user testuser1
+  user: name=testuser1 state=present groups=wheel
+- name: add user testuser2
+  user: name=testuser2 state=present groups=wheel
+
+#事实上，with_items中可以使用元素还可为hashes,例如：
+- name: add several users
+  user: name={{ item.name }} state=present groups={{ item.groups }}
+  with_items:
+  - {{ name: 'testuser1', group: 'wheel' }}
+  - {{ name: 'testuser2', group: 'root' }}
+#ansible的循环机制还有更多的高级功能，具体请参见官方文档（http://docs.ansible.com/playbooks_loops.html）
+
+官网示例：
+Looping over Fileglobs
+with_fileglob matches all files in a single directory, non-recursively, that match a pattern. It can be used like this:
+
+---
+- hosts: all
+  tasks:
+    # first ensure our target directory exists
+    - file: dest=/etc/fooapp state=directory
+    # copy each file over that matches the given pattern
+    - copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
+      with_fileglob:
+        - /playbooks/files/fooapp/*
+
+lineinfile有支持正则参数    backrefs=yes
+
+
+
+lineinfile模块
+#用于文件内的内容处理
+ansible ctx-lf -m lineinfile -a "dest=/tmp/sudoers line='appuser  ALL=(ALL)       NOPASSWD:ALL' insertafter=^sre" -u sre -s -i host  #在sudo文件中sre开头之后加入line=的内容，insertafter可以写正则或EOF（结尾），同理还有insertbefore也可以写正则或BOF（开头）
+ansible ctx-lf -m lineinfile -a "dest=/tmp/sudoers state=absent regexp=^appuser" -u sre -s -i hosts  #去掉正则匹配的所有行
+ansible ctx-lf -m lineinfile -a "dest=/tmp/sudoers regexp=^sre line='#sre  ALL=(ALL)       NOPASSWD:ALL'" -u sre -s -i hosts  #将sre开头的最后匹配的一行前边加上#
+#也可以用()形式做替代变更，类似sed
+ansible ctx-lf -m lineinfile -a "dest=/tmp/sudoers regexp=^(sre.*)$ line='#\1' backrefs=yes" -u sre -s -i hosts   #\1表示第一个()里的内容，注意这种用法需要backrefs为yes，开启扩展正则匹配
+ansible ctx-lf -m lineinfile -a "dest=/tmp/sudoers regexp=^(sre.*)$ line='123123' validate='visudo -cf %s'" -u sre -s -i hosts   #加入validate的验证，比如sudo文件如果改错了，可能影响整个系统的管理，加入验证之后，如果修改的sudo文件格式错误，将不会保存
+
+
+
+
+
+tags: 在playbook可以为某个或某些任务定义一个“标签”，在执行此playbook时，通过为ansible-playbook命令使用--tags选项能实现仅运行指定的tasks而非所有的。
+简单示例：
+- hosts: test
+  remote_user: root
+  vars:
+  - package: httpd
+  - service: httpd
+  tasks:
+  - name: install httpd package
+    yum: name={{ package }} state=latest
+    tags:
+    - always
+  - name:
+    template: src=/data/playbooks/templates/httpd.conf.j2 dest=/etc/httpd/conf/httpd.conf
+    tags:
+    - conf
+    notify:
+    - restart httpd
+  - name: start httpd service
+    service: enabled=true name={{ service }} state=started
+  handlers:
+  - name: restart httpd
+    service: name=httpd state=restarted
+
+ansible-playbook test.yml --tags="conf"
+
+特殊tags: always
+表示无论如何都会运行的tasks
+
+
+
+
+条件测试：
+#当ansible_fqdn等于 node2.magedu.com时才会创建这个用户
+- hosts: all
+  remote_user: root
+  vars:
+  - username: user10
+  tasks:
+  - name: create {{ username}} user
+    user: name={{ username }}
+    when: ansible_os_family == "Debian"
+
+
+
+
+register
+register用于注册一个变量，保存命令的结果(shell或command模块)，这个变量可以在后面的task、when语句或模板文件中使用，该指令用在循环中会有不同
+
+- shell: /bin/pwd
+  register: pwd_result
+此时变量pwd_result的结果为：
+
+{
+    u'changed': True, 
+    u'end': u'2014-02-23 12:02:51.982893', 
+    u'cmd': [u'/bin/pwd'], 
+    u'start': u'2014-02-23 12:02:51.980191', 
+    u'delta': u'0:00:00.002702', 
+    u'stderr': u'', 
+    u'rc': 0,           #这个就是命令返回状态，非0表示执行失败
+    'invocation': {'module_name': 'command', 'module_args': '/bin/pwd'}, 
+    u'stdout': u'/home/sapser',    #以一个字符串保存命令结果
+    'stdout_lines': [u'/home/sapser']     #以列表保存命令结果
+}
+在随后的task中使用该变量：
+
+- debug: msg="{{pwd_result}}"
+  when: pwd_result.rc == 0
+循环处理命令结果：
+
+- name: registered variable usage as a with_items list
+  hosts: all
+  tasks:
+      - name: retrieve the list of home directories
+        command: ls /home
+        register: home_dirs
+
+      - name: add home dirs to the backup spooler
+        file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
+        with_items: home_dirs.stdout_lines       #等同于with_items: home_dirs.stdout.split()
+
+
+
+
+
+
+
+如果命令或脚本的退出码不为零，可以使用如下方式替代：
+
+tasks:
+- name: run this command and ignore the result
+  shell: /use/bin/some/command || /bin/true
+
+或者使用ignore_errors来忽略错误信息：
+tasks:
+- name: run this command and ignore the result
+  shell: /use/bin/some/command
+  ignore_errors: True
+
+
+
+
+
+include包含:
+tasks:
+  - include: tasks/foo.yml
+可以向include传递变量，如你部署了多个实例，通过向相同的yml文件传递不同的值来区分实例：
+
+tasks:
+  - include: test.yml user=timmy     #在foo.yml可以通过{{ user }}来使用这些变量
+  - include: test.yml user=alice
+  - include: test.yml user=bob
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+
+
+ansible roles
+优点：
+如果把所有的东西都写到playbooks里面的话，可能会导致这个playbooks很臃肿，不宜读。而模块化之后，成为roles的组织结构，易读，代码可重用，层次清晰等等好处。
+
+
+roles目录结构：
+├── roles
+│   ├── common
+│   │   ├── files
+│   │   ├── handlers
+│   │   ├── meta
+│   │   ├── tasks
+│   │   ├── templates
+│   │   └── vars
+│   └── rise
+│       ├── files
+│       │   ├── delete_log.sh
+│       │   ├── gnatsd.ini
+│       │   ├── rise_game.sh
+│       │   ├── tailsource.tar.gz
+│       │   ├── throne_admin_config.json
+│       │   ├── throne_admin.ini
+│       │   ├── throne_config.json
+│       │   ├── throne.ini
+│       │   ├── throne_job_config.json
+│       │   ├── throne_job.ini
+│       │   └── ufile-python.tar.gz
+│       ├── tasks
+│       │   ├── log.yml
+│       │   └── main.yml
+│       └── vars
+│           └── main.yml
+└── site.yml
+
+
+tasks目录：
+  至少应该包含一个名为main.yml的文件，其定义了此角色的任务列表；此文件可以使用include包含其它的位于此目录中的task文件；
+files目录：
+存放由copy或script等模块调用的文件；
+templates目录：
+template模块会自动在此目录中寻找Jinja2模板文件；
+handlers目录：
+存放handlers（触发器），此目录中应当包含一个main.yml文件，用于定义此角色用到的各handler；在handler中使用include包含的其它的handler文件也应该位于此目录中；
+vars目录：
+应当包含一个main.yml文件，用于定义此角色用到的变量，只对当前role有作用；
+meta目录：
+应当包含一个main.yml文件，用于定义此角色的特殊设定及其依赖关系（定义role和role直接的依赖关系）；ansible 1.3及其以后的版本才支持；
+default目录：
+为当前角色设定默认变量时使用此目录；应当包含一个main.yml文件。
+
+
+
+hosts文件中定义变量
+all
+aaa
+bb cc
+
+group_vars和host_vars目录下变量文件使用
+vars_files指令导入外部变量文件
+setup模块收集的目标主机信息
+register指令注册的变量
+
+hosts中定义变量：
+[bang:vars]
+DDTServer_db_ip=10.10.172.89
+
+
+
+
+附ansible-playbook命令参数：
+Usage: ansible-playbook playbook.yml
+
+Options:
+  -u REMOTE_USER, --user=REMOTE_USER           ssh连接的用户名，ansible.cfg中可以配置
+  -k, --ask-pass        提示输入ssh登录密码，当使用密码验证登录的时候用
+  -s, --sudo            sudo运行
+  -U SUDO_USER, --sudo-user=SUDO_USER          sudo到哪个用户，默认为root
+  -K, --ask-sudo-pass   提示输入sudo密码，当不是NOPASSWD模式时使用
+  -T TIMEOUT, --timeout=TIMEOUT                ssh连接超时时间，默认10秒
+  -C, --check           指定该参数后，执行playbook文件不会真正去执行，而是模拟执行一遍，然后输出本次执行会对远程主机造成的修改
+  -c CONNECTION         连接类型(default=smart)
+  -D, --diff            如果file和template模块改变，会显示改变的内容，应该和--check一起
+  -e EXTRA_VARS, --extra-vars=EXTRA_VARS       设置额外的变量如：key=value or YAML/JSON，以空格分隔变量，或用多个-e
+  -f FORKS, --forks=FORKS                      fork多少个进程并发处理，默认5
+  -i INVENTORY, --inventory-file=INVENTORY     指定hosts文件路径，默认default=/etc/ansible/hosts
+  -l SUBSET, --limit=SUBSET       指定一个pattern，对- hosts:匹配到的主机再过滤一次
+  --list-hosts          只打印有哪些主机会执行这个playbook文件，不是实际执行该playbook
+  --list-tasks          列出该playbook中会被执行的task
+  -M MODULE_PATH, --module-path=MODULE_PATH    模块所在路径，默认/usr/share/ansible/
+  --private-key=PRIVATE_KEY_FILE      私钥路径
+  --start-at-task=START_AT            start the playbook at the task matching this name
+  --step                同一时间只执行一个task，每个task执行前都会提示确认一遍
+  --syntax-check        只检测playbook文件语法是否有问题，不会执行该playbook
+  -t TAGS, --tags=TAGS  当play和task的tag为该参数指定的值时才执行，多个tag以逗号分隔
+  --skip-tags=SKIP_TAGS 当play和task的tag不匹配该参数指定的值时，才执行
+  -v, --verbose         verbose mode (-vvv for more, -vvvv to enable connection debugging)
+
+
+http://lixcto.blog.51cto.com/4834175/1432722
+github实例：https://github.com/ansible/ansible-examples
+

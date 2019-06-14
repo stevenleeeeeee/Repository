@@ -1,0 +1,138 @@
+---
+- hosts: "{{ webservers }}"           #环境变量传入的、存在于Inventory中的特定主机、组
+  gather_facts: false
+  vars:                               #变量
+    - http_port: 80           
+    - max_clients: 200  
+    - foo: test
+    - zk_port: 
+       a: 10211
+       b: 10311
+       c: 10411
+       d: 10511
+       x: 10611
+  vars_files:
+    - /home/root/ansible_vars.yml
+  remote_user: root                   #远端执行权限
+  tasks:                              #针对以上主机/组要执行的动作，name的值将在执行时输出
+  - name: Test
+    shell: shell /usr/bin/foo
+    register: result
+    ignore_errors: True     #ignore_errors要设为True，否则若shell执行不成功即"echo $? != 0"，则其后的语句不被执行，导致中止。
+    until: result.stdout.find("all systems go") != -1   #Until
+    retries: 5
+    delay: 10
+
+   - name: zk port
+     set_fact: zkport="{{item.value}}"  #该模块允许设置新变量。变量按主机设置，就像安装模块发现的事实一样
+     with_dict:  '{{zk_port}}'      #这里调用了上面定义的 "zk_port" 字典变量
+     when: item.key == app_group
+
+  - name: Example of looping over a command result      #循环命令的执行结果
+    shell: touch /$HOME/{{ item }}    #with_lines的命令永远在controller的主机运行，仅shell模块在目标运行（遍历命令的输出）
+    with_lines: /usr/bin/cat  /home/fg/test
+  - name: exec shell scripts
+    shell: echo "I've got '{{ foo | default('No name', true) }}' and am not afraid to use it!"  #当变量foo未定义时使用默认字串
+    when: foo is defined and ( ansible_os_family == "RedHat" or ansible_lsb.major_release|int >= 6 )
+  - name: install apache              #用yum模块操作（name是输出到屏幕的信息）
+    yum: name=httpd state=installed   #安装
+  - name: write the apache config file
+    template: src=/srv/httpd.j2 dest=/etc/httpd.conf    #传输配置文件（其可在本地文件中调用变量）
+    notify:                                             #notify用于触发下面的handlers动作
+    - restart apache
+  - name: ensure apache is running
+    service: name=httpd state=started
+    when: not ansible_os_family == "RedHat" or ansible_os_family ！= "Debian"
+  - file: dest=/var/stuff/{{ item }} state=directory    #定义序列并设置起始值、终值、步长
+      with_sequence: start=4 end=16 stride=2
+  - name: add several users
+    user: name={{ item.name }} state=present groups={{ item.groups | regex_replace('^w(.*)$', '\\1')}}  #变量值替换
+    ignore_errors: True
+    with_items:
+      - { name: 'user1', groups: 'wheel', id: '1' }
+      - { name: 'user2', groups: 'root', id: '7'}
+    when: item.name == "user1" or item.id > 5
+  - name: Create a register to represent the status if the docker-thinpool exsited
+    shell: lsblk | grep docker-thinpool
+    register: result                  #捕捉变量的输出结果，输出捕捉内容：command: echo {{ result.stdout }}
+    ignore_errors: True
+    tags: 
+      - docker                        #执行特定tag：ansible-playbook x.yml --tags="docker,xxx1,xxx2,..."
+  - shell: cat /etc/motd
+    register: motd_contents
+  - shell: echo "motd contains the word hi"
+    when: motd_contents.stdout.find('hi') != -1   #对输出进行匹配...
+  - debug: msg={{ item | round}}             #show all the hosts matching the pattern, ie all but the group www
+    with_inventory_hostnames: all:!www       #round过滤器提供四舍五入功能，列表的第一个元素：first，最后一个元素：last，长度：length
+  - include: tasks/sometasks.yml             #求和：sum，排序：sort，列表的元素间加入'|'： join(' | ')
+    when: "'reticulating splines' in output"
+    sudo: yes
+  - debug: msg={{ item | upper | truncate(3, True) }}     #转为大写后只显示其前3个字符，后面用...显示
+    with_random_choice:
+      - "go through the door"
+      - "drink from the goblet"
+      - "press the red button"
+      - "do nothing"
+  - command: /bin/false
+    register: result                  #注册器
+    ignore_errors: True               #忽略错误信息
+  - command: /bin/something  
+    when: result|failed               #第一条命令失败时（result为failed时）才执行第二条命令
+  - command: /bin/something_else  
+    when: result|success              #result为success时才执行
+
+  - name: ensure ~/bin
+    file: path=/home/{{ ansible_ssh_user }}/bin/ state=directory owner={{ ansible_ssh_user }} \
+    group={{ ansible_ssh_user }} recurse=yes
+  - name: transport cronolog
+    copy: src=cronolog dest=/home/{{ ansible_ssh_user }}/bin/cronolog mode=0770
+    
+  - shell: cat .bash_profile
+    register: profile
+  - name: "cat .bash_profile"
+    debug: msg="{{ profile.stdout }}"
+    
+  - name: check service
+    shell: /home/{{ ansible_ssh_user }}/shell/echo_service_list.sh {{ app_name }} tomcat{{ item }} \
+    {{ inventory_hostname }} {{ port_num }}{{ app_num }}1{{ item }}
+    with_sequence: start=1 end={{ node_num }}
+    register: tomcats
+  - name: echo service status
+    debug: msg="{{ item.stdout }}"
+    with_items: "{{ tomcats.results }}"
+
+  - name: 'deleting files'
+    shell: "if [[ -d ${HOME}/{{ prj_name }} ]]; then rm -rf ${HOME}/{{ prj_name }};else echo FAILED;fi"
+    register: result
+  - fail: msg="There is no tomcat on {{ inventory_hostname }}"
+    when: '"FAILED" in result.stdout'
+
+  - name: transport upstream.d files
+    copy: src={{ item }} dest=/home/{{ ansible_ssh_user }}/nginx/conf/upstream.d/ force=yes
+    with_fileglob:
+        - upstream.d/*
+  - name: transport map.conf files
+    lineinfile: line="{{ item }}"  dest=/home/{{ ansible_ssh_user }}/nginx/conf/map.conf
+    with_lines:
+        - cat ${WORKSPACE}/roles/add_to_upstream/files/map.conf
+
+  - command: /bin/still/something_else
+    when: result|skipped              #skipped：已经执行过跳过执行
+  - name: crontab example             #Crontab...
+    cron: name="custom job" minute=*/3 hour=* day=* month=* weekday=* job="/usr/sbin/ntpdate 172.16.254.139"
+  - name: Download file
+    get_url: url=http://10.1.1.116/favicon.ico dest=/tmp  #支持HTTP、HTTPS、FTP
+  - name: modify /etc/ntp.conf        #正则匹配替换
+    lineinfile: dest=/etc/ntp.conf  regexp="{{item.regexp}}" line="{{item.line}}"
+    with_items:
+      - { regexp: '^restrict',line: 'restrict default ignore' }
+      - { regexp: 'restrict',line: 'restrict 127.0.0.1'}
+  handlers:                           #与notify协调，满足特定条件时触发
+    - name: restart apache
+      service: name=httpd state=restarted
+    - name: transport file
+      file: path=/etc/{{ item | safe }} mode=0600 owner=root  #safe常用于HTML中，用于取消HTML自动转义
+      with_items:
+        - my.cnf
+        - shadow
+        - fstab

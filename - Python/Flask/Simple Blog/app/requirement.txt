@@ -1,0 +1,9 @@
+flask
+flask-script
+flask-admin
+micawber
+markdown
+flask-moment
+flask-sqlalchemy
+BeautifulSoup4
+flask-wtf

@@ -1,0 +1,14 @@
+vim /etc/docker/daemon.json
+{
+	"registry-mirrors": ["https://ozxsmwjk.mirror.aliyuncs.com"] 	#去阿里云申请，修改后重启docker服务
+}
+
+阿里云加速器申请页面：
+https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors
+
+
+修改kubernetes资源YAML中image地址使用国内源 Example:
+若下载镜像为：k8s.gcr.io/addon-resizer:1.8.5
+则可使用国内阿里云的镜像：registry.cn-hangzhou.aliyuncs.com/google_containers/addon-resizer:1.8.5
+
+

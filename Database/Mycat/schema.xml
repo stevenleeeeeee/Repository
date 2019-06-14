@@ -1,0 +1,64 @@
+    <!-- SCHEMA >>> DATANODE >>> DATAHOST -->
+    
+<?xml version="1.0"?>
+<!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+<mycat:schema xmlns:mycat="http://io.mycat/">
+    
+    <schema name="TESTDB" checkSQLschema="false" sqlMaxLimit="100">
+        <!-- 
+        Table       定义了MyCat中的逻辑表，所有需要拆分的表都需要在这个标签中定义
+        primaryKey  该逻辑表对应真实表的主键
+        ........
+        -->
+        <table name="travelrecord" dataNode="dn1,dn2,dn3" rule="auto-sharding-long" />
+        <table name="company" primaryKey="ID" type="global" dataNode="dn1,dn2,dn3" />
+        <table name="goods" primaryKey="ID" type="global" dataNode="dn1,dn2" />
+        <table name="hotnews" primaryKey="ID" autoIncrement="true" dataNode="dn1,dn2,dn3" rule="mod-long" />
+        <table name="employee" primaryKey="ID" dataNode="dn1,dn2" rule="sharding-by-intfile" />
+        <table name="customer" primaryKey="ID" dataNode="dn1,dn2" rule="sharding-by-intfile">
+            <childTable name="orders" primaryKey="ID" joinKey="customer_id" parentKey="id">
+                <childTable name="order_items" joinKey="order_id" parentKey="id" />
+            </childTable>
+            <childTable name="customer_addr" primaryKey="ID" joinKey="customer_id" parentKey="id" />
+        </table>
+    </schema>
+
+    <!-- <定义数据的操作节点，该属性用于绑定逻辑库到某个具体的database，若定义此属性那么逻辑库就不能工作在分库分表模式下
+    也就是说对这个逻辑库的所有操作会直接作用到绑定的dataNode上，这个schema就可以用作读写分离和主从切换
+    name        定义数据节点的名字，这个名字需要是唯一的，我们需要在table标签上应用这个名字，来建立表与分片对应的关系
+    dataHost    该属性用于定义该分片属于哪个数据库实例的，属性值是引用dataHost标签上定义的name属性
+    -->
+    <dataNode name="dn1" dataHost="localhost1" database="db1" />
+    <dataNode name="dn2" dataHost="localhost1" database="db2" />
+    <dataNode name="dn3" dataHost="localhost1" database="db3" />
+
+    <!-- 读写分离及故障切换
+    balance="#"：
+        0   不开启读写分离机制，所有读操作都发送到当前可用的writeHost上
+        1   全部的readHost与stand by writeHost参与select语句的负载均衡，简单的说当双主双从模式(M1->S1，M2->S2，并且M1与M2互为主备)
+        2   所有读操作都随机的在writeHost、readhost上分发
+        3   所有读请求随机的分发到wiriterHost对应的readhost执行，writerHost不负担读压力（在1.4及其以后版本有）
+
+    writeType="#":
+        0   所有写操作发送到配置的第一个writeHost，第一个挂了切到还生存的第二个writeHost，重新启动后已切换后的为准
+        1   所有写操作都随机的发送到配置的writeHost，1.5以后废弃不推荐。
+        2   不执行写操作
+
+    switchType='#'
+       -1   不自动切换
+        1   默认，表示自动切换
+        2   基于MySQL主从同步的状态决定是否切换,心跳语句为 show slave status
+        3   基于MySQL galary cluster的切换机制（适合集群）（1.4.1），心跳语句为 show status like 'wsrep%'
+    -->
+    <!-- 定义数据节点，包括了各种逻辑项的配置 -->
+    <dataHost name="localhost1" maxCon="1000" minCon="10" balance="0" writeType="0" dbType="mysql"
+              dbDriver="native" switchType="1" slaveThreshold="100">
+        <heartbeat>select user()</heartbeat>    <!-- 配置真实MySQL与MyCat的心跳 -->
+        <writeHost host="hostM1" url="localhost:3306" user="root" password="123456">        <!-- 定义可写 -->
+            <readHost host="hostS2" url="192.168.1.200:3306" user="root" password="xxx" />  <!-- 定义可读-->
+        </writeHost>
+        <writeHost host="hostS1" url="localhost:3316" user="root" password="123456" />      <!-- 可写主机 -->
+    </dataHost>
+
+</mycat:schema>
+ 

@@ -1,0 +1,6 @@
+;;; File managed by Salt
+[program:{{ program }}]
+{% for key, value in values.items() -%}
+{{ key }}={{ value }}
+{% endfor -%}
+

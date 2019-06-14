@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<br><br><br><br>
+<div class="container">
+	<div class="row">
+		<div class="span3"></div>
+		<div class="span9">
+			<h1>欢迎来到flask我的社区</h1>
+		
+		</div>
+	</div>
+
+
+	<div class="row">
+		<div class="span3"></div>
+		<div class="span3">
+			<h1>Sign in</h1>
+			<form action="{{ url_for( 'sign_in' ) }}" method="POST">
+				username:
+				<input type="text" name="username"><br>
+				password:
+				<input type="password" name="password"><br>
+				repeate password:
+				<input type="password" name="password2"><br>
+				email:<br>
+				<input type="text" name="email"><br>
+				<input type="submit">
+			</form>
+		</div>
+		<div class="span3">
+			<h1>Login</h1>
+			<form action="{{ url_for( 'login' ) }}" method="POST">
+				username:
+				<input type="text" name="username"><br>
+				password:
+				<input type="password" name="password"><br>
+				<input type="submit">
+			</form>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="span3"></div>
+		<div class="span6">
+
+<footer class="footer"><div class="container">Published by brackenbo@hotmail.com</div></footer>
+		</div>
+		<div class="span3"></div>
+	</div>
+</div>
+<br>
+
+{% endblock %}

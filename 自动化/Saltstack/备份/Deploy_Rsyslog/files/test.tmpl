@@ -1,0 +1,18 @@
+set $!realip = "{{ ADDRESS }}";
+module(load="builtin:omfile")
+
+$template kdemo,"%msg%\n"
+$template kdemoFilename,"/tmp/%fromhost-ip%.log"
+
+#this string is test {{ KAFKA_ADDRESS }}
+
+ruleset(name="to"){
+      action (
+          type="omfile"
+          template="kdemo"
+          dynaFile="kdemoFilename"
+          fileOwner="root"
+      )
+}
+
+call_indirect "to";

@@ -1,0 +1,24 @@
+[Host_Alias]  ansible_ssh_host=192.168.1.50 ansible_ssh_port=22  ansible_ssh_user=root ansible_ssh_pass=123456
+
+www.lightcloud.com host_key_checking=False #跳过秘钥验证时输入yes的环节
+192.168.1.1:21
+192.168.1.2:22 maxRequestsPerChild=500 ansible_ssh_private_key_file=/home/key #针对本组主机的私钥 
+
+[webserver]                     #主机组
+web[3:10].lightcloud.com        #范围：[start:end]
+web1.lightcloud.com http_port=80 maxRequestsPerChild=100
+web2.lightcloud.com http_port=81 maxRequestsPerChild=200 
+
+[mysql]
+192.168.1.[1:10]                #范围：[start:end]
+
+[webserver:children]            #组间嵌套（对组或其子组操作）
+webserver
+mysql
+
+[lightcloud:vars]               #主机组成员共有变量
+ntp_server=ntp.lightcloud.com
+proxy=proxy.lightcloud.com
+ansible_ssh_port=22
+ansible_ssh_user=root
+ansible_ssh_pass=123456

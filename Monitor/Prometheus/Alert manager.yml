@@ -1,0 +1,140 @@
+#------------------------------------------------------------------- alertmanager.yml
+#Alertmanager的配置主要包含两个部分：
+# 路由(route)以及接收器(receivers)
+# 所有告警信息都会从配置中的顶级路由"route"进入路由树，根据路由规则将告警信息发送给相应接收器
+
+# 全局配置
+global: 
+  evaluation_interval: 1m #默认每分钟对这些告警规则进行计算，若需要自定义告警计算周期则在此设置
+  resolve_timeout: 5m #处理超时时间，默认5min
+  smtp_smarthost: 'smtp.sina.com:25' # 发送邮箱的smtp服务器代理
+  smtp_from: '******@sina.com' # 发送邮箱的名称
+  smtp_auth_username: '******@sina.com' # 邮箱账号
+  smtp_auth_password: '******' #邮箱密码
+
+# 定义路由树
+route:
+  group_by: [cluster, alertname] # 报警分组，根据标签名称匹配并进入到不同的子路由，并根据对应的接收器发送告警
+  group_wait: 10s # 分组最初即第一次等待多久时间发送警报的通知
+  group_interval: 10s # 分组发送新告警前等待的时间
+  repeat_interval: 1m # 重复告警的周期
+  receiver: 'demo-user1' # 警报接收者名称，默认情况下所有的告警都会发送给在这里设置的接收者
+  routes:
+  - receiver: 'demo-user1' # 属于分组中的接收者: demo-user1
+    group_wait: 10s
+    match_re:
+      service: mysql|cassandra  
+      # 如果告警包含名为service的标签，且service的值为MySQL或Cassandra则向其发送
+      # 由于这里没定义group_by等属性，这些属性将从上级路由继承，将会接收到按cluser和alertname进行分组的告警通知
+  - receiver: 'demo-user2' # 属于分组中的接收者: demo-user2
+    group_by: [product, environment]
+    match:
+      team: frontend
+
+# 接收器定义警报接收者的信息（按照角色如系统运维、数据库管理员来划分多个接收器）
+receivers:
+  - name: 'demo-user1' # 名称
+    email_configs: # 基于邮箱
+    - to: '******@163.com'  # 接收者
+  - name: 'demo-user2' # 名称
+    webhook_configs:  #基于webhook
+    - url: 'http://127.0.0.1:5001/' #钩子地址
+
+# inhibition（抑制机制）是在与另一组匹配器匹配的警报存在的条件下使匹配一组匹配器的警报失效的规则
+# 2个警报必须具有一组相同的标签
+# 其避免当某种问题告警产生之后用户接收到大量由此问题导致的一系列其它告警。如当集群不可用时用户可能只希望接收到1条告警
+inhibit_rules:
+  #当有新告警规则满足source_match或定义的匹配规则
+  #并且已发送告警与新产生的告警中equal定义的标签完全相同，则启动抑制机制，新的告警不会发送。
+  - source_match: 
+      alertname: NodeDown #当集群中的某个主机节点异常宕机导致告警NodeDown被触发
+      severity: critical  #并且，当有新告警级别为severity=critical时
+    target_match:         #当已发送的告警通知匹配到target_match和target_match_re规则
+      severity: critical
+    equal: ['alertname', 'node', 'instance']
+
+#------------------------------------------------------------------- alertmanager_rules.yml
+#为了让Prometheus启用定义告警规则，需在Prometheus全局配置文件中指定告警规则存放路径：
+#
+# rule_files:
+#   - /etc/prometheus/rules/*.rules
+#   - ......
+
+# 在与prometheus同目录下的alertmanager_rules.yml中定义告警规则
+groups:  # 可将一组相关规则设置定义在group下。每个group可定义多个告警规则 (rule)
+ - name: test-rules
+   rules:
+   - alert: InstanceDown # 告警名称
+     expr: job:request_latency_seconds:mean5m{job="myjob"} > 0.5 # 告警判定，基于PromQL触发，用于计算是否满足该条件
+     for: 2m # 可选的评估等待时间。表示当触发条件持续一段时间后才发送告警，在等待期间新产生告警的状态为pending
+     labels: # 自定义标签，允许用户指定要附加到告警上的一组附加标签
+      severity: page
+     annotations: # 指定一组附加信息，如用于描述告警详细信息的文字等，其内容在告警产生作为参数一同发送到Alertmanager
+      summary: "{{$labels.instance}}: has been down"  # 描述告警概要信息
+      description: "{{$labels.instance}}: job {{$labels.job}} has been down " # 描述告警详细信息
+
+#告警信息生命周期的3中状态:
+#  1. inactive： #当前报警信息即不是firing状态也不是pending状态
+#  2. pending：  #在设置的阈值时间范围内被激活的
+#  3. firing：   #超过设置的阈值时间被激活的
+
+#-------------------------------------------------------------------
+#Prometheus支持模板化label和annotations的中标签的值：
+
+#通过变量: $labels.<labelname> 可访问当前告警实例中指定标签的值。$value 则可以获取当前PromQL表达式计算的样本值：
+
+# To insert a firing element's label values: {{ $labels.<labelname> }}
+# To insert the numeric expression value of the firing element: {{ $value }}
+
+#上面的告警模板也可以单独在文件中定义，定义的例子参考下面的链接：
+#https://yunlzheng.gitbook.io/prometheus-book/parti-prometheus-ji-chu/alert/alert-template
+
+#对已pending或firing的告警，会将它们存储到时间序列ALERTS{}中:
+#可通过PrmQL查询告警实例：（样本值为1表示当前告警处于活动状态（pending或firing），当告警转换为非活动状态时值则为0）
+ALERTS{alertname="<alert name>", alertstate="pending|firing", <additional alert labels>}
+
+#Prometheus负责产生告警、Alertmanager负责告警后续处理，因此需在prometheus.yml中定义alertmanagers的信息:
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         targets: ['localhost:9093']
+#------------------------------------------------------------------- 
+# 分组:
+# 可将详细告警信息合并成一个通知。在某些情况下，如由于系统宕机导致大量的告警被同时触发
+# 在这种情况下分组机制可将这些被触发的告警合并为一个告警通知，避免一次性接受大量的告警通知，而无法对问题进行快速定位。
+# 例如当集群中有数百个正在运行的服务实例，并且为每一个实例设置了告警规则
+# 假如此时发生网络故障，可能导致大量服务实例无法连接到数据库，结果就会有数百个告警被发送到Alertmanager
+# 而作为用户，可能只希望能够在一个通知中中就能查看哪些服务实例收到影响
+# 这时可按照服务所在集群或告警名称对告警进行分组，而将这些告警内聚在一起成为一个通知
+# 告警分组，告警时间，以及告警的接受方式可以通过Alertmanager的配置文件进行配置
+# 
+# 抑制:
+# 当某一告警发出后，可以停止重复发送由此告警引发的其它告警
+# 例如当集群不可访问时触发了一次告警，通过配置Alertmanager可忽略与该集群有关的其它所有告警
+# 这样可避免接收到大量与实际问题无关的告警通知。抑制机制同样通过Alertmanager的配置文件进行设置
+# 
+# 静默:
+# 提供了简单的机制可以快速根据标签对告警进行静默处理。
+# 如果接收到的告警符合静默的配置，Alertmanager则不会发送告警通知
+# 静默设置需要在Alertmanager的Web页面进行设置
+
+# ------------------------------------------------------------------ Example
+groups:
+- name: hostStatsAlert
+  rules:
+  - alert: hostCpuUsageAlert
+    expr: sum(avg without (cpu)(irate(node_cpu{mode!='idle'}[5m]))) by (instance) > 0.85
+    for: 1m
+    labels:
+      severity: page
+    annotations:
+      summary: "Instance {{ $labels.instance }} CPU usgae high"
+      description: "{{ $labels.instance }} CPU usage above 85% (current value: {{ $value }})"
+  - alert: hostMemUsageAlert
+    expr: (node_memory_MemTotal - node_memory_MemAvailable)/node_memory_MemTotal > 0.85
+    for: 1m
+    labels:
+      severity: page
+    annotations:
+      summary: "Instance {{ $labels.instance }} MEM usgae high"
+      description: "{{ $labels.instance }} MEM usage above 85% (current value: {{ $value }})"

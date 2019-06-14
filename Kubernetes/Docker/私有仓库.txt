@@ -1,0 +1,59 @@
+vim /etc/docker/daemon.json     #使用内部的私有仓库地址
+{
+    "insecure-registries":["192.168.1.163:5000"]
+}
+
+#或直接修改docker的systemd配置文件，在ExecStart=/usr/bin/dockerd后追加参数: 
+    --insecure-registry x.x.x.x:x
+----------------------------------------------------------------- 推送到私有仓库：
+#推送标签：
+docker tag alpine:v1 192.168.0.153:5000/fbgweb:v1   #打标签
+docker push 192.168.0.153:5000/fbgweb:v1            #推送到远程仓库
+
+#在2.1版本中支持了删除镜像的API，但这个删除操作只会删除镜像元数据，不会删除层数据。
+#在2.4版本中对这一问题进行了解决，增加了一个垃圾回收命令，删除未被引用的层数据
+
+#获取仓库镜像信息：
+curl -s 20.58.27.3:5000/v2/_catalog | python -m json.tool
+{
+    "repositories": [
+        "busybox",
+        "coreos",
+        "weblogic",
+        "......."
+    ]
+}
+
+#查看仓库镜像版本：
+curl 20.58.27.3:5000/v2/<Image_name>/tags/list | python -m json.tool
+
+#获取digest值：
+curl -sH "Accept: application/vnd.docker.distribution.manifest.v2+json" -I -X HEAD \
+ 20.58.27.3:5000/v2/<镜像名称>/manifests/<版本> | grep Etag
+
+
+#删除：
+curl  -X DELETE 20.58.27.3:5000/v2/<镜像名称>/manifests/<Etag值>
+
+
+-----------------------------------------------------------------  仓库镜像查看:
+#!/bin/bash
+
+registry=20.58.27.3:5000
+index=0
+
+while true
+do
+    Image_name=$(curl -s ${registry}/v2/_catalog | python -m json.tool | jq .repositories[-1-${index}])
+
+    if [[ $Image_name == "null"  ]];then
+        break
+    else
+        curl -s ${registry}/v2/${Image_name//\"/}/tags/list |  awk -F':|"' '{printf "%-35s%-40s\n",$5,$10}'
+    fi
+
+    index=$index+1
+done
+-----------------------------------------------------------------
+#旧版本删除仓库镜像的方式: 
+https://github.com/burnettk/delete-docker-registry-image

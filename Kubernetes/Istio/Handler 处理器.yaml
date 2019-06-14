@@ -1,0 +1,42 @@
+
+#适配器：
+#适配器封装了 Mixer 和特定外部基础设施后端进行交互的必要接口，例如 Prometheus 或者 Stackdriver。
+#各种适配器都需要参数配置才能工作。例如日志适配器可能需要 IP 地址和端口来进行日志的输出。
+#{metadata.name}.{kind}.{metadata.namespace} 是 Handler 的完全限定名。下面定义的对象的 FQDN 就是 staticversion.listchecker.istio-system，他必须是唯一的。
+apiVersion: config.istio.io/v1alpha2
+kind: listchecker
+metadata:
+  name: staticversion
+  namespace: istio-system
+spec:
+  providerUrl: http://white_list_registry/
+  blacklist: false
+
+#实例：
+#配置实例将请求中的属性映射成为适配器的输入。下面的例子是一个 metric 实例的配置，用于生成 requestduration metric:
+apiVersion: config.istio.io/v1alpha2
+kind: metric
+metadata:
+  name: requestduration
+  namespace: istio-system
+spec:
+  value: response.duration | "0ms"
+  dimensions:
+    destination_service: destination.service | "unknown"
+    destination_version: destination.labels["version"] | "unknown"
+    response_code: response.code | 200
+  monitored_resource_type: '"UNSPECIFIED"'
+
+#规则：
+#用于指定使用特定实例配置调用某一 Handler 的时机。比如我们想要把 service1 服务中，请求头中带有 x-user 的请求的 requestduration 指标发送给 Prometheus Handler。
+apiVersion: config.istio.io/v1alpha2
+kind: rule
+metadata:
+  name: promhttp
+  namespace: istio-system
+spec:
+  match: destination.service == "service1.ns.svc.cluster.local" && request.headers["x-user"] == "user1" #前置检查，如果检查通过则会执行动作列表
+  actions:      #动作中包含了实例列表，这个列表将会分发给 Handler
+- handler: handler.prometheus   #规则必须使用 Handler 和实例的完全限定名。如果规则、Handler 以及实例全都在同一命名空间，命名空间后缀就可以在 FQDN 中省略，如 handler.prometheus。
+  instances:
+  - requestduration.metric.istio-system

@@ -1,0 +1,61 @@
+# HPAv2目前支持3种指标：
+# Object：  描述k8s对象的某种指标，譬如ingress的hits-per-second
+# Pods：    pod的平均指标，譬如transactions-processed-per-second，描述每个pod的事务每秒事务数
+# Resource：描述pod中定义的资源用量，譬如CPU或内存，是基于标准资源的HPA：Resource/{cpu,memory}
+
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: podinfo
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: podinfo
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageValue: 200Mi
+
+---
+
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: deploy-tomcat
+  selfLink: /apis/autoscaling/v1/namespaces/default/horizontalpodautoscalers/deploy-tomcat
+spec:
+  maxReplicas: 9
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: deploy-tomcat
+  metrics:
+  - type: Pods
+    pods:
+      metric:
+        name: memory_usage_bytes
+      target:
+        type: AverageValue        #Value：直接与API返回的指标进行比较。AverageValue：将返回值除容器数再与目标值比较
+        averageValue:  499391745  #若指标值高于此值则触发伸缩
+  - type: External                #使用外部度量进行伸缩
+    external:
+      metricName: queue_messages_ready
+      metricSelector:
+        matchLabels:
+          queue: worker_tasks
+      targetAverageValue: 30
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50

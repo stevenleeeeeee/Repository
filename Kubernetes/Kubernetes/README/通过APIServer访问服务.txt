@@ -1,0 +1,12 @@
+Example:
+
+https://10.211.55.7:6443/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy
+{
+kind: "Status",
+apiVersion: "v1",
+metadata: { },
+status: "Failure",
+message: "Unauthorized",
+reason: "Unauthorized",
+code: 401
+}

@@ -1,0 +1,164 @@
+Linux最多可以支持255张路由表，其中有3张表是内置的：  
+* 本地路由表（Local table）  
+本地接口地址，广播地址，及NAT地址都放在这个表。该表由系统自动维护，不能直接修改
+* 主路由表（Main table）  
+如果没有指明路由所属的表，所有的路由都默认都放在这个表里，一般来说，旧的路由工具（如route）所添加的路由都会加到这个表。一般是普通的路由。
+* 默认路由表（Default table）  
+一般来说默认的路由都放在这张表，但若特别指明放的也可以是所有的网关路由。
+  
+在Linux里，总共可以定义232个优先级的规则，一个优先级别只能有一条规则，其中有3个规则是默认的，优先级别越高的规则越先匹配（数值越小优先级别越高 )  
+
+#### 路由配置命令的格式如下
+```bash
+#查看路由表
+ip route list [table ( main | local | default | route_id ) ]  
+
+[root@wy ~]# ip route list table local
+broadcast 127.0.0.0 dev lo  proto kernel  scope link  src 127.0.0.1 
+local 127.0.0.0/8 dev lo  proto kernel  scope host  src 127.0.0.1 
+local 127.0.0.1 dev lo  proto kernel  scope host  src 127.0.0.1 
+broadcast 127.255.255.255 dev lo  proto kernel  scope link  src 127.0.0.1 
+broadcast 172.17.0.0 dev docker0  proto kernel  scope link  src 172.17.0.1 
+................. 略 ..............
+[root@wy ~]# ip route list table main
+default via 172.18.255.253 dev eth0 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+172.17.0.0/16 dev docker0  proto kernel  scope link  src 172.17.0.1 
+172.18.240.0/20 dev eth0  proto kernel  scope link  src 172.18.255.90 
+
+#在默认情况下进行路由时，首先会根据规则0在本地路由表里寻找路由
+如果目的地址是本网络，或是广播地址的话，在这里就可以找到合适的路由
+如果路由失败，就会匹配下一个不空的规则，在这里只有32766规则，在这里将会在主路由表里寻找路由
+如果失败，就会匹配32767规则，即寻找默认路由表。如果失败，路由将失败
+从这里可以看出，策略性路由是往前兼容的。
+
+#增删改：
+ip route [ ( change | del | add | append | replace | monitor ) xxxx （table  main | local | default | route_id ]
+
+#添加路由：
+ip route add default via 192.168.0.4 [ table main ] #将特定的路由条目放置指定的路由表中
+#向主路由表（main table）即表254添加一条路由，路由内容是设置192.168.0.4成为网关
+
+ip route add 192.168.3.0/24 via 192.168.0.3 table 1 
+#向路由表1添加一条路由，子网192.168.3.0（子网掩码是255.255.255.0）的网关是192.168.0.3
+```
+
+### 策略路由
+是指对于IP包的路由是以网络管理员根据业务需要而定下的一些策略为主要依据进行路由的  
+例如我们可以配置这样的策略路由：  
+所有来直自网A的包，选择X路径；其他选择Y路径”，或者是“所有TOS为A的包选择路径F；其他选者路径K  
+即：根据管理员**自定义的一些规则进行匹配**并对其进行下一跳的转发  
+策略性路由机制与传统的路由算法相比主要是引入了多路由表以及规则的概念   
+
+### 多路由表
+传统的路由算法是仅使用一张路由表的。但是在有些情形底下，我们是需要使用多路由表的。  
+例如一个子网通过一个路由器与外界相连，路由器与外界有两条线路，其中一条速度比较快，一条速度比较慢。  
+对于子网内的大多数用户来说对速度并没有特殊的要求，所以可以让他们用比较慢的路由；但是子网内有一些特殊的用户却是对速度的要求比较苛刻，所以他们需要使用速度比较快的路由。如果使用一张路由表上述要求是无法实现的，而如果根据源地址或其它参数，对不同的用户使用不同的路由表，这样就可以大大提高路由器的性能。
+
+要配置一个策略路由有2步  
+ 1、在自定义路由表中添加要走的路由  ip route add xxx/x via xxx **table table_num**  
+ 2、增加策略，使得符合该策略的流量走第一步所定义的路由表 ip rule add 策略 ( table tablenum 或 动作 )  
+ 
+ ---
+规则是策略性的关键性的新的概念。我们可以用自然语言这样描述规则，例如我门可以指定这样的规则:  
+规则1： 所有来自192.16.152.24的IP包使用路由表10，本规则的优先级别是1500  
+规则2： 所有的包使用路由表253，本规则的优先级别是32767  
+
+我们可以看到，规则包含3个要素：  
+什么样的包，将应用本规则（所谓的SELECTOR，可能是filter更能反映其作用）  
+符合本规则的包将对其采取什么动作（ACTION），例如用那个表  
+ 
+### 规则的配置命令
+```bash
+ip rule [ list | add | del ] SELECTOR ACTION
+说明：
+SELECTOR =  ( from PREFIX | to PREFIX | tos TOS | dev STRING | pref NUMBER )
+ACTION  =   ( table TABLE_ID | nat ADDRESS | prohibit | reject | unreachable | flowid CLASSID )
+TABLE_ID =  ( local | main | default | new | NUMBER )
+
+例子：
+]# ip rule list    #系统默认的三条路由策略
+0: from all lookup local
+32766: from all lookup main
+32767: from all lookup default 
+#规则0，它是优先级别最高的规则，规则规定，所有的包，都必须首先使用local表（254）进行路由。本规则不能被更改和删除。
+#规则32766，规定所有的包使用表main进行路由。本规则可以被更改和删除
+#规则32767，规定所有的包使用表default进行路由。本规则可以被更改和删除
+
+
+#向规则链增加一条规则，规则匹配的对象是所有的数据包，动作是选用路由表1的路由，这条规则的优先级是32800
+ip rule add from 0/0 table 1 pref 32800
+
+#向规则链增加一条规则，规则匹配的对象是IP为192.168.3.112，tos等于0x10的包，动作是使用路由表2，规则优先级1500
+ip rule add from 192.168.3.112/32 tos 0x10 table 2 pref 1500
+
+#向规则链增加一条规则，规则匹配的对象是IP为192.168.3.112，tos等于0x10的包
+#动作是丢弃报文并发送 COMM.ADM.PROHIITED的ICMP信息，这条规则的优先级是1500
+ip rule add from 192.168.3.112/32 tos 0x10 prohibit  pref 1500
+
+#向规则链增加一条规则，规则匹配的对象是IP为192.168.3.112，tos等于0x10的包
+#动作是单纯丢弃报文，这条规则的优先级是1500
+ip rule add from 192.168.3.112/32 tos 0x10 reject  pref 1500
+
+#将向规则链增加一条规则，规则匹配的对象是IP为192.168.3.112，tos等于0x10的包
+#动作是丢弃该包并发送 NET UNREACHABLE的ICMP信息，这条规则的优先级是1500
+ip rule add from 192.168.3.112/32 tos 0x10 unreachable pref 1500
+```
+### Example
+```bash
+#向规则链增加一条规则，规则匹配的对象是所有的数据包，动作是选用路由表1的路由，这条规则的优先级是32800
+router> ip rule add [from 0/0] table 1 pref 32800
+
+#向规则链增加一条规则，规则匹配的对象是IP为192.168.3.112，tos等于0x10的包，使用路由表2
+这条规则的优先级是1500，动作是。
+router> ip rule add from 192.168.3.112/32 [tos 0x10] table 2 pref 1500 prohibit
+
+#添加以后，我们可以看看系统规则的变化。
+router># ip rule
+0: from all lookup local
+1500 from 192.168.3.112/32 [tos 0x10] lookup 2
+32766: from all lookup main
+32767: from all lookup default
+32800: from all lookup 1
+
+#面的规则是以源地址为关键字，作为是否匹配的依据的。除了源地址外，还可以用以下的信息：
+　　From -- 源地址
+　　To -- 目的地址（这里是选择规则时使用，查找路由表时也使用）
+　　Tos -- IP包头的TOS（type of sevice）域
+　　Dev -- 物理接口
+　　Fwmark -- 防火墙参数
+  
+#采取的动作除了指定表，还可以指定下面的动作：
+　　Table 指明所使用的表
+　　Nat 透明网关
+　　Action prohibit 丢弃该包，并发送 COMM.ADM.PROHIITED的ICMP信息
+　　Reject 单纯丢弃该包
+　　Unreachable丢弃该包，并发送 NET UNREACHABLE的ICMP信息
+
+# --------------------------------------------------------------------------------
+A.添加路由表：
+#vi /etc/iproute2/rt_tables
+251 APP
+252 MAN
+
+B.两个路由表设置不同的默认路由：
+ip route add default via 172.16.100.1 dev eth0 table APP
+ip route add default via 192.168.100.1 dev eth1 table MAN
+
+C.两个路由表设置策略路由：
+ip rule add from 172.16.100.8 table APP
+ip rule add from 182.168100.8 table MAN
+----注意：这个地方是rule，不是route
+
+D.将上述语句写到开机脚本中：
+# vi /etc/rc.local
+ip route add default via 172.16.100.1 dev eth0 table APP
+ip route add default via 192.168.100.1 dev eth1 table MAN
+ip rule add from 172.16.100.8 table APP
+ip rule add from 182.168100.8 table MAN
+```
+### 策略路由的作用
+1 基于源地址选路（ Source-Sensitive Routing）  
+2 根据服务级别选路（ Quality of Service）  
+3 节省费用的应用  
+4 负载平衡（Load Sharing  ）

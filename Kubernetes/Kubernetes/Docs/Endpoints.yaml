@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: etcd-k8s
+  labels:
+    k8s-app: etcd
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: api
+    port: 2379
+    protocol: TCP
+
+---
+
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: etcd-k8s    #手动创建时强制要求与service同名，并且在service中不存在标签选择器进行关联，此时即手动维护的
+  labels:
+    k8s-app: etcd
+subsets:
+- addresses:
+  - ip: 192.168.100.102
+    nodeName: etcd1
+  - ip: 192.168.100.103
+    nodeName: etcd2
+  - ip: 192.168.100.104
+    nodeName: etcd3
+  ports:
+  - name: api
+    port: 2379
+    protocol: TCP
+
+---
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: etcd-k8s
+  labels:
+    k8s-app: etcd-k8s
+spec:
+  jobLabel: k8s-app
+  endpoints:
+  - port: api
+    interval: 30s
+    scheme: https
+    tlsConfig:
+      caFile: /etc/prometheus/secrets/etcd-certs/ca.pem
+      certFile: /etc/prometheus/secrets/etcd-certs/etcd.pem
+      keyFile: /etc/prometheus/secrets/etcd-certs/etcd-key.pem
+      #use insecureSkipVerify only if you cannot use a Subject Alternative Name
+      insecureSkipVerify: true 
+  selector:
+    matchLabels:
+      k8s-app: etcd
+  namespaceSelector:
+    matchNames:
+    - monitoring
+
+
+# kubectl -n monitoring create secret generic etcd-certs \
+  --from-file=/etc/kubernetes/ssl/ca.pem \
+  --from-file=/etc/kubernetes/ssl/etcd.pem \
+  --from-file=/etc/kubernetes/ssl/etcd-key.pem
+
+# kubectl -n monitoring get secrets etcd-certs  #这里的证书是在部署 etcd 集群时创建
+NAME         TYPE      DATA      AGE
+etcd-certs   Opaque    3         16h
+
+#使Prometheus Operator接入secret
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: k8s
+  labels:
+    prometheus: k8s
+spec:
+  replicas: 2
+  secrets:
+  - etcd-certs
+  version: v2.2.1
+
+# kubectl -n monitoring replace -f manifests/prometheus/prometheus-k8s.yaml

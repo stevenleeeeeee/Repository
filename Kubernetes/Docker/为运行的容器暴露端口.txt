@@ -1,0 +1,13 @@
+[root@localhost ~]# docker inspect a339f39c13a6 | grep IPAddress                
+            "SecondaryIPAddresses": null,
+            "IPAddress": "172.17.0.3",
+                    "IPAddress": "172.17.0.3",
+
+[root@localhost ~]# iptables -t nat -A  DOCKER -p tcp --dport 8001 -j DNAT --to-destination 172.17.0.3:17001 
+
+[root@localhost ~]# curl  192.168.70.138:8001/console -I          
+HTTP/1.1 302 Moved Temporarily
+Date: Sun, 05 May 2019 08:13:13 GMT
+Transfer-Encoding: chunked
+Location: http://192.168.70.138:8001/console/
+X-Powered-By: Servlet/2.5 JSP/2.1

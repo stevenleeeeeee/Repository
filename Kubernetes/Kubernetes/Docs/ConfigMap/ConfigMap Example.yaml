@@ -1,0 +1,235 @@
+
+
+#Example Pod with a secret, a downward API, and a configmap:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: volume-test
+spec:
+  containers:
+  - name: container-test
+    image: busybox
+    volumeMounts:
+    - name: all-in-one
+      mountPath: "/projected-volume"
+      readOnly: true
+  volumes:
+  - name: all-in-one
+    projected:
+      sources:
+      - secret:
+          name: mysecret
+          items:
+            - key: username
+              path: my-group/my-username
+      - downwardAPI:
+          items:
+            - path: "labels"
+              fieldRef:
+                fieldPath: metadata.labels
+            - path: "cpu_limit"
+              resourceFieldRef:
+                containerName: container-test
+                resource: limits.cpu
+      - configMap:
+          name: myconfigmap
+          items:
+            - key: config
+              path: my-group/my-config
+
+--- 
+
+#格式：
+#kubectl create configmap <map-name> <data-source>
+#kubectl create configmap <map-name> --from-file=kubectl/game.properties      #也可以是目录
+#kubectl create configmap <map-name> --from-file=<my-key-name>=<path-to-file>
+
+#kubectl create configmap game-config-env-file \
+# --from-env-file=configure-pod-container/configmap/kubectl/game-env-file.properties
+#cat configure-pod-container/configmap/kubectl/game-env-file.properties
+#enemies=aliens
+#lives=3
+#allowed="true"
+
+#kubectl get configmap game-config-env-file -o yaml
+#apiVersion: v1
+#data:
+#  allowed: '"true"'
+#  enemies: aliens
+#  lives: "3"
+#kind: ConfigMap
+#metadata:
+#  creationTimestamp: 2017-12-27T18:36:28Z
+#  name: game-config-env-file
+#  namespace: default
+#  resourceVersion: "809965"
+#  selfLink: /api/v1/namespaces/default/configmaps/game-config-env-file
+#  uid: d9d1ca5b-eb34-11e7-887b-42010a8002b8
+
+
+#kubectl create configmap special-config --from-literal=special.how=very --from-literal=special.type=charm
+#kubectl get configmaps special-config -o yaml
+#apiVersion: v1
+#data:
+#  special.how: very
+#  special.type: charm
+#kind: ConfigMap
+#metadata:
+#  creationTimestamp: 2016-02-18T19:14:38Z
+#  name: special-config
+#  namespace: default
+#  resourceVersion: "651"
+#  selfLink: /api/v1/namespaces/default/configmaps/special-config
+#  uid: dadce046-d673-11e5-8cd0-68f728db1985
+
+
+#环境变量方式：
+#kubectl create configmap special-config --from-literal=special.how=very
+#kubectl edit pod dapi-test-pod
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: dapi-test-pod
+#spec:
+#  containers:
+#    - name: test-container
+#      image: k8s.gcr.io/busybox
+#      command: [ "/bin/sh", "-c", "env" ]
+#      env:
+#        # Define the environment variable
+#        - name: SPECIAL_LEVEL_KEY
+#          valueFrom:
+#            configMapKeyRef:
+#              # The ConfigMap containing the value you want to assign to SPECIAL_LEVEL_KEY
+#              name: special-config
+#              # Specify the key associated with the value
+#              key: special.how
+#  restartPolicy: Never
+
+
+#将ConfigMap数据添加到卷
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: special-config
+#  namespace: default
+#data:
+#  special.level: very
+#  special.type: charm
+#---
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: dapi-test-pod
+#spec:
+#  containers:
+#    - name: test-container
+#      image: k8s.gcr.io/busybox
+#      command: [ "/bin/sh", "-c", "ls /etc/config/" ]
+#      volumeMounts:
+#      - name: config-volume
+#        mountPath: /etc/config
+#  volumes:
+#    - name: config-volume
+#      configMap:
+#        # Provide the name of the ConfigMap containing the files you want
+#        # to add to the container
+#        name: special-config
+#  restartPolicy: Never
+
+#pod运行时，command（"ls /etc/config/"）生成以下输出：
+#special.level
+#special.type
+
+#将ConfigMap数据添加到卷中的特定路径
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dapi-test-pod
+spec:
+  containers:
+    - name: test-container
+      image: k8s.gcr.io/busybox
+      command: [ "/bin/sh","-c","cat /etc/config/keys" ]
+      volumeMounts:
+      - name: config-volume
+        mountPath: /etc/config
+  volumes:
+    - name: config-volume
+      configMap:
+        name: special-config
+        items:
+        - key: special.level
+          path: keys  #该字段为特定ConfigMap项指定所需的文件路径。在这种情况下该special.level项目将安装在config-volume卷中/etc/config/keys
+  restartPolicy: Never
+#pod运行时，command（"cat /etc/config/keys"）生成以下输出：very
+
+----------------------------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etcd-env-config
+data:
+  number_of_members: "1"
+  initial_cluster_state: new
+  initial_cluster_token: DUMMY_ETCD_INITIAL_CLUSTER_TOKEN
+  discovery_token: DUMMY_ETCD_DISCOVERY_TOKEN
+  discovery_url: http://etcd_discovery:2379
+  etcdctl_peers: http://etcd:2379
+  duplicate_key: FROM_CONFIG_MAP
+  REPLACE_ME: "a value"
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: website
+  labels:
+    app: website
+    role: frontend
+  annotations:
+    podpreset.admission.kubernetes.io/podpreset-allow-database: "resource version"
+spec:
+  containers:
+    - name: website
+      image: ecorp/website
+      volumeMounts:
+        - mountPath: /cache
+          name: cache-volume
+        - mountPath: /etc/app/config.json
+          readOnly: true
+          name: secret-volume
+      ports:
+        - containerPort: 80
+      env:
+        - name: DB_PORT
+          value: "6379"
+        - name: duplicate_key
+          value: FROM_ENV
+        - name: expansion
+          value: $(REPLACE_ME)    #引用Configmap资源的etcd-env-config对象中的REPLACE_ME的值
+      envFrom:
+        - configMapRef:
+          name: etcd-env-config
+  volumes:
+    - name: cache-volume
+      emptyDir: {}
+    - name: secret-volume
+      secret:
+         secretName: config-details
+---
+#创建:
+kubectl create configmap tdms-uap-configuration --from-file=./configuration #将当前目录作为配置中心实例对象的内容
+#注入:
+#     containers:
+#       ...........
+#       volumeMounts:
+#       - name: tdms-uap-config-configuration
+#         mountPath: /var/app/tdms_uap/WEB-INF/configuration
+#       ...........
+#     volumes:
+#     - name: tdms-uap-config-configuration
+#       configMap:
+#         name: tdms-uap-configuration

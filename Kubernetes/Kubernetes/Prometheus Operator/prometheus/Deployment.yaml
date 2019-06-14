@@ -1,0 +1,144 @@
+#Kubernets官方插件支持：https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/prometheus
+
+#部署:
+#YAML清单地址：https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/prometheus
+
+# 添加kubelet的启动参数:
+# --authentication-token-webhook=true
+# --authorization-mode=Webhook
+
+# 添加kube-apiserver的启动参数: 
+# --requestheader-client-ca-file=/etc/kubernetes/ssl/ca.pem \
+# --requestheader-allowed-names=aggregator \
+# --requestheader-extra-headers-prefix=X-Remote-Extra- \
+# --requestheader-group-headers=X-Remote-Group \
+# --requestheader-username-headers=X-Remote-User \
+# --proxy-client-cert-file=/etc/kubernetes/ssl/aggregator-proxy.pem \
+# --proxy-client-key-file=/etc/kubernetes/ssl/aggregator-proxy-key.pem \
+# --enable-aggregator-routing=true \
+
+# 添加kube-controller-manager的启动参数:
+# --horizontal-pod-autoscaler-use-rest-clients=true",
+# --horizontal-pod-autoscaler-sync-period=60s",
+
+#prometheus持久化设置，新增2个PV（根据 alertmanager-pvc.yaml prometheus-statefulset.yaml设置，自己设置持久化存储）:
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: prometheus-pv
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 16Gi
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    path: /data/prometheus/prometheus-data
+    server: 192.168.0.34
+--- 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: alertmanager-pv
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    path: /data/prometheus/alertmanager-data
+    server: 192.168.0.34
+
+--- #若需暴露prometheus-server端口，修改prometheus-service.yaml，并设置type为NodePort
+
+spec:
+  ports:
+    - name: http
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+      nodePort: 32189
+  type: NodePort
+
+cd kubernetes/tree/master/cluster/addons/prometheus
+for file in kube-state-*; do kubectl apply -f $file ; done       #从APIServer获取资源对象状态信息
+for file in node-exporter-*; do kubectl apply -f $file ; done    #daemonset于节点9100端口
+for file in alertmanager-*; do kubectl apply -f $file ; done     #告警组件 ( 需配置其ConfigMap )
+for file in prometheus-*; do kubectl apply -f $file ; done       #
+
+#部署k8s-prometheus-adapter ( 代理prometheus，将PromQL转为APIServer的指标接口，它是中间层 )
+#默认k8s-prometheus-adapter部署在custom-metrics名称空间，因此需要将相关证书和私钥作为此名称空间中的Secret对象
+#自定义的K8S API Server必须基于HTTPS与客户端通信
+#并且k8s-prometheus-adapter需要名为cm-adapter-serving-certs的Secret对象加载证书
+
+#基于Kubernets的CA为k8s-prometheus-adapter签署自制证书
+cd /etc/kubernetes/pki   
+( unmask 077 ; openssl genrsa -out serving.key 2048 )
+openssl req -new -key serving.key -out serving.csr -subj "/CN=serving"
+openssl x509 -req -in serving.csr -CA /etc/kubernetes/pki/ca.crt \
+    -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out serving.crt -days 3650
+
+kubectl create namespace custom-metrics
+kubectl create secret generic cm-adapter-serving-certs -n custom-metrics \
+    --from-file=serving.crt=./serving.crt --from-file=serving.key=serving.key
+
+git clone https://github.com/DirectXMan12/k8s-prometheus-adapter.git
+kubectl apply -f k8s-prometheus-adapter/deploy/manifests
+
+#检查:  kubectl api-version | grep custom
+#验证:  kubectl get -raw "/apis/custom.metrics.k8s.io/v1beta1" | jq '.resources[].name'
+
+----------------------------
+
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    name: prometheus-deployment
+  name: prometheus
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+      - image: prom/prometheus:v2.0.0
+        name: prometheus
+        command:
+        - "/bin/prometheus"
+        args:
+        - "--config.file=/etc/prometheus/prometheus.yml"
+        - "--storage.tsdb.path=/prometheus"
+        - "--storage.tsdb.retention=24h"
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        volumeMounts:
+        - mountPath: "/prometheus"
+          name: data
+        - mountPath: "/etc/prometheus"
+          name: config-volume
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 500m
+            memory: 2500Mi
+      serviceAccountName: prometheus    
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: config-volume
+        configMap:
+          name: prometheus-config 
