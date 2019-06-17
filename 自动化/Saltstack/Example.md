@@ -101,7 +101,7 @@ salt '*' sys.reload_modules
 # 获取自定义的grains
 salt '*' grains.item name / salt 'cong-55' grains.get name ?区别
 
-# 同时设置多个grains值
+# 同时设置多个grains值 （ 单个值：grains.setval ）
 salt '*' grains.setvals "{'key1': 'val1', 'key2': 'val2'}" 
 
 # 设置grains
