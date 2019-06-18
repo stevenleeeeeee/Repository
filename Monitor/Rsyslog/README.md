@@ -363,7 +363,7 @@ mail.*                                                  -/var/log/maillog
 #使用定制的模板（日志文件名称）将local5的所有信息追加到此模板定义的文件名...
 $template DynamicFile,"/var/log/test_logs/%$YEAR%_%$MONTH%_%$DAY%-local5.log"
 local5.* -?DynamicFile              #通过指定问号"?"而不是斜杠来说明是动态生成的文件名，?后跟此动态名称的模板，- 为异步
-local5.* -?DynamicFile;Mytemplate   #也可以使用模板指定输出格式
+local5.* -?DynamicFile;Mytemplate   #也可以在分号后面指定输出格式的模板
 
 #将日志写入mysql数据库...（需加载mysql模块：$ModLoad ommysql）
 #*.*      :ommysql:database-server,database-name,database-user,database-password
