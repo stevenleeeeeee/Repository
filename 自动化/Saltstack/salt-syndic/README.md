@@ -52,6 +52,10 @@ master: 192.168.10.101                      #所有的minion端不再直接指�
 
 systemctl restart salt-minion
 ```
+#### 同步顶层master与syndic的sls文件
+```bash
+rsync -avzP --delete -e 'ssh -p 22 -o StrictHostKeyChecking=no' /source_dir root@<ip>:/destination_dir/
+```
 #### 注意
 ```bash
 #在最上层master做资源管理 state （pillar grains module）时不能直接在top.sls下指定minon id 但是可直接管理minion
