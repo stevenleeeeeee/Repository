@@ -47,6 +47,7 @@ Elastic v5.5.0
 
 #Elastic对ulimit有要求，此操作需Root权限对安装ES的用户修改ulimit配额，最终使用非root账户启动ES
 [root@localhost ~]# yum -y install bzip2 git unzip maven
+[root@localhost ~]# ulimit -SHn 655350
 [root@localhost ~]# cat >> /etc/security/limits.conf <<eof
 * soft nofile 655350        #
 * hard nofile 655350        #进程最大打开文件描述符

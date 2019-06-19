@@ -165,7 +165,7 @@ foreach ($.quux in $!foo) do {
     "timereported": "2018-01-15T19:40:20.462759+08:00", 
     "hostname": "log", 
     "syslogtag": "a_test",  #下游接收时可以根据syslogtag属性，其依据在上游配置imfile时添加的tag来区分不同的日志文件!
-    "inputname": "imfile",  #     例如：input(type="imfile" File="/data/test_1.log" tag="test_1")  <---
+    "inputname": "imfile",  #  如：input(type="imfile" File="/data/test_1.log" tag="test_1")  <---
     "fromhost": "", 
     "fromhost-ip": "", 
     "pri": "133", 
@@ -189,14 +189,16 @@ foreach ($.quux in $!foo) do {
     fromhost            #收到消息的来源的主机名（在中继链中，这是紧接在我们面前的系统，不一定是原始发送者）
     fromhost-IP         #与fromhost相同，不过获取的是ip。本地输入如 imklog 在此属性中使用 ---> 127.0.0.1
     syslogtag           #来自消息的Tag ( 即标签 ) message 的 tag
-    PROGRAMNAME         #标签的"静态"部分，例如tag是named[123456]，则programname是named
+    PROGRAMNAME         #来自消息的Tag，但它是标签的"静态"部分，例如tag是 named[123456] 则programname是: named
+    #例：在输入端打标签：$InputFileTag APPNAME / 接收端匹配：if $programname == 'APPNAME' then @<ip>:<port>;模板
                         # 1. end of tag
                         # 2. nonprintable character
-                        # 3. ‘:’
-                        # 4. ‘[‘
-                        # 5. ‘/’
-    PRI                 #PRI部分消息，未解码（单值） message的PRI
+                        # 3. ':'
+                        # 4. '['
+                        # 5. '/'
+    PRI                 #PRI部分消息，未解码（单值） message的PRI 即优先级!
     pri-text            #消息的PRI部分采用文本形式，数字PRI附加在括号中（例如 "local0.err <133>"）
+    app-name            #The contents of the APP-NAME field from IETF draft draft-ietf-syslog-protocol
     IUT                 #监视器InfoUnitType - 与 MonitorWare后端通信时使用（也适用于 Adiscon LogAnalyzer）
     syslogfacility      #来自消息的设施 - 以数字形式
     syslogfacility-text #来自消息的设施 - 以文本形式
@@ -226,7 +228,7 @@ foreach ($.quux in $!foo) do {
     json                #对值进行编码以便在JSON字段中使用。这意味着根据JSON规范转义了几个字符如 US-ASCII LF 被"\n"替换
     jsonf[:outname]     #表示该属性应表示为JSON字段。这意味着不仅要编写属性，而且还要使用格式中的完整JSON字段
     csv                 #格式化RFC 4180中指定的CSV格式的结果字段（在所有修改之后）
-    drop-last-lf
+    drop-last-lf            #例如： %msg:::drop-last-lf%    即：日志的完整消息文本，移出最後的換行符
     date-utc                #在输出数据之前将数据转换为UTC
     date-mysql              #格式为mysql日期
     date-rfc3164            #格式为RFC 3164日期
@@ -516,6 +518,8 @@ useragent=ios_h5_zjcap&apiver=2&WKWebView=1" "ios_h5_zjcap" 0.001 -
  www.zjcap.cn 10.168.29.17 10.171.246.184 [11/Aug/2016:12:02:20 +0800] "GET /resources/images/icon/coupon.b9243e75.png HTTP/1.1" - 200 715 "https://www.zjcap.cn/resources/css/index.css?06212016" 
 "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36" 0.001 -
 
+
+%programname:F,59:3%               #使用分号作为分隔符，取第三列内容（推荐）
 "%msg:1:2%"                        #读取从pos从1到2的数据
 "%msg:::lowercase%"                #将整个消息转换为小写
 "%msg:10:$%"                       #截取pos从10到最后的消息内容
@@ -611,4 +615,38 @@ $outchannel name,file-name,max-size,action-on-max-size
 #操作队列是可由用户进行配置的，因此可以更改为最适合给定用例的任何内容（翻译）
 #action队列 ---> 当message进入到main队列之后，filter engine从main队列读取并将message发到action队列
 #等待action将数据通过各种不同的output发到其他日志中转介质
+```
+#### Rsyslog服务端根据发送端的标签生成存储路径
+```txt
+input(type="imfile"
+      File="/tmp/logs/test.log"
+      Tag="log@save;program;app1"
+      stateFile="/var/lib/rsyslog/111.state"
+)
+
+template(name="common-template"
+        type="string"
+        string="/tmp/logs/%programname:F,59:2%/%fromhost-ip%/%programname:F,59:3%.%$now%.log"
+)
+
+if ( $programname startswith 'log@save') then {
+
+    action(type="omfile"
+           dynaFile="common-template"
+           fileCreateMode="0644"
+           DirCreateMode="0700"
+           createDirs="on"
+    )
+    stop
+}
+```
+#### 日志压缩
+```bash
+#!/bin/bash
+
+#获取以前一天日志结尾的 yyyy-mm-dd.log 日志文件，并放到数组
+LOGFILE=$(find . -name "*$(date '+%Y%m%d' -d '-1 day').log" -type f)
+
+#并发20个bzip2进行日志压缩
+echo ${LOGFILE[@]} | xargs -P 20 -n 1 bzip2 
 ```

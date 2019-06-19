@@ -1,5 +1,5 @@
 ```bash
-[root@mreald.com  logstash_conf]# cat /etc/logrotate.d/logstash     #多个文件绝对路径路径可以用空格、换行分隔
+[root@node1 ~]# cat /etc/logrotate.d/logstash     #多个文件绝对路径路径可以用空格、换行分隔
 /nfsc/logtest/stg/applog/*/*out
 /nfsc/logtest/stg/oslog/*/var/log/cron
 /nfsc/logtest/stg/oslog/*/var/log/secure
@@ -40,8 +40,13 @@
 # postrotate/endscript	    在轮替之后执行之间的命令，postrotate与endscript成对出现。
 # olddir			将轮替的文件移至指定目录下
 # missingok		    如果日志文件不存在，继续进行下一个操作，不报错
+
+# 测试语法:
+[root@node1 ~]# /usr/sbin/logrotate -d -v /etc/logrotate.conf
 ```
 ####  写入 Crontab
 ```bash
+#logrotate提供的轮替周期参数只能精确到天，以天为轮替周期在一些情况下并不能满足我们的要求，此时可以基于crontab进行切割
+
 */5 * * * * logrotate    /etc/logrotate.d/logstash
 ```
