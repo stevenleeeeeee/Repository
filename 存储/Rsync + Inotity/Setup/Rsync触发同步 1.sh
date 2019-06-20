@@ -25,3 +25,4 @@ inotifywait -mrq --timefmt '%d/%m/%y %H:%M' --format '%T %e %w%f' -e move,modify
     rsync -vzrtopg --delete -e 'ssh -p 22' ${src} ${user}@${host1}:${des} && echo "$(date '+%F') - ${events}" >> $log
     rsync -vzrtopg --delete -e 'ssh -p 22' ${src} ${user}@${host2}:${des} && echo "$(date '+%F') - ${events}" >> $log
 }
+

@@ -42,8 +42,9 @@ systemctl enable salt-syndic --now
 # 由于Syndic只订阅最上层Master下发的任务, 对于文件服务等, Syndic本地需要进行配置
 # syndic节点所有sls文件必须与最上层master同步，因为所有底层minion订阅到任务时都是去自己的直接上层获取sls并执行
 # syndic本地会维护auth及文件服务系统。保证各个syndic与master的文件目录保持统一! 
-# Syndic本质上是一个特殊的Minion ( 需保证Syndic上的file_roots及pillar_roots与顶层master是一致的! )
-# 由于Syndic管理了其下Minions的认证, 因此最上层Master并不知道有多少Syndic主机，Syndic下边有多少Minions.
+# Syndic本质是个特殊的Minion ( 需保证Syndic上的file_roots及pillar_roots与顶层master一致! )
+# 由于Syndic管理了其下Minions的认证, 因此最上层Master并不知道有多少Syndic主机，Syndic下边有多少Minions
+# 每个Syndic都必须使用和维护好自己的file_roots目录。发布操作使用的数据文件并不会自动地从上级Master节点传输过来
 #------------------------------------------------------------ salt-minion 
 
 #在minion中将master地址指向salt-syndic的地址:
