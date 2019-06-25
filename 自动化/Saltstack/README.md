@@ -803,3 +803,14 @@ schedule:
         seconds:
             10
 ```
+#### state.sls与state.highstate
+```txt
+state.sls与state.highstate区别大致如下：
+
+state.highstate会读取所有环境（包括base环境）的top.sls文件
+并且执行top.sls文件内容里面定义的sls文件，不在top.sls文件里面记录的sls则不会被执行
+
+state.sls默认读取base环境，但是它并不会读取top.sls文件。你可以指定state.sls执行哪个sls文件，只要它在base环境下存在
+state.sls也可以指定读取哪个环境：state.sls salt_env='prod' xxx.sls，这个xxx.sls可以不在top.sls中记录
+state.sls执行的xxx.sls会被下发到minion端，而state.highstate则不会
+```
