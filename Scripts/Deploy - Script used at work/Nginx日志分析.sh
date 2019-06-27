@@ -55,7 +55,7 @@ function SCAN_LOGFILE_POSITION() {
 #输出特定时间段内URL访问量前30个的统计结果
 function SCAN_TIME_RANGE_URL_SORT() {
     SCAN_LOGFILE_POSITION | SCAN_LOGFILE_URL_SORT   
-    echo -e "\033[31m扫描日志开始时间：$LOG_S_TIME \033[0m"
+    echo -e "\033[31m扫描日志开始时间: $LOG_S_TIME \033[0m"
     echo -e "\033[31m扫描日志结束时间: $LOG_E_TIME \033[0m"
 }
 
@@ -63,14 +63,14 @@ function SCAN_TIME_RANGE_URL_SORT() {
 function SCAN_TIME_RANGE_URL() {
     read -p "please input URl:" sentence
     SCAN_LOGFILE_POSITION | grep -c "$sentence"
-    echo -e "\033[31m扫描日志开始时间：$LOG_S_TIME \033[0m"
+    echo -e "\033[31m扫描日志开始时间: $LOG_S_TIME \033[0m"
     echo -e "\033[31m扫描日志结束时间: $LOG_E_TIME \033[0m"
 }
 
 #输出特定时间段内URL返回超过指定时间的统计
 function SCAN_TIME_RANGE_LONGTIME() {
     SCAN_LOGFILE_POSITION | SCAN_LOGFILE_LONGTIME
-    echo -e "\033[31m扫描日志开始时间：$LOG_S_TIME \033[0m"
+    echo -e "\033[31m扫描日志开始时间: $LOG_S_TIME \033[0m"
     echo -e "\033[31m扫描日志结束时间: $LOG_E_TIME \033[0m"
 }
 
