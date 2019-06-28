@@ -57,7 +57,7 @@ REDIS_MASTER_PORT_6379_TCP_ADDR=10.0.0.11
 #Kubernetes还支持命名端口的DNS SRV（服务）记录。
 #如果 "my-service.my-ns" Service具有"http"以协议命名的端口，则可执行DNS SRV查询"_http._tcp.my-service.my-ns"以发现其端口号
 
-#有时您不需要或不需要负载平衡和单个服务IP。在这种情况下，您可以通过指定"None"群集IP（.spec.clusterIP）来创建“无头”服务。
+#有时不需要或不需要负载平衡和单个服务IP。在这种情况下，您可以通过指定"None"群集IP（.spec.clusterIP）来创建无头服务
 
 
 #externalIPs (通过svc创建,在指定的node上监听端口)
@@ -104,3 +104,38 @@ spec:
 #- 这个端口是kube-proxy来启动的,所以只有运行kube-proxy的    
 #[root@n2 ~]# netstat -ntulp       
 #tcp        0      0 192.168.2.12:80         0.0.0.0:*               LISTEN      11465/kube-proxy 
+
+
+#在Kubernetes集群中同一个微服务的不同副本会对集群内或集群外（取决于服务对外暴露类型）暴露统一的服务名称
+#一个服务背后是多个 EndPoint，EndPoint解决映射到某个容器的问题
+#在 EndPoint 中不仅可以指定集群内容器的IP，还可以指定集群外的IP，我们可以利用这个特性使用集群外部的服务
+#EndPoint 方式的缺点是只能指定IP，不能使用网址，比如RDS的地址，这种情况下只能使用ExternalName来解决
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-production
+spec:
+  ports:
+    - port: 3306
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: mysql-production
+  namespace: default
+subsets:
+  - addresses:
+      - ip: 192.168.1.25
+    ports:
+      - port: 3306
+
+
+#对Service名称和外部服务地址做一个映射，使之访问Service名称既是访问外部服务
+kind: Service
+apiVersion: v1
+metadata:
+  name: svc1
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: somedomain.org
