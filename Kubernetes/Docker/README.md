@@ -240,12 +240,11 @@ CONTAINER ID        IMAGE                   COMMAND                  CREATED    
 # COPY         同ADD，但不会解压文件
 # VOLUME       用于指定持久化目录
 # EXPOSE       容器需要暴露的端口
-# LABEL        给镜像添加信息。用docker inspect可查看镜像的相关信息，如：LABEL version="1.0"
+# LABLE        为容器打标签元数据，使用docker inspect <ImageName> 可查看到其元数据信息，包括部分Dockerfile中的指令
 # ENTRYPOINT   配置容器，使其可执行化（若CMD也存在则CMD的内容相当于ENTRYPOINT的参数）
 # CMD          在容器启动时进行调用的命令
 # WORKDIR      工作目录
 # USER         用于设定容器的运行用户名或UID
-# LABLE        为容器打标签元数据，使用docker inspect <ImageName> 可查看到其元数据信息，包括部分Dockerfile中的指令
 
 [root@localhost ~]# docker build -t "name:tag" .            #根据当前路径下的Dockerfile开始构建镜像
 
