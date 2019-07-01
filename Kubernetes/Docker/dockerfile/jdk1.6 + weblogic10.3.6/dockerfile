@@ -1,0 +1,101 @@
+FROM centos:latest
+
+COPY files /tmp/
+
+LABEL JAVA_VERSION='jdk1.6.0_43' \
+      WEBLOGIC_VERSION='10.3.6' \
+      APPLICATION_PATH='/var/app' \
+      WORKDIR='/app/weblogic/Oracle/Middleware/wlserver_10.3'
+          
+ARG USERNAME=weblogic
+ARG PASSWORD=pdw_W_4962
+ARG DOMAIN_PATH=/app/weblogic/Oracle/Middleware/user_projects/domains/base_domain
+ARG TZ="Asia/Shanghai"
+
+ENV TZ ${TZ}
+
+#JDK1.6
+RUN groupadd weblogic -g 501 \
+    && useradd weblogic -g 501 -u 501 -d /home/weblogic -s /bin/bash \
+    && echo ${PASSWORD} | passwd weblogic --stdin \
+    && \cp -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo 'Asia/Shanghai' > /etc/timezone \
+    && ulimit -n 655350 \
+    && rpm -ivh /tmp/jdk-6u43-linux-amd64.rpm \
+    && mkdir -p /app \
+    && chown -R weblogic:weblogic /app \
+    && sed -i -E 's|^(securerandom.source=).*|\1file:/dev/./urandom|g' /usr/java/jdk1.6.0_43/jre/lib/security/java.security \
+    && echo 'JAVA_HOME=/usr/java/jdk1.6.0_43' > /etc/profile.d/java.sh \
+    && echo 'CLASSPATH=.:$JAVA_HOME/lib:$JAVA_HOME/jre/lib' >> /etc/profile.d/java.sh \
+    && echo 'PATH=$JAVA_HOME/bin::$JAVA_HOME/bin:$PATH' >> /etc/profile.d/java.sh \
+    && echo 'LANG=C' >> /etc/profile.d/java.sh \
+	&& rm -rf /tmp/jdk-6u43-linux-amd64.rpm
+
+RUN source /etc/profile
+
+#Weblogic10.3.6
+RUN source /etc/profile \
+    && cd /tmp \
+    && java -jar wls1036_generic.jar -Djava.io.tmpDir=/tmp -mode=silent -silent_xml=jdk6silent.xml -log=install.log \
+    && cd /app/weblogic/Oracle/Middleware/wlserver_10.3/common/bin/ \
+    && ./config.sh -mode=silent -silent_script=/tmp/domain.rsp -logfile=/app/weblogic/Oracle/Middleware/create_domain.log \
+    && mkdir -p ${DOMAIN_PATH}/servers/AdminServer/security \
+    && echo -e "username=${USERNAME}\npassword=${PASSWORD}" > ${DOMAIN_PATH}/servers/AdminServer/security/boot.properties \
+    && sed -i '353aexport JAVA_OPTIONS="${JAVA_OPTIONS} -Djava.security.egd=file:/dev/./urandom"' ${DOMAIN_PATH}/bin/setDomainEnv.sh \
+    && rm -rf /tmp/{*.rpm,wls1036_generic.jar,domain.rsp,*.xml} \
+    && mkdir -m 777 -p /var/app \
+    && sed -i '5aexport USER_MEM_ARGS="-Xms2048M -Xmx2048M -XX:MaxPermSize=512M"' /app/weblogic/Oracle/Middleware/user_projects/domains/base_domain/startWebLogic.sh
+
+EXPOSE 17001
+#EXPOSE 17002
+
+WORKDIR /app/weblogic/Oracle/Middleware/wlserver_10.3
+
+CMD ["/app/weblogic/Oracle/Middleware/user_projects/domains/base_domain/startWebLogic.sh"]
+
+#------------------------------------------------------------------------------------------ 构建上层应用：
+FROM 20.58.27.3:5000/jdk6-weblogic:10.3.6		#从基础镜像开始构建BPM
+
+#将应用写入镜像/var/app路径下（其实此构建过程也可以使用docker cp 的方式直接注入到上面的镜像中然后开始部署应用）
+COPY default        /var/app/default			
+COPY workspace      /var/app/workspace
+
+USER root
+
+RUN chown weblogic.weblogic -R /var/app
+
+EXPOSE 17001
+EXPOSE 16304
+EXPOSE 16305
+EXPOSE 16306
+
+ARG DOMAIN_DIR=/app/weblogic/Oracle/Middleware/user_projects/domains/base_domain	
+ARG USERNAME=weblogic
+ARG PASSWORD=xxxxxxxxx
+
+#USER weblogic
+
+#指定工作目录及启动时执行的命令
+WORKDIR ${DOMAIN_DIR}							
+CMD ["/app/weblogic/Oracle/Middleware/user_projects/domains/base_domain/startWebLogic.sh"]
+
+#构建BPM镜像时,需要在dockerfile所在目录执行构建命令: 
+Docker build -t ‘bpm-test:xxxxv1’ .  	#其中的xxx是版本,镜像名称实际上是可以自定义的,建议使用应用名称,容易识别.
+#镜像构建完成后,将在docker daemon自身的镜像信息中显示此打包好的镜像
+
+#----------------------------------------------- 将中间镜像
+docker commit -c "EXPOSE 17001" \
+-c "WORKDIR /app/weblogic/Oracle/Middleware/user_projects/domains/base_domain" \
+-c "CMD rm -rf /app/weblogic/Oracle/Middleware/user_projects/domains/base_domain/servers/AdminServer/{cache,data,tmp} \
+&& /app/weblogic/Oracle/Middleware/user_projects/domains/base_domain/startWebLogic.sh " \
+<容器ID>  <镜像名称>:<版本>		
+
+
+#注，容器ID通过docker ps 的第一列可以查看到
+
+#构建镜像完成后需要将镜像打tag, 存入docker仓库中:
+docker tag  bpm-test:xxxx 20.58.27.3:5000/bpm-test:xxxx
+docker push  20.58.27.3:5000/bpm-test:xxxx
+
+#----------------------------------------------- kubernetes中使用deployment进行部署
+.......
