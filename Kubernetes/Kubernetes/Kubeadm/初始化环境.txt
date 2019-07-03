@@ -1,0 +1,116 @@
+#将组件的Docker镜像打包导入到内网Docker仓库中
+docker load < coredns.tar.gz
+docker load < dashboard.tar.gz
+docker load < etcd.tar.gz
+docker load < flannel.tar.gz
+docker load < kube-apiserver.tar.gz
+docker load < kube-controller-manager.tar.gz
+docker load < kube-proxy.tar.gz
+docker load < kube-scheduler.tar.gz
+docker load < pause.tar.gz
+
+#集群节点设置主机名映射
+cat >> /etc/hosts <<'EOF'
+192.168.70.138  node1 master1
+192.168.70.139  node2 master2
+192.168.70.140  node3
+192.168.70.141  node4
+EOF
+
+setenforce 0
+sed -i.bak "s/^SELINUX=.*/SELINUX=disabled/g" /etc/sysconfig/selinux /etc/selinux/config
+
+systemctl stop firewalld --now
+iptables -F && iptables -X && iptables -F -t nat && iptables -X -t nat
+iptables -P FORWARD ACCEPT
+systemctl disable dnsmasq --now
+
+yum -y install yum-utils chrony lvm2 git jq unzip ipset ipvsadm conntrack libseccomp sysstat 
+yum -y install yum-utils epel-release
+yum-config-manager --add-repo  https://download.docker.com/linux/centos/docker-ce.repo
+
+cat > /etc/yum.repos.d/kubenetes.repo <<'EOF'
+[kubenetes]
+name=Kubenetes Repo
+baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
+gpgcheck=0
+enabled=1
+EOF
+
+yum -y install docker-ce kubeadm kubelet chrony kubectl  device-mapper-persistent-data
+
+systemctl daemon-reload
+systemctl enable docker --now
+systemctl enable kubelet
+systemctl enable chronyd --now
+
+timedatectl set-timezone Asia/Shanghai
+timedatectl set-local-rtc 0
+systemctl enable chronyd --now 
+
+modprobe bridge
+modprobe br_netfilter
+modprobe ip_vs
+modprobe ip_vs_rr
+modprobe ip_vs_wrr  
+modprobe ip_vs_sh
+modprobe nf_conntrack_ipv4
+
+sysctl -w vm.swappiness=0
+sed -i.bak "/swap/s/\(.*\)/#\1/g" /etc/fstab && swapoff -a
+
+ulimit -n 655350
+
+echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
+modprobe bridge 
+swapoff -a
+sed -iE "/swap/s/\(.*\)/#\1/g" /etc/fstab 
+echo 0 > /proc/sys/vm/swappiness
+
+cat > /etc/sysctl.d/kubernetes.conf <<'EOF'
+net.bridge.bridge-nf-call-ip6tables=1
+net.bridge.bridge-nf-call-iptables=1
+net.netfilter.nf_conntrack_max=2310720
+net.ipv4.ip_local_port_range=15000 64000
+fs.file-max=6553500
+fs.nr_open=6553500
+fs.inotify.max_user_instances=8192
+fs.inotify.max_user_watches=1048576
+net.ipv4.ip_forward=1
+net.ipv4.tcp_tw_recycle=0
+net.ipv6.conf.all.disable_ipv6=1
+net.netfilter.nf_conntrack_max=2310720
+vm.swappiness=0
+vm.overcommit_memory=1
+vm.panic_on_oom=0
+EOF
+
+cat > /etc/security/limits.conf <<'EOF'
+* soft nofile 655350
+* hard nofile 655350
+* soft nproc 655350
+* hard nproc 655350
+* soft memlock  unlimited
+* hard memlock  unlimited
+EOF
+
+sysctl -p
+
+vim /etc/sysconfig/kubelet
+KUBELET_EXTRA_ARGS="--fail-swap-on=false"
+
+cat > /etc/docker/daemon.json <<'EOF'
+{
+  "exec-opts": ["native.cgroupdriver=cgroupfs"],
+  "registry-mirrors": ["https://fz5yth0r.mirror.aliyuncs.com"],
+  "log-driver": "json-file",
+  "log-opts": {
+	  "max-size": "100m",
+	  "max-file": "3"
+  }
+}
+EOF
+
+sed -i '/ExecStart=/iExecStartPost=/usr/sbin/iptables -P FORWARD ACCEPT' /usr/lib/systemd/system/docker.service
+
+systemctl daemon-reload && systemctl restart docker

@@ -10,7 +10,7 @@ fileserver_backend:
   - git
 
 gitfs_remotes:
-  - http://root:Chang123123@20.59.20.173/root/salt_sls.git:
+  - http://root:Cxxxx@x.x.x.x/root/salt_sls.git:
     - mountpoint: salt://
 
 gitfs_base: master
@@ -21,12 +21,12 @@ pillar_roots:
 
 ext_pillar:
   - git:
-    - master http://root:Chang123123@20.59.20.173/root/salt_pillar.git:
+    - master http://root:Cxxxx@x.x.x.x/root/salt_pillar.git:
       - mountpoint: salt://
 
 
 rest_cherrypy:
-  port: 8000
+  port: 8001
   host: 0.0.0.0
   debug: True
   disable_ssl: True

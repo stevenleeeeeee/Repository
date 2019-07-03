@@ -1,15 +1,14 @@
 #### Flannel 网络设置
 ```txt
-
 CNI插件是可执行文件，会被kubelet调用:  ( 以下参数在使用kudeadm时是默认设置 )
 kubelet --network-plugin=cni --cni-conf-dir /etc/cni/net.d --cni-bin-dir /opt/cni/bin
 
 备忘：
-Flannel 基于3层网络实现虚拟的2层网络
-Flannel 为每个host分配一个subnet，容器从这个subnet中分配IP，这些IP可以在host间路由，容器间无需使用nat和端口映射即通信
+Flannel 基于3层网络实现虚拟2层网
+为每个host分配1个subnet，容器从这个subnet中再分配IP，这些IP可以在host间路由，容器间无需使用nat和端口映射即通信
 每个subnet都是从一个更大的IP池中划分的，flannel会在每个主机上运行一个叫flanneld的agent，其职责就是从池子中分配subnet
-Flannel 使用etcd存放网络配置、已分配 的subnet、host的IP等信息
-Flannel 数据包在主机间转发是由backend实现的，目前已经支持 UDP、VxLAN、host-gw、AWS VPC和GCE路由等多种
+Flannel 使用etcd存放网络配置、已分配的subnet、host的IP等信息
+Flannel 数据包在主机间转发是由backend实现的，目前已支持 UDP、VxLAN、host-gw、AWS VPC和GCE路由等多种
 "Tunnel"协议的另外一个重要的特性就是软件扩展性，是软件定义网络（Software-defined Network，SDN）的基石之一
 
 流程：
@@ -132,7 +131,7 @@ FLANNEL_IPMASQ=false
 cat /run/docker_opts.env
 # /opt/flannel/mk-docker-opts.sh -c
 # cat /run/docker_opts.env
-DOCKER_OPTS=" --bip=172.22.9.1/24 --ip-masq=false --mtu=1450"
+DOCKER_OPTS=" --bip=172.22.9.1/24 --ip-masq=false --mtu=1450 "
 #
 修改docker的服务启动文件如下：
 # vim /lib/systemd/system/docker.service
@@ -142,7 +141,7 @@ ExecStart=/usr/bin/dockerd $DOCKER_OPTS -H fd://
 DOCKER_OPT_BIP="--bip=172.22.9.1/24"
 DOCKER_OPT_IPMASQ="--ip-masq=true"
 DOCKER_OPT_MTU="--mtu=1450"
-DOCKER_NETWORK_OPTIONS=" --bip=172.22.9.1/24 --ip-masq=true --mtu=1450"
+DOCKER_NETWORK_OPTIONS=" --bip=172.22.9.1/24 --ip-masq=true --mtu=1450 "
 [root@node-1 ~]# systemctl daemon-reload
 [root@node-1 ~]# systemctl restart docker
 
@@ -165,11 +164,9 @@ default via 192.168.166.2 dev ens33 proto static metric 100
 172.22.9.0/24 dev docker0 proto kernel scope link src 172.22.9.1    #docker0 ---> flannel ---> ens33 ---> ...
 192.168.166.0/24 dev ens33 proto kernel scope link src 192.168.166.102 metric 100
 
-
 #CNI：
 #是Container Network Interface的是一个标准的，通用的接口。现在容器平台：docker，kubernetes，mesos，容器网络解决方案。
 #flannel，calico，weave。只要提供标准的接口就能为同样满足该协议的所有容器平台提供网络功能，而CNI正是这样的标准接口协议。
-
 
 #Flannel为container提供网络解决方案。
 #Flannel有一个基于etcd cluster的数据交换中心，每个节点上有flannel service，每个节点被分配不同的网段
