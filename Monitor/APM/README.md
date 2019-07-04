@@ -362,3 +362,7 @@ SAVE_JAVA_OPTIONS="${JAVA_OPTIONS} -javaagent:$AGENT_PATH...."
 6.在测试环境使用1.6的jdk遇到报错，关键字: "provider weblogic.xml.jaxp.RegistryDocumentBuilderFactory not found" 
   解决办法：删除pinpoint目录下的lib/log4x.xml即可!
 ```
+#### 删除PINPOINT WEB页面的Application
+```url
+http://x.x.x.x:port/admin/removeApplicationName.pinpoint?applicationName=应用名&password=admin
+```
