@@ -57,3 +57,25 @@ Testing...
 ...     def read_value(self):
 ...             print('here I will do something.')
 ...             #do someting
+
+#---------------------------------------------------
+class Decorator(object):
+    """Simple decorator class."""
+
+    def __init__(self, func):
+        self.func = func
+
+    def __call__(self, *args, **kwargs):
+        print('Before the function call.')
+        res = self.func(*args, **kwargs)
+        print('After the function call.')
+        return res
+
+@Decorator
+def testfunc():
+    print('Inside the function.')
+
+testfunc()
+# Before the function call.
+# Inside the function.
+# After the function call.

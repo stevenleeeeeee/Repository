@@ -378,6 +378,7 @@ ExecStart=/kubernetes/bin/etcd \
 --peer-key-file=/kubernetes/ssl/server-key.pem \
 --trusted-ca-file=/kubernetes/ssl/ca.pem \
 --peer-trusted-ca-file=/kubernetes/ssl/ca.pem \
+--snapshot-count=10000 \
 --data-dir=/var/lib/etcd \
 --heartbeat-interval=250 \
 --election-timeout=2000 \
@@ -656,7 +657,6 @@ ExecStart=/kubernetes/bin/kube-controller-manager \
 --feature-gates=RotateKubeletServerCertificate=true \
 --controllers=*,bootstrapsigner,tokencleaner \
 --experimental-cluster-signing-duration=87600h0m0s \
---use-service-account-credentials=true \
 --service-account-private-key-file=/kubernetes/ssl/ca-key.pem \
 --requestheader-client-ca-file=/kubernetes/ssl/ca.pem \
 --root-ca-file=kubernetes/ssl/ca.pem \
