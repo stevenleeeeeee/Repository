@@ -10,8 +10,8 @@ https://kubernetes.io/docs/setup/independent/high-availability/
 #### 内核参数调整
 ```bash
 #系统版本: Centos 7.4 Minimal (对内核版本有要求，建议使用最新发行版)
-#部署前应首先关闭firewald并清空iptables的防火墙规则:iptables、关闭Selinux、进行集群节点时钟同步...
-cat <<EOF > /etc/sysctl.d/k8s.conf
+#部署前应关闭firewald并清空iptables规则、关闭Selinux、进行集群节点时钟同步、设置主机名等...
+cat > /etc/sysctl.d/kubernetes.conf <<EOF
 net.ipv4.tcp_keepalive_time = 600
 net.ipv4.tcp_keepalive_intvl = 30
 net.ipv4.tcp_keepalive_probes = 10
