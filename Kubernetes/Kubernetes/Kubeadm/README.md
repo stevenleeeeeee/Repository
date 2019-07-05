@@ -3,7 +3,7 @@
 https://kubernetes.io/zh/docs/reference/setup-tools/kubeadm/kubeadm-init/
 https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 https://segmentfault.com/a/1190000018741112?utm_source=tag-newest
-https://www.jianshu.com/p/8eb81d1674dc
+https://blog.51cto.com/michaelkang/2413965?source=dra   #kubeadm 1.15
 https://www.cnblogs.com/kuku0223/p/10474858.html
 https://kubernetes.io/docs/setup/independent/high-availability/
 ```
@@ -380,7 +380,7 @@ kubeadm init phase preflight [--config config.yml]
 # --external-etcd-keyfile /path/to/privatekey
 
 #部署
-kubeadm init --config deploy.yaml
+kubeadm init --config HA-Deploy.yaml --upload-certs [ --control-plane ]
 
 #当执行 "kubeadm init" 后
 #Node节点用 "kubeadm join <master-ip> --token xxx --discovery-token-ca-cert-hash xxx" 的方式加入集群

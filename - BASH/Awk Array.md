@@ -77,7 +77,6 @@ ddd 2
 # awk处理第1行时先读取a[$1]值再自增，a[$1]即a[1]值为空(0)，即 awk ‘!0′，即 awk ’1′，即 awk’1{print}’ 
 # awk处理第2行时先读取a[$1]值再自增，a[$1]即a[1]值为1，即 awk ‘!1′，即 awk ’0′，即 awk ’0{print}’ 
 
-
 #Example
 [root@localhost ~]# cat 1
 1 2 3
