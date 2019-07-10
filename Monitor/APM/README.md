@@ -1,4 +1,7 @@
 ```bash
+https://www.iqarr.com/2018/02/04/java/pinpoint/pinpoint-deploy/
+https://www.jianshu.com/p/266f0c15f691
+
 #pinpoint是和应用一起运行的另外的应用。使用字节码增强使得pinpoint看上去不需要代码修改，其使用Java编写
 #pinpoint在类装载时通过介入应用代码为分布式事务和性能信息注入必要的跟踪代码
 #pinpoint收集来的测试数据主要是存在Hbase数据库的。所以它可以收集大量的数据，可以进行更加详细的分析
@@ -82,6 +85,7 @@ total 478724
 export JAVA_HOME=/jdk
 export PATH=$PATH:$JAVA_HOME/bin
 eof
+
 [root@localhost ~]# source /etc/profile
 [root@localhost ~]# java -version
 java version "1.8.0_191"
@@ -98,6 +102,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.191-b12, mixed mode)
 [root@localhost conf]# vim hbase-env.sh         #修改hbase-env.sh的JAVA_HOME环境变量
 export JAVA_HOME=/usr/java/jdk17/               #在27行左右的位置修改
 export _ssh_opts="-p 22"                        #指定启动时其连接目标主机所使用的SSH端口号
+export HBASE_SSH_OPTS="-p 22"                   #在1.0版本中使用此配置设置ssh端口
 
 [root@localhost conf]# vim hbase-site.xml       #修改Hbase的配置信息:
 <configuration>
@@ -362,7 +367,43 @@ SAVE_JAVA_OPTIONS="${JAVA_OPTIONS} -javaagent:$AGENT_PATH...."
 6.在测试环境使用1.6的jdk遇到报错，关键字: "provider weblogic.xml.jaxp.RegistryDocumentBuilderFactory not found" 
   解决办法：删除pinpoint目录下的lib/log4x.xml即可!
 ```
-#### 删除PINPOINT WEB页面的Application
-```url
+#### 删除ApplicationName或AgentId
+```bash
+#applicationname
 http://x.x.x.x:port/admin/removeApplicationName.pinpoint?applicationName=应用名&password=admin
+
+#agentid
+http://x.x.x.x:port/admin/removeAgentId.pinpoint?applicationName=应用名&agentId=代理ID&password=admin
+
+#注：
+# 在配置文件中pinpoint-web.properties的admin.password字段定义其password值
+```
+#### 开启Hbase的Web UI
+```bash
+#ref: https://blog.csdn.net/liu16659/article/details/80713326
+
+# vi hbase-site.xml
+<property> 
+  <name>hbase.master.info.port</name> 
+  <value>60010</value> 
+</property> 
+```
+#### Agent端测试到collecter端的联通性
+```bash
+# ref: https://naver.github.io/pinpoint/1.7.3/troubleshooting_network.html
+
+# cd /apm-agent/scrtipts
+# bash networktest.sh
+# 输出：
+UDP-STAT:// localhost
+    => 127.0.0.1:9995 [SUCCESS]
+    => 0:0:0:0:0:0:0:1:9995 [SUCCESS]
+
+UDP-SPAN:// localhost
+    => 127.0.0.1:9996 [SUCCESS]
+    => 0:0:0:0:0:0:0:1:9996 [SUCCESS]
+
+TCP:// localhost
+    => 127.0.0.1:9994 [SUCCESS]
+    => 0:0:0:0:0:0:0:1:9994 [SUCCESS]
 ```

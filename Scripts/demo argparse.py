@@ -30,8 +30,11 @@ python a.py --foo ww  --aa 40 xuesong 27                                  # 执�
 
 parser.add_argument('--ver','-v',action='store_true',help="帮助信息",required=True,type="str",nargs=1)
 
-dest        #设置这个选项的value解析出来后放到哪个属性中 ( 当对选项赋值后传递到代码内的parser属性的名字 )
-action	    #表示值赋予键的方式，这里用到的是bool类型，action意思是当读取的参数中出现指定参数的时候的行为,'count' 将参数出现次数作为参数值、'append' 将每次出现的该参数后的值都存入同一个数组再赋值,action='append' 多个参数可叠加为列表.可选参数需设置 action='store_true' 不加参数为True 
+dest        #设置选项value解析出后放到哪个属性 ( 当对选项赋值后传递到代码内的parser属性的名字 )
+action	    #表示值赋予键的方式，，action意思是当读取的参数中出现指定参数的时候的行为
+            #'count' 将参数出现次数作为参数值
+            #'append' 将每次出现的该参数后的值都存入同一个数组再赋值（多个参数叠加为列表）
+            # 可选参数需设置 action='store_true' 不加参数为True 
 required    #必需参数，通常-f这样的选项是可选的，但是如果required=True那么就是必须的了
 type        #指定参数类型
 help		#可以写帮助信息 

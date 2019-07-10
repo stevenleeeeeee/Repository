@@ -29,7 +29,7 @@ dist-maven  LICENSE.txt      src
 [root@localhost zookeeper-3.4.10]# echo '<本节点ID>' > data/myid
 
 #设置环境变量（此处略过JAVA的安装及JAVA_HOME的配置）
-[root@localhost zookeeper-3.4.10]# cat > /etc/profile.d/zookeeper.sh <<'eof' 或： cat >> ~/.bash_profile <<'eof'
+[root@localhost zookeeper-3.4.10]# cat > /etc/profile.d/zookeeper.sh <<'eof'
 export ZOOKEEPER_HOME=/usr/local/zookeeper-3.4.10/
 export PATH=$ZOOKEEPER_HOME/bin:$PATH
 eof
