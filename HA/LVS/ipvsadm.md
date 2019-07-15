@@ -3,7 +3,6 @@
 * real-service-address:     是指真实服务器的ip地址  
 * scheduler:                调度方法
 
-
 #### 格式
 ```
 ipvsadm -A|E -t|u|f virutal-service-address:port [-s scheduler] [-p [timeout]] [-M netmask]

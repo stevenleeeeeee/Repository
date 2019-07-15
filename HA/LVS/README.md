@@ -1,7 +1,15 @@
-#### 说明
 ```txt
+LVS相关术语:
+1. DS：Director Server        指的是前端负载均衡器节点
+2. RS：Real Server            后端真实的工作服务器
+3. VIP                        向外部直接面向用户请求，作为用户请求的目标的IP地址
+4. DIP：Director Server IP    主要用于和内部主机通讯的IP地址
+5. RIP：Real Server IP        后端服务器的IP地址
+6. CIP：Client IP             访问客户端的IP地址
+
+
 DR：
-      DR、RS均使用相同VIP对外服务但仅DR对此VIP的ARP请求响应，所有RS对此VIP的ARP请求保持静默，即网关把对VIP的请求全部交给DR
+      DR、RS均使用相同VIP对外服务但仅DR对此VIP的ARP请求响应，所有RS对此VIP的ARP请求静默，即网关把对VIP的请求全部交给DR
       当DR收到后根据调度算法找出对应RS并切把此VIP的数据包中的MAC改为RS的MAC（因IP一致）并将请求分发给这台RS
       RS处理后由于IP一致因此可将数据直接返回给C端，"相当于直接从客户端收到这个数据包无异"。DR模型从始至终修改的仅有MAC地址
       因DR要对二层包头改换所以DR、RS之间必须在同一个广播域（可简单理解为在同一台交换机中）
@@ -9,6 +17,9 @@ DR：
       特点：
       与TUN相比这种实现不需隧道结构因此可使用大多数操作系统做为后端节点，但其要求负载均衡器的网卡必须与物理网卡在一个物理段
       RS的网关不能与DR的网关相同，接收VIP的网关应该仅知道DR的MAC地址... （响应报文必须不能进过Director Server设备）
+      所有的请求报文经由Director Server，但响应报文必须不能进过Director Server
+      不支持地址转换，也不支持端口映射
+      RS上的lo接口配置VIP的IP地址,RS和DS必须在同一网段
 
 NAT：
       将C端的数据包目的IP换为某RS的IP并发其处理，RS处理后把数据交给LVS(网关)后LVS再把RS发送时数据包中的源IP改为VIP后发送
