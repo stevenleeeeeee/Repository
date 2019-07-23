@@ -175,6 +175,13 @@ HbaseWeb : http://192.168.70.129:16010/master-status
 [root@node129 conf]# cd ~/APM-soft
 [root@node129 APM-soft]# rm -rf /data/service/pp-col/webapps/*
 [root@node129 APM-soft]# unzip pinpoint-collector-1.8.3.war -d /data/service/pp-col/webapps/
+
+#HA场景
+[root@node129 APM-soft]# vim /data/service/pp-col/webapps/ROOT/WEB-INF/classes/hbase.properties
+#hbase.client.host 设置为 hbase 所用的 zk 地址
+[root@node129 APM-soft]# vim /data/service/pp-col/webapps/ROOT/WEB-INF/classes/pinpoint-collector.properties
+#cluster.zookeeper.address 修改为给 Pinpoint 准备的 zk 地址
+
 [root@node129 APM-soft]# cd /data/service/pp-col/bin/   #启动Tomcat
 [root@node129 bin]# ./startup.sh                        #查看日志检查是否成功启动: tail -f ../logs/catalina.out
 
@@ -196,6 +203,13 @@ HbaseWeb : http://192.168.70.129:16010/master-status
 [root@node129 conf]# cd ~/APM-soft
 [root@node129 APM-soft]# rm -rf /data/service/pp-web/webapps/*
 [root@node129 APM-soft]# unzip pinpoint-web-1.8.3.war -d /data/service/pp-web/webapps/ROOT
+
+#HA场景
+[root@node129 APM-soft]# vim /data/service/pp-web/webapps/ROOT/WEB-INF/classes/hbase.properties
+#hbase.client.host 设置为 hbase 所用的 zk 地址
+[root@node129 APM-soft]# vim /data/service/pp-web/webapps/ROOT/WEB-INF/classes/pinpoint-collector.properties
+#cluster.zookeeper.address 修改为给 Pinpoint 准备的 zk 地址
+
 [root@node129 APM-soft]# ll /data/service/pp-web/webapps/ROOT/WEB-INF/classes/    #查看war包是否解压成功
 total 88
 -rw-rw-r--. 1 root root 2164 Apr  7  2016 applicationContext-cache.xml
@@ -357,25 +371,25 @@ SAVE_JAVA_OPTIONS="${JAVA_OPTIONS} -javaagent:$AGENT_PATH...."
     pinpoint-web.properties
 
 3.其实pinpoint还是有缺陷，异步的操作监控不到! 
-  比如写了个多线程来发送HttpClient4的请求，但是pinpoint监控不到。(新版本可能会修复)
+  比如写了个多线程来发送HttpClient4的请求，但是pinpoint监控不到。(新版本已经修复)
   但是官方介绍说可以监控到Httpclient4的请求。现在都是分布式系统，异步拿数据很常见，如果监控不到异步的操作就很鸡肋了
 
 4.在pp1.6部署，Hbase中的默认字段有增加，如果没有加上默认字段，取得的数据就会变得相当少了
 
-5.Pinpoint还提供了警报触发后自动调用的两个接口，这个需要在部署Mysql并修改pp的配置
+5.Pinpoint还提供了警报触发后自动调用的两个接口，这个需要再部署Mysql并修改pp的配置
 
 6.在测试环境使用1.6的jdk遇到报错，关键字: "provider weblogic.xml.jaxp.RegistryDocumentBuilderFactory not found" 
   解决办法：删除pinpoint目录下的lib/log4x.xml即可!
 ```
 #### 删除ApplicationName或AgentId
 ```bash
-#applicationname
+# applicationname
 http://x.x.x.x:port/admin/removeApplicationName.pinpoint?applicationName=应用名&password=admin
 
-#agentid
+# agentid
 http://x.x.x.x:port/admin/removeAgentId.pinpoint?applicationName=应用名&agentId=代理ID&password=admin
 
-#注：
+# 注：
 # 在配置文件中pinpoint-web.properties的admin.password字段定义其password值
 ```
 #### 开启Hbase的Web UI
@@ -383,9 +397,9 @@ http://x.x.x.x:port/admin/removeAgentId.pinpoint?applicationName=应用名&agent
 #ref: https://blog.csdn.net/liu16659/article/details/80713326
 
 # vi hbase-site.xml
-<property> 
+<property>
   <name>hbase.master.info.port</name> 
-  <value>60010</value> 
+  <value>60010</value>
 </property> 
 ```
 #### Agent端测试到collecter端的联通性
@@ -395,6 +409,7 @@ http://x.x.x.x:port/admin/removeAgentId.pinpoint?applicationName=应用名&agent
 # cd /apm-agent/scrtipts
 # bash networktest.sh
 # 输出：
+
 UDP-STAT:// localhost
     => 127.0.0.1:9995 [SUCCESS]
     => 0:0:0:0:0:0:0:1:9995 [SUCCESS]

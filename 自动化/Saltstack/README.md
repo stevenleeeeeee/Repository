@@ -17,8 +17,7 @@
 [root@localhost ~]# cat /etc/sysconfig/network   
 HOSTNAME=master.salt.com
 [root@localhost ~]# yum install -y salt-master salt-minion salt-ssh salt-api    
-[root@localhost ~]# systemctl enable salt-master    #Master占用4505和4506端口。
-ot@localhost ~]# systemctl start salt-master
+[root@localhost ~]# systemctl enable salt-master --now    #Master占用4505和4506端口。
 
 #Slave
 [root@localhost ~]# echo '192.168.70.129 slave.salt.com' /etc/hosts

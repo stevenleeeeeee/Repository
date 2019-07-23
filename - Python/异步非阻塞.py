@@ -20,7 +20,7 @@ def accept(sock, mask):
     conn, addr = sock.accept()                      # 接收链接 Should be ready，这里创建了建立链接的对象"conn"
     conn.setblocking(False)
     #print('accepted', conn, 'from', addr)
-    sel.register(conn, selectors.EVENT_READ, read)  # 注册以建立链接的对象 "conn" 和读事件，并指定回调对象"read"
+    sel.register(conn, selectors.EVENT_READ, read)  # 注册已建立链接的对象 "conn" 和读事件，并指定回调对象"read"
 
 # 监听"有数据可读"事件的函数
 def read(conn:socket.socket, mask):
@@ -48,19 +48,21 @@ sel.register(sock, selectors.EVENT_READ, accept)
 
 e = threading.Event()
 
-def work(event:threading.Event):
-    '''
-    为了不断地提取 selectors 中的事件，使用循环不断提取sel对象的事件
-    只有当事件（如有客户端连接、有数据可读）发生时，accept、read方法才会调用，这样就避免了阻塞式编程
-    '''
-    while not event.is_set():
-        events = sel.select()           # 监听是否有连接进来 (优先使用epoll)，当没有新连接进入时其将一直阻塞住
-        for key, mask in events:        # 一旦条件满足，则events中将有值 (将产生事件的对象返回)
-            callback = key.data         # key.data为在selectors中注册的回调函数 (accpet or read) 相当于调accept函数
-            callback(key.fileobj, mask) # key.fileobj为在selectors中注册的对象，开始调用并进行处理 (回调)
 
-# 交由工作线程去处理，不要把主线程给阻塞住
-threading.Thread(target=work,args=(e,)).start()
+if __name__ == '__main__':
+    def work(event:threading.Event):
+        '''
+        为了不断地提取 selectors 中的事件，使用循环不断提取sel对象的事件
+        只有当事件（如有客户端连接、有数据可读）发生时，accept、read方法才会调用，这样就避免了阻塞式编程
+        '''
+        while not event.is_set():
+            events = sel.select()           # 监听是否有连接进来 (优先使用epoll)，当没有新连接进入时其将一直阻塞住
+            for key, mask in events:        # 一旦条件满足，则events中将有值 (将产生事件的对象返回)
+                callback = key.data         # key.data为在selectors中注册的回调函数 (accpet / read) 相当于调accept
+                callback(key.fileobj, mask) # key.fileobj为在selectors中注册的对象，开始调用并进行处理 (回调)
+
+    # 交由工作线程去处理，不要把主线程给阻塞住
+    threading.Thread(target=work,args=(e,)).start()
 
 ############################### Client端 ###########################################
 
