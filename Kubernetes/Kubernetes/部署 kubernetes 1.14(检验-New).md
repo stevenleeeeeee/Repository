@@ -20,23 +20,36 @@ curl -sL https://raw.githubusercontent.com/docker/docker/master/contrib/check-co
 hostnamectl --static set-hostname <NODE_NAME>
 chmod a+x /etc/rc.d/rc.local
 
+#关闭SElinux
 setenforce 0
 sed -i.bak "s/^SELINUX=.*/SELINUX=disabled/g" /etc/sysconfig/selinux /etc/selinux/config
 
-systemctl stop firewalld --now
+#防火墙设置
+systemctl disable firewalld --now
 iptables -F && iptables -X && iptables -F -t nat && iptables -X -t nat
 iptables -P FORWARD ACCEPT
 systemctl disable dnsmasq --now
 
+#安装基础组件
 yum -y install epel-release
-yum -y install yum-utils chrony lvm2 git jq unzip ipset ipvsadm conntrack libseccomp sysstat 
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-yum -y install device-mapper-persistent-data docker-ce        #Docker要求Linux内核版本3.10+
+yum -y install yum-utils chrony lvm2 git jq unzip ipset ipvsadm conntrack libseccomp sysstat device-mapper-persistent-data
+yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+yum makecache all
+version=$(yum list docker-ce.x86_64 --showduplicates | sort -r | grep ${docker_version} | awk '{print $2}')
+yum -y install --setopt=obsoletes=0 docker-ce-${version} docker-ce-selinux-${version};
+#Docker要求Linux内核版本3.10+
 
+#设置语言
+echo 'LANG="en_US.UTF-8"' >> /etc/profile.d/LANG
+source /etc/profile
+
+#设置时区
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 timedatectl set-timezone Asia/Shanghai
 timedatectl set-local-rtc 0
 systemctl enable chronyd --now 
 
+#加载模块
 modprobe bridge
 modprobe br_netfilter
 modprobe ip_vs
@@ -45,16 +58,19 @@ modprobe ip_vs_wrr
 modprobe ip_vs_sh
 modprobe nf_conntrack_ipv4
 
+#关闭swap
 sysctl -w vm.swappiness=0
 sed -i.bak "/swap/s/\(.*\)/#\1/g" /etc/fstab && swapoff -a
 
-ulimit -n 655350
-
+#修改内核参数
 cat > /etc/sysctl.d/kubernetes.conf <<'EOF'
 net.bridge.bridge-nf-call-ip6tables=1
 net.bridge.bridge-nf-call-iptables=1
 net.netfilter.nf_conntrack_max=2310720
 net.ipv4.ip_local_port_range=15000 64000
+net.ipv4.neigh.default.gc_thresh1=4096
+net.ipv4.neigh.default.gc_thresh2=6144
+net.ipv4.neigh.default.gc_thresh3=8192
 fs.file-max=6553500
 fs.nr_open=6553500
 fs.inotify.max_user_instances=8192
@@ -67,6 +83,8 @@ vm.swappiness=0
 vm.overcommit_memory=1
 vm.panic_on_oom=0
 EOF
+
+ulimit -n 655350
 
 cat > /etc/security/limits.conf <<'EOF'
 * soft nofile 655350
@@ -82,13 +100,18 @@ sysctl -p
 #Docker自1.13+开始修改了默认防火墙规则，禁用iptables中filter表的FOWARD链，这会引起跨Node的Pod无法通信:
 sed -i '/ExecStart=/iExecStartPost=/usr/sbin/iptables -P FORWARD ACCEPT' /usr/lib/systemd/system/docker.service
 
+#修改Docker配置信息
 mkdir -p /etc/docker /data/docker
 sed -Ei 's|(/usr/bin/dockerd)|\1 --data-root=/data/docker|' /usr/lib/systemd/system/docker.service 
 cat > /etc/docker/daemon.json <<'EOF'
 {
+  "max-concurrent-downloads": 3,
+  "max-concurrent-uploads": 5,
   "exec-opts": ["native.cgroupdriver=systemd"],
-  "registry-mirrors": ["https://fz5yth0r.mirror.aliyuncs.com"],
-  "使用以下设置防止Pod日志过大占用磁盘空间"："",
+  "registry-mirrors": ["https://fz5yth0r.mirror.aliyuncs.com","https://7bezldxe.mirror.aliyuncs.com/"],
+  "insecure-registries": ["192.168.1.100:80"],
+  "storage-driver": "overlay2",
+  "storage-opts": ["overlay2.override_kernel_check=true"],
   "log-driver": "json-file",
   "log-opts": {
 	  "max-size": "100m",
