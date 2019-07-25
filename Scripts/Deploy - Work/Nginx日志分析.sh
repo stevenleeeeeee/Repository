@@ -88,6 +88,11 @@ function AVERANGE_HOUR_URL_COUNTS() {
     grep -F ${SCANURL} $LOG | awk -F ':' '{s[$2]++}END{for(i in s){print i"\t"s[i]}}' | sort -n
 }
 
+#统计IP访问次数
+function IP_ANALYSIS() {
+    awk -F'\\|\\|' '{s[$2]+=1}END{for(i in s){print i,s[i]}}' $LOG
+}
+
 # SCAN_LOGFILE_POSITION               #日志时间范围截取
 # cat $LOG | SCAN_LOGFILE_URL_SORT    #输出当天URL访问量前30个的统计结果
 # SCAN_LOGFILE_URL                    #指定URL的统计
@@ -98,6 +103,7 @@ function AVERANGE_HOUR_URL_COUNTS() {
 # SCAN_TIME_RANGE_LONGTIME            #输出特定时间段内URL返回超过指定时间的统计
 # SCAN_MINUTE_COUNTS                  #以分钟为单位输出URL的访问数量统计
 # AVERANGE_HOUR_URL_COUNTS            #以小时为单位输出指定URL在每小时内的访问量
+# IP_ANALYSIS                         #统计IP访问次数
 
 echo -e "\033[31mTYPE:
 1:  日志时间范围截取
@@ -109,6 +115,7 @@ echo -e "\033[31mTYPE:
 7:  输出特定时间段内URL返回超过指定时间的统计
 8： 以分钟为单位输出URL的访问数量统计
 9： 以小时为单位输出指定URL在每小时内的访问量
+a:  统计IP访问次数
 \033[0m
 "
 
@@ -141,6 +148,9 @@ case $TYPE in
      ;;
      9)
         AVERANGE_HOUR_URL_COUNTS
+     ;;
+     a)
+        IP_ANALYSIS
      ;;
      *) 
         echo "please input 1~9"
