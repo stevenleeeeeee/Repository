@@ -96,9 +96,11 @@ args = parser.parse_args()
 
 # -------------------------------------------------  数据格式化
 
+# 参考: https://blog.csdn.net/weixin_33861800/article/details/87007750
 from collections import OrderedDict
 from flask.ext.restful import fields, marshal_with
 
+# 定义其要输出的json的格式
 resource_fields = {
     'task':   fields.String,
     'uri':    fields.Url('todo_ep')
@@ -109,15 +111,16 @@ class TodoDao(object):
         self.todo_id = todo_id
         self.task = task
 
-        # This field will not be sent in the response
+        # This field will not be sent in the response 这里不会输出
         self.status = 'active'
 
 class Todo(Resource):
-    @marshal_with(resource_fields)
+    ''' marshal_with() 装饰器将会应用到由 resource_fields 描述的转换 '''
+    @marshal_with(resource_fields) 
     def get(self, **kwargs):
         return TodoDao(todo_id='my_todo', task='Remember the milk')
 
-# 上面的例子接受一个 python 对象并准备将其序列化。marshal_with() 装饰器将会应用到由 resource_fields 描述的转换。
+# 上面的例子接受一个 python 对象并准备将其序列化。marshal_with() 装饰器相当于蒙板，不需展示的数据不会输出
 # 从对象中提取的唯一字段是 task。fields.Url 域是一个特殊的域，它接受端点（endpoint）名作参数并在响应中为该端点生成URL
 # 许多你需要的字段类型都已经包含在内。请参阅 fields 指南获取一个完整的列表。
 
@@ -161,7 +164,7 @@ class Todo(Resource):
 
     def put(self, todo_id):                     # put 针对新建资源，其参数为新建的资源的key
         args = parser.parse_args()              # 实例化对上传的类型进行检查的对象
-        task = {'task': args['task']}           # 检查名为task的子key的value是否为str类型
+        task = {'task': args['task']}           # 检查名为task的子key的value是否为str类型并获取其值 (传递过来的)
         TODOS[todo_id] = task                   # 添加JSON
         return task, 201
 
@@ -175,7 +178,7 @@ class TodoList(Resource):
         args = parser.parse_args(strict=True)                   # 实例化对上传的类型进行检查的对象
         todo_id = int(max(TODOS.keys()).lstrip('todo')) + 1     # 新增Key编号
         todo_id = 'todo%i' % todo_id                            # 新增key名称: todo4
-        TODOS[todo_id] = {'task': args['task']}                 # 设置json的key与value
+        TODOS[todo_id] = {'task': args['task']}                 # 检查并设置其值
         return TODOS[todo_id], 201                              # 返回数据及状态码
 
 # 通过 api.add_resource() 方法来添加路由
