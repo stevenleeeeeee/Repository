@@ -382,6 +382,11 @@ kubeadm init phase preflight [--config config.yml]
 # --external-etcd-certfile /path/to/cert \
 # --external-etcd-keyfile /path/to/privatekey
 
+#查看所需镜像列表
+kubeadm config images list --config kubeadm.yml
+#拉取镜像
+kubeadm config images pull --config kubeadm.yml
+
 #部署
 kubeadm init --config HA-Deploy.yaml --upload-certs [ --control-plane ]
 
