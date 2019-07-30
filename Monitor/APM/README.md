@@ -130,6 +130,7 @@ export HBASE_SSH_OPTS="-p 22"                   #在1.0版本中使用此配置�
 11784 HMaster
 
 #初始化Hbase的pinpoint库，执行pinpoint提供的Hbase初始化语句，这时会初始化一会
+#在hbase-create.hbase脚本中的TTL定义可修改，按数据需保存的时长进行修改，单位：s
 [root@node129 bin]# ./hbase shell /root/APM-soft/hbase-create.hbase
 #执行完了以后，进入Hbase
 [root@localhost bin]# ./hbase shell             #进入后可以看到Hbase的版本，还有一些相关的信息
@@ -209,6 +210,11 @@ HbaseWeb : http://192.168.70.129:16010/master-status
 #hbase.client.host 设置为 hbase 所用的 zk 地址
 [root@node129 APM-soft]# vim /data/service/pp-web/webapps/ROOT/WEB-INF/classes/pinpoint-collector.properties
 #cluster.zookeeper.address 修改为给 Pinpoint 准备的 zk 地址
+cluster.enable=true
+cluster.zookeeper.address=xx.xx.xx.xx,xx.xx.xx.xx,xx.xx.xx.xx   #zookeeper 集群地址
+cluster.zookeeper.sessiontimeout=30000
+cluster.listen.ip=xx.xx.xx.xx
+cluster.listen.port=xx
 
 [root@node129 APM-soft]# ll /data/service/pp-web/webapps/ROOT/WEB-INF/classes/    #查看war包是否解压成功
 total 88
@@ -239,6 +245,13 @@ sql                         #pp-web本身有些数据需要存放在MySQL数据�
 pinpoint-web.properties     #这里pp-web集群的配置文件，如果你需要pp-web集群的话
 applicationContext-* .xml   #这些文件在后续的调优工作中会用到
 log4j.xml                   #日志相关配置
+[root@node129 APM-soft]# grep cluster pinpoint-web.properties
+cluster.enable=true
+cluster.web.tcp.port=9997
+cluster.zookeeper.address=xx.xx.xx.xx,xx.xx.xx.xx,xx.xx.xx.xx   #zookeeper 集群地址
+cluster.zookeeper.sessiontimeout=30000
+cluster.zookeeper.retry.interval=60000
+cluster.connect.address=<PINPOINT-WEB-NODE1>:<PORT>,<PINPOINT-WEB-NODE2>:<PORT>
 
 #启动Tomcat:
 [root@node129 APM-soft]# cd /data/service/pp-web/bin/ && ./startup.sh
