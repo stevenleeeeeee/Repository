@@ -231,8 +231,11 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
-    order = relationship('Order', backref='users')      # 一个客户可以创建多个订单
-    
+    order = relationship('Order', backref='users')      # 一个客户可以创建多个订单(相当于Order.users.name 可查本表对应的数据)
+    # relationship根据定义的表之间的外键"ForeignKey"来关联表间数据的关系
+    # backref是反向引用，这里即使得Order实体可通过Order.users.name可获取到此Order实例相关联的User表的name属性的值!
+    # 此外，抛开backref参数，也可以使用User.order(对象)的方式获取用户实体对应的Order信息
+
 class Order(Base):
     __tablename__ = 'order'
     id = Column(Integer, primary_key=True)
@@ -243,6 +246,12 @@ class Order(Base):
 order = session.query(User).filter(User.name == 'kein').first().order
 # 依据订单查询用户：
 user = session.query(Order).filter(Order.number == 1).first().users
+
+# 大多数情况下 relationship() 都能自行找到关系中的外键, 但有时却无法决定把哪一列作为外键
+# 例如 Order 模型中有两个或以上的列定义为 Role 模型的外键, SQLAlchemy 就不知道该使用哪列
+# 如果无法决定外键, 就要为 relationship() 提供额外参数, 从而确定所用外键
+
+
 
 # 一对一关系：
 # 在一个表中有一条记录，则在另一张表中有一条记录相匹配。一般是看主表每一个字段对应另一张表的匹配记录条数
@@ -280,6 +289,7 @@ class Student(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
+
     def __repr__(self):
         return "name:%r" %self.name
 
@@ -290,6 +300,7 @@ c2 = Course(name = 'c2')
 
 c1.student = [s1, s2]
 c2.student = [s1, s2]
+
 session.add(c1)
 session.add(c2)
 session.commit()
