@@ -1,7 +1,3 @@
-python实例手册
-
-#encoding:utf8
-
 0 说明
 
     手册制作: 雪松 littlepy www.51reboot.com
@@ -18,55 +14,7 @@ python实例手册
     网盘更新下载地址:    http://pan.baidu.com/s/1sjsFrmX
     github更新下载地址:  https://github.com/liquanzhou/ops_doc
 
-1 基础
-
-    安装python2.7
-
-        wget https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tgz
-
-        tar xvf Python-2.7.9.tgz
-        cd Python-2.7.9
-        ./configure --prefix=/usr/local/python27
-        make
-        make install
-        mv /usr/bin/python /usr/bin/python_old
-        ln -s /usr/local/python27/bin/python /usr/bin/python
-        python          # 查看版本
-
-        解决YUM无法使用的问题
-
-           vim /usr/bin/yum
-           首行#!/usr/bin/python 替换为老版本python  #!/usr/bin/python2.4  注意可能为2.6
-
-    pip模块安装
-
-        yum install python-pip            # centos安装pip
-        sudo apt-get install python-pip   # ubuntu安装pip
-        pip官方安装脚本
-            wget https://raw.github.com/pypa/pip/master/contrib/get-pip.py
-            python get-pip.py
-        pip编译安装
-            # https://pypi.python.org/pypi/setuptools
-            wget http://pypi.python.org/packages/source/s/setuptools/setuptools.tar.gz
-            tar zxvf setuptools.tar.gz
-            cd setuptools/
-            python setup.py build
-            python setup.py install
-            # https://pypi.python.org/pypi/ez_setup
-            tar zxvf ez_setup.tar.gz
-            cd ez_setup/
-            python setup.py build
-            python setup.py install
-            # https://pypi.python.org/pypi/pip
-            tar zxvf pip.tar.gz
-            cd pip/
-            python setup.py build
-            python setup.py install
-        加载环境变量
-            vim /etc/profile
-            export PATH=/usr/local/python27/bin:$PATH
-            . /etc/profile
-
+    pip:
         pip freeze                      # 查看包版本
         pip install Package             # 安装包 pip install requests
         pip show --files Package        # 查看安装包时安装了哪些文件
@@ -124,7 +72,6 @@ python实例手册
 
     列表
 
-        # 列表元素的个数最多 536870912
         shoplist = ['apple', 'mango', 'carrot', 'banana']
         shoplist[2] = 'aa'
         del shoplist[0]
@@ -506,6 +453,7 @@ python实例手册
             f.seek(p,1)    # 移动到相对于当前位置之后的p个字节
             f.seek(p,2)    # 移动到相对文件尾之后的p个字节
             f.seek(0,2)    # 指针指到尾部
+
             # 改变指针超出文件尾部,会造成文件洞,ll看占用较大，但du -sh却非常小
             f.read(65535)  # 读取64K字节
             f.write("str") # 写会覆盖当前指针后的响应字符,无插入功能
@@ -1000,7 +948,7 @@ python实例手册
                 os.path.basename()         # 去掉目录路径,返回文件名
                 os.path.dirname()          # 去掉文件名,返回目录路径
                 os.path.join()             # 将分离的各部分组合成一个路径名
-                os.path.spllt()            # 返回(dirname(),basename())元组
+                os.path.split()            # 返回(dirname(),basename())元组
                 os.path.splitdrive()       # 返回(drivename,pathname)元组
                 os.path.splitext()         # 返回(filename,extension)元组
 
@@ -1447,8 +1395,7 @@ python实例手册
     subprocess      [子进程管理]
 
         import subprocess
-        s=subprocess.Popen('ls', shell=True, \
-                stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        s=subprocess.Popen('ls', shell=True, stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
         print s.stdout.read()
         print s.stderr.read()
         print s.wait()         # 等待子进程结束。并返回执行状态 shell 0为正确
@@ -3639,7 +3586,8 @@ python实例手册
             import urllib2
 
             url = 'http://www.01happy.com/wp-content/uploads/2012/09/bg.png'
-            file("./pic/%04d.png" % i, "wb").write(urllib2.urlopen(url).read())
+            a=file("./pic/%04d.png" % i, "wb")
+            a.write(urllib2.urlopen(url).read())
 
         抓取网页解析指定内容
 
@@ -3704,11 +3652,12 @@ python实例手册
 
             url = "http://www.baidu.com"
             # AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11
-            headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1)',
-            'Accept':'text/html;q=0.9,*/*;q=0.8',
-            'Accept-Charset':'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
-            'Connection':'close',
-            'Referer':None #注意如果依然不能抓取的话，这里可以设置抓取网站的host
+            headers = {
+                'User-Agent':'Mozilla/5.0 (Windows NT 6.1)',
+                'Accept':'text/html;q=0.9,*/*;q=0.8',
+                'Accept-Charset':'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+                'Connection':'close',
+                'Referer':None #注意如果依然不能抓取的话，这里可以设置抓取网站的host
             }
 
             opener = urllib.request.build_opener()
@@ -4364,9 +4313,8 @@ python实例手册
             import time
 
             '''
-            by:某大牛
             QQ:185635687
-            这个是多线程并发控制. 如果要改成多进程，只需把threading 换成 mulitprocessing.Process ， 对， 就是换个名字而已.
+            这个是多线程并发控制. 如果要改成多进程，只需把threading 换成 mulitprocessing.Process ，对，就是换个名字而已
             '''
 
             #获取ip 及其出现次数
@@ -6161,12 +6109,4 @@ python实例手册
                 count = int(count)
                 buf = s.recv(count)
                 print buf
-
-
-
-不定期更新下载地址：
-http://pan.baidu.com/s/1sjsFrmX
-https://github.com/liquanzhou/ops_doc
-
-请勿删除信息, 植入广告, 抵制不道德行为
 

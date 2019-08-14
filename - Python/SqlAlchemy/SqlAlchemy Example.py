@@ -125,6 +125,26 @@ print(my_stdent)
 my_stdent = session.query(Student).filter_by(name="fengxiaoqing2").first()
 print(my_stdent.id, my_stdent.name, my_stdent.age, my_stdent.address)
 
+
+# Query通过指定与text()构造的使用可灵活地使用字符串，这是大多数方法所接受的。如 filter() / order_by()：
+from sqlalchemy import text
+
+for user in session.query(User).filter( text( "id<224" ) ).order_by(text("id")).all():
+    print(user.name)
+# ed
+# wendy
+# mary
+# fred
+# 可使用冒号使用基于字符串的SQL指定绑定参数:
+session.query(User).filter(text("id<:value and name=:name")).params(value=224, name='fred').order_by(User.id)
+
+# 如果要使用整句文本SQL，可结合from_statement()使用
+# 要使用完全基于字符串的语句，text()可以将表示完整语句的构造传递给 from_statement()
+# 如果没有其他说明符，字串SQL中的列将根据名称与模型列匹配，例如下面只使用星号表示加载所有列：
+session.query(User).from_statement(text("SELECT * FROM users where name=:name")).params(name='ed').all()
+# [<User(name='ed', fullname='Ed Jones', nickname='eddie')>]
+
+
 # Example:
 session.query(Student).filter(Student.name.like("%feng%"))
 
@@ -135,18 +155,25 @@ query(Student).filter(Student.id == 10001)
 query(Student).filter(Student.id != 100)
 
 # LIKE:
-query(Student).filter(Student.name.like(“%feng%”))
+query(Student).filter(Student.name.like("%feng%"))
+query.filter(User.name.ilike('%ed%'))   #不区分大小写
 
 # IN:
-query(Student).filter(Student.name.in_(['feng', 'xiao', 'qing']))
+query.filter(User.name.in_(['ed', 'wendy', 'jack']))
+query(Student).filter(Student.name.in_(['feng', 'xiao', 'qing'])).all()
+query.filter(User.name.in_(session.query(User.name).filter(User.name.like('%ed%'))))
 
 # not in
 query(Student).filter(~Student.name.in_(['feng', 'xiao', 'qing']))
 
+# IS NULL：
+query.filter(User.name == None)
+query.filter(User.name.is_(None))       # IS NOT NULL：  query.filter(User.name.isnot(None))
+
 # AND:
 from sqlalchemy import and_
 query(Student).filter(and_(Student.name == 'fengxiaoqing', Student.id ==10001))
-# 或者
+# 或
 query(Student).filter(Student.name == 'fengxiaoqing').filter(Student.address == 'chengde')
 
 # OR:
@@ -213,10 +240,17 @@ session.query(Student).group_by(Student.age)
 # 排序 order_by() 反序在order_by里面用desc()方法：
 session.query(Student).filter(Student.name.like("%feng%")).order_by(Student.id.desc()).all()
 
+for instance in session.query(User).order_by(User.id):
+    print(instance.name, instance.fullname)
+# ed Ed Jones
+# wendy Wendy Williams
+# mary Mary Contrary
+# fred Fred Flintstone
+
 # 将ORM的查询语句转换为SQL
 str(User.query.limit(1))
 
-# ------------------------------------------------- relationship
+# ------------------------------------------------- relationship (替代了部分join查询的作用)
 # 一对多关系：
 # 一个客户可以创建多个订单，而一个订单只能对应一个客户：
 # 订单表通过外键（foreign key）来引用客户表，客户表通过 relationship() 方法来关联订单表：
@@ -231,7 +265,7 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
-    order = relationship('Order', backref='users')      # 一个客户可以创建多个订单(相当于Order.users.name 可查本表对应的数据)
+    order = relationship('Order', backref='users')      # 一个客户多个订单 ( Order.users.name 可查本表对应的数据 )
     # relationship根据定义的表之间的外键"ForeignKey"来关联表间数据的关系
     # backref是反向引用，这里即使得Order实体可通过Order.users.name可获取到此Order实例相关联的User表的name属性的值!
     # 此外，抛开backref参数，也可以使用User.order(对象)的方式获取用户实体对应的Order信息
@@ -252,10 +286,10 @@ user = session.query(Order).filter(Order.number == 1).first().users
 # 如果无法决定外键, 就要为 relationship() 提供额外参数, 从而确定所用外键
 
 
-
 # 一对一关系：
 # 在一个表中有一条记录，则在另一张表中有一条记录相匹配。一般是看主表每一个字段对应另一张表的匹配记录条数
 # 一对一本质上是两个表之间的双向关系，只需要在一对多关系的基础上设置 relationship 方法的 uselist 参数为 false 即可
+
 
 # 多对多关系：
 # 一个表中的多个记录与另一个表中的多个记录相关联时即产生多对多关系
@@ -309,3 +343,78 @@ s1_course = session.query(Student).filter(Student.name == 's1').first().course
 print(s1_course)
 c1_student = session.query(Course).filter(Course.id == 1).first().student
 print(c1_student)
+
+# ------------------------------------------------- join
+
+#     mysql> select * from users;
+#     +----+------+
+#     | id | name |
+#     +----+------+
+#     |  1 | jack |
+#     +----+------+
+#     1 row in set (0.00 sec)
+#     
+#     mysql> select * from addresses;
+#     +----+-----------------+---------+
+#     | id | email_address   | user_id |
+#     +----+-----------------+---------+
+#     |  1 | test@test.com   |       1 |
+#     |  2 | test1@test1.com |       1 |
+#     +----+-----------------+---------+
+#     2 rows in set (0.00 sec)
+
+# 如果不使用join的话，可以直接联表查询:
+session.query(User.name, Address.email_address)\
+    .filter(User.id == Address.user_id)\
+    .filter(Address.email_address =='test@test.com')\
+    .all()
+# SELECT users.name AS users_name, addresses.email_address AS addresses_email_address 
+# FROM users, addresses
+# WHERE users.id = addresses.user_id 
+# AND 
+# addresses.email_address = %s
+
+# 在sqlalchemy中提供了Queqy.join()函数:
+session.query(User).join(Address).filter(Address.email_address=='test@test.com').first()
+# SELECT users.id AS users_id, users.name AS users_name 
+# FROM users 
+# INNER JOIN addresses ON users.id = addresses.user_id 
+# WHERE addresses.email_address = 'test@test.com'
+# LIMIT 1
+
+session.query(User).join(Address).filter(Address.email_address=='test@test.com').first().name
+session.query(User).join(Address).filter(Address.email_address=='test@test.com').first().addresses
+
+# 注意上面用法的前提是存在外键的情况下
+# 如果没有外键，那么可以使用:
+query.join(Address, User.id==Address.user_id)    # explicit condition
+query.join(User.addresses)                       # specify relationship from left to right
+query.join(Address, User.addresses)              # same, with explicit target
+query.join('addresses')    
+
+
+# 假设我们需要这样一个查询，
+# mysql> SELECT users.*, adr_count.address_count FROM users LEFT OUTER JOIN
+#     ->     (SELECT user_id, count(*) AS address_count FROM addresses GROUP BY user_id) AS adr_count
+#     ->     ON users.id = adr_count.user_id;
+#  +----+------+---------------+
+#  | id | name | address_count |
+#  +----+------+---------------+
+#  |  1 | jack |             2 |
+#  +----+------+---------------+
+#  1 row in set (0.00 sec)
+# 以上SQL可表现为如下形式：
+sbq = session.query(Address.user_id, func.count('*').label('address_count')).group_by(Address.user_id).subquery()
+session.query(User.name, sbq.c.address_count).outerjoin(sbq, User.id==sbq.c.user_id).all()
+
+# ------------------------------------------------- 子查询
+# SELECT users.*, adr_count.address_count
+# FROM users 
+# LEFT OUTER JOIN (SELECT user_id, count(*) AS address_count FROM addresses GROUP BY user_id) AS adr_count
+# ON users.id=adr_count.user_id
+
+# 使用query实现：（ 这里使用 subquery() 来代表一个select语句 ）
+stmt = session.query(Address.user_id, func.count('*').label('address_count')).group_by(Address.user_id).subquery()
+# 这个subquery()生成的结果类似于一个table结构，可以用c来获取里面的字段
+for u, count in session.query(User, stmt.c.address_count).outerjoin(stmt, User.id==stmt.c.user_id).order_by(User.id):
+    print(u, count)

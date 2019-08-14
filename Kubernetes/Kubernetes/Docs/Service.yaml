@@ -139,3 +139,21 @@ metadata:
 spec:
   type: ExternalName
   externalName: somedomain.org
+
+
+# NodePort
+apiVersion: v1  
+kind: Service  
+metadata:  
+  labels:  
+    name: app1  
+  name: app1  
+  namespace: default  
+spec:  
+  type: NodePort  
+  ports:  
+  - port: 8080  
+    targetPort: 8080  
+    nodePort: 30062
+  selector:  
+    name: app1  

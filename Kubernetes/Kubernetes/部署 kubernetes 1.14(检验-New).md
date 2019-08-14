@@ -32,7 +32,7 @@ systemctl disable dnsmasq --now
 
 #安装基础组件
 yum -y install epel-release
-yum -y install yum-utils chrony lvm2 git jq unzip ipset ipvsadm conntrack libseccomp sysstat device-mapper-persistent-data
+yum -y install yum-utils chrony lvm2 git jq unzip ipset ipvsadm conntrack libseccomp sysstat device-mapper-persistent-data nfs-utils
 yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
 yum makecache all
 version=$(yum list docker-ce.x86_64 --showduplicates | sort -r | grep ${docker_version} | awk '{print $2}')
@@ -40,7 +40,7 @@ yum -y install --setopt=obsoletes=0 docker-ce-${version} docker-ce-selinux-${ver
 #Docker要求Linux内核版本3.10+
 
 #设置语言
-echo 'LANG="en_US.UTF-8"' >> /etc/profile.d/LANG
+echo 'LANG="en_US.UTF-8"' >> /etc/profile.d/LANG.sh
 source /etc/profile
 
 #设置时区
@@ -954,6 +954,11 @@ systemctl start docker
 ```
 #### Info
 ```
+yum install -y bash-completion
+source /usr/share/bash-completion/bash_completion
+echo "source <(kubectl completion bash)" >> /etc/profile.d/kube_completion.sh
+source /etc/profile
+
 echo 'export KUBECONFIG=/kubernetes/config/kubelet.kubeconfig' >> /etc/profile.d/kubernetes.sh
 source /etc/profile.d/kubernetes.sh
 

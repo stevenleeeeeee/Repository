@@ -1,11 +1,12 @@
 tar -zxf node-v8.1.4-linux-x64.tar.gz 
 ln -sv node-v8.1.4-linux-x64 node
 
-vi ~/.bash_profile
+cat >> ~/.bash_profile <<'EOF'
 NODE_HOME=/root/node
 PATH=$NODE_HOME/bin:$PATH:$HOME/bin
 export NODE_HOME
 export PATH
+EOF
 
 
 #软件
@@ -14,7 +15,7 @@ export PATH
 ./elasticdump  --input=http://192.168.1.1:9200/original --output=http://192.168.1.2:9200/newCopy --type=mapping  
 ./elasticdump  --input=http://192.168.1.1:9200/original --output=http://192.168.1.2:9200/newCopy --type=data
 
-#如果索引很多，你还是懒得一个个去迁移，那么你可以改用这个命令
+#如果索引很多懒得一个个迁移，那么可改用这个命令
 #加个--all=true，input与output里不需要把索引名加上，这样就可以自动把原机器上的所有索引迁移到目标机器
 ./elasticdump  --input=http://192.168.1.1:9200/ --output=http://192.168.1.2:9200/ --all=true  
 

@@ -24,7 +24,7 @@ systemctl stop firewalld --now &&  systemctl --failed
 iptables -F
 
 yum -y install epel-release
-yum -y install yum-utils chrony lvm2 git jq unzip ipset ipvsadm conntrack libseccomp
+yum -y install yum-utils chrony lvm2 git jq unzip ipset ipvsadm conntrack libseccomp nfs-utils
 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 yum -y install device-mapper-persistent-data docker-ce        #Docker要求Linux内核版本3.10+
 

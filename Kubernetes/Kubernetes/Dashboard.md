@@ -10,6 +10,7 @@ https://github.com/kubernetes/dashboard/wiki/Integrations
   k8s.gcr.io/heapster-influxdb-amd64:v1.5.2               
   k8s.gcr.io/heapster-grafana-amd64:v5.0.4
 ```
+
 #### Download Dashboard Images
 ```bash
 #!/bin/bash
@@ -71,18 +72,18 @@ vim heapster.yaml    #https://github.com/kubernetes/dashboard/wiki/Integrations
 ......
 
 kubectl apply -f .
-#clusterrolebinding.rbac.authorization.k8s.io/heapster created
-#serviceaccount/heapster created
-#deployment.extensions/heapster created
-#service/heapster created
-#serviceaccount/kubernetes-dashboard-admin created
-#clusterrolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-admin created
-#secret/kubernetes-dashboard-certs created
-#serviceaccount/kubernetes-dashboard created
-#role.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
-#rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
-#deployment.apps/kubernetes-dashboard created
-#service/kubernetes-dashboard-external created
+# clusterrolebinding.rbac.authorization.k8s.io/heapster created
+# serviceaccount/heapster created
+# deployment.extensions/heapster created
+# service/heapster created
+# serviceaccount/kubernetes-dashboard-admin created
+# clusterrolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-admin created
+# secret/kubernetes-dashboard-certs created
+# serviceaccount/kubernetes-dashboard created
+# role.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
+# rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard-minimal created
+# deployment.apps/kubernetes-dashboard created
+# service/kubernetes-dashboard-external created
 
 kubectl get svc -n kube-system
 #NAME                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                  AGE

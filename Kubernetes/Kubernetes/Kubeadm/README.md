@@ -137,7 +137,7 @@ listen stats
 192.168.70.131 node131
 
 #在所有节点安装Docker
-[root@node129 ~]# yum -y install yum-utils epel-release
+[root@node129 ~]# yum -y install yum-utils epel-release nfs-utils
 [root@node129 ~]# yum-config-manager --add-repo  https://download.docker.com/linux/centos/docker-ce.repo
 
 #在Master节点安装kubeadm、kubelet、kubectl. 这里使用阿里云镜像
@@ -160,8 +160,11 @@ cat > /etc/docker/daemon.json <<EOF
 }
 EOF
 
-systemctl daemon-reload && systemctl restart docker
+#设置docker信任非HTTPS的镜像仓库
+vim /usr/lib/systemd/system/docker.service
+ExecStart=/usr/bin/dockerd --insecure-registry=xx.xx.xx.xx:xxx .....
 
+systemctl daemon-reload && systemctl restart docker
 
 
 # 列出Docker版本：  yum list docker-ce --showduplicates | sort -r

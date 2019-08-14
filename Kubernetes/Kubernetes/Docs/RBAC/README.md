@@ -165,7 +165,7 @@ system: node                                #定义了kubelets的权限
 system: authenticated                       #所有被认证的用户
 system: unauthenticated                     #所有未被认证的用户
 system: serviceaccounts                     #所有的服务帐户
-system:kubelet-bootstrap                    #用于自动为节点签发证书
+system: kubelet-bootstrap                   #用于自动为节点签发证书
 ```
 #### 命令行工具
 ```bash

@@ -29,7 +29,7 @@ spec:
         imagePullPolicy: IfNotPresent
         command:
           - /metrics-server                              #
-          - --kubelet-preferred-address-types=InternalIP #确定用于连接到特定节点的地址时使用的节点地址类型的优先级
+          - --kubelet-preferred-address-types=InternalIP #确定用于连接到特定节点IP时使用的目标节点地址的优先级
           - --kubelet-insecure-tls                       #不验证Kubelet提供的服务证书的CA
           #- --kubelet-preferred-address-types=InternalIP,Hostname,InternalDNS,ExternalDNS,ExternalIP
           #- --source=kubernetes.summary_api:https://kubernetes.default?kubeletHttps=true&kubeletPort=10250&insecure=true&useServiceAccount=true
@@ -76,8 +76,8 @@ kube-proxy-pm2j4                  2m           24Mi
 kube-scheduler-node129            1m           20Mi            
 metrics-server-6f489d7445-vhdtv   1m           16Mi     
 
-#HPA Demo:
-#kubectl autoscale deploy Example --min=1 --max=10 --cpu-percent=80
+# HPA Demo:
+# kubectl autoscale deploy Example --min=1 --max=10 --cpu-percent=80
 
-#kubectl api-versions 只有出现  metrics.k8s.io/v1beta1 才说明部署成功。Metrics API URI 为 /apis/metrics.k8s.io/
+# kubectl api-versions 只有出现  metrics.k8s.io/v1beta1 才说明部署成功。Metrics API URI 为 /apis/metrics.k8s.io/
 ```
