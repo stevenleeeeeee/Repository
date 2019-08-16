@@ -12,9 +12,13 @@ https://kubernetes.io/docs/setup/independent/high-availability/
 #系统版本: Centos 7.4 Minimal (对内核版本有要求，建议使用最新发行版)
 #部署前应关闭firewald并清空iptables规则、关闭Selinux、进行集群节点时钟同步、设置主机名等...
 
+setenforce 0
+sed -i.bak "s/^SELINUX=.*/SELINUX=disabled/g" /etc/sysconfig/selinux /etc/selinux/config
+
+systemctl disable firewalld --now
 iptables -P FORWARD ACCEPT
 
-cat > /etc/sysctl.d/kubernetes.conf <<EOF
+cat > /etc/sysctl.d/99-kubernetes-cri.conf <<'EOF'
 net.ipv4.tcp_keepalive_time = 600
 net.ipv4.tcp_keepalive_intvl = 30
 net.ipv4.tcp_keepalive_probes = 10
@@ -44,6 +48,7 @@ vm.swappiness = 0
 vm.overcommit_memory=1
 vm.panic_on_oom=0
 EOF
+
 sysctl --system
 ```
 #### 控制平面前端代理服务
@@ -136,7 +141,10 @@ listen stats
 192.168.70.129 node129
 192.168.70.131 node131
 
-#在所有节点安装Docker
+# 在所有节点安装Docker
+# 列出Docker版本：  yum list docker-ce --showduplicates | sort -r
+# 安装指定版本：    sudo yum install docker-ce-<VERSION_STRING>
+
 [root@node129 ~]# yum -y install yum-utils epel-release nfs-utils
 [root@node129 ~]# yum-config-manager --add-repo  https://download.docker.com/linux/centos/docker-ce.repo
 
@@ -166,10 +174,6 @@ ExecStart=/usr/bin/dockerd --insecure-registry=xx.xx.xx.xx:xxx .....
 
 systemctl daemon-reload && systemctl restart docker
 
-
-# 列出Docker版本：  yum list docker-ce --showduplicates | sort -r
-# 安装指定版本：    sudo yum install docker-ce-<VERSION_STRING>
-
 #在Node节点安装kubeadm、kubelet
 [root@node129 ~]# yum -y install docker-ce kubeadm kubelet chrony
 
@@ -179,32 +183,24 @@ systemctl daemon-reload && systemctl restart docker
 [root@node129 ~]# systemctl enable kubelet --now    #必要时执行"journalctl -exu kubelet"查看启动日志进行故障排查
 [root@node129 ~]# systemctl start chronyd --now     #所有节点的时间必须要先进行同步
 [root@node129 ~]# echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
-[root@node129 ~]# modprobe bridge 
+[root@node129 ~]# modprobe bridge
+[root@node129 ~]# modprobe overlay
+[root@node129 ~]# modprobe br_netfilter
 [root@node129 ~]# swapoff -a
 [root@node129 ~]# sed -iE "/swap/s/\(.*\)/#\1/g" /etc/fstab 
-[root@node129 ~]# echo 0 > /proc/sys/vm/swappiness
-[root@node129 ~]# cat /etc/sysctl.d/kubernetes.conf 
-net.bridge.bridge-nf-call-ip6tables=1
-net.bridge.bridge-nf-call-iptables=1
-net.ipv4.ip_forward=1
-vm.swappiness=0
-
-[root@node129 ~]# sysctl -p
 [root@node129 ~]# systemctl restart docker
 [root@node129 ~]# vim /etc/sysconfig/kubelet
 KUBELET_EXTRA_ARGS="--fail-swap-on=false"
 
 #在Master节点执行集群初始化:
-[root@node129 ~]# kubeadm config images list                #列出需下载的镜像 (先下载再导入到所有节点的仓库)
+[root@node129 ~]# kubeadm config images [list/pull]         #列出/下载需要的镜像 (先下载再导入到所有节点的仓库)
 [root@node129 ~]# kubeadm config print init-defaults        #列出kubeadm执行init时使用的YAML清单
 
 #使用阿里云的K8S源并详细输出执行细节
 #这个步骤将会从指定的镜像仓库下载K8S组件以Pod方式运行所需要的镜像，如果不修改镜像源地址的话，会很慢，必须使用国内的源!
-[root@node129 ~]# kubeadm init  \
---kubernetes-version=v1.14.0 \
---pod-network-cidr=10.244.0.0/16 \
---apiserver-advertise-address=192.168.70.129 \
---image-repository registry.cn-hangzhou.aliyuncs.com/google_containers -v 4  
+[root@node129 ~]# kubeadm init --kubernetes-version=v1.14.0 --pod-network-cidr=10.244.0.0/16 \
+  --apiserver-advertise-address=192.168.70.129 \
+  --image-repository registry.cn-hangzhou.aliyuncs.com/google_containers -v 4  
 
 #当执行kubeadm init ........... 如执行顺利将输出如下：
 Your Kubernetes control-plane has initialized successfully!
@@ -254,13 +250,14 @@ for i in $(systemctl list-unit-files --no-legend --no-pager -l \
 
 [root@node131 ~]# kubeadm join 192.168.70.129:6443 --token riu0dh.hkzvjr20du2wum6j \
  --discovery-token-ca-cert-hash sha256:b07a92d2b3c354d8aa61b4b42bdc541e13a2942692b0c21668f6a0bb1627f4a3 
-#若执行后有如下输出：   
-[WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver.\
- The recommended driver is "systemd". Please follow the guide at https://kubernetes.io/docs/setup/cri/
-#修改：
-[root@node131 ~]#vim /var/lib/kubelet/kubeadm-flags.env  #修改--cgroup-driver=参数为"systemd"
-KUBELET_KUBEADM_ARGS=--cgroup-driver=systemd --network-plugin=cni \
- --pod-infra-container-image=registry.cn-hangzhou.aliyuncs.com/google_containers/pause:3.1
+# 若执行后有如下输出：   
+# [WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver.\
+#  The recommended driver is "systemd". Please follow the guide at https://kubernetes.io/docs/setup/cri/
+# 修改：
+[root@node131 ~]# vim /var/lib/kubelet/kubeadm-flags.env  #修改--cgroup-driver=参数为"systemd"
+KUBELET_KUBEADM_ARGS="--cgroup-driver=systemd --network-plugin=cni --pod-infra-container-image=registry.cn-hangzhou.aliyuncs.com/google_containers/pause:3.1"
+[root@node131 ~]# systemctl daemon-reload
+[root@node131 ~]# systemctl restart kubelet
 ```
 #### 检查集群状态
 ```bash
@@ -280,12 +277,13 @@ kube-proxy-fvsrz                1/1   Running  0        14m   192.168.70.129 nod
 kube-proxy-q4lxt                1/1   Running  0        5m45s 192.168.70.131 node131 <none>         <none>
 kube-scheduler-node129          1/1   Running  0        13m   192.168.70.129 node129 <none>         <none>
 ```
-#### 总结
+#### 总结及 HA 部署
 ```bash
 --------------------------------------------------------------------------------- Demo
 #在执行 "kubeadm init xxx" 命令时记得加 "--pod-network-cidr" 参数
 #并且pod所在网段的地址要和flannel的对应，否则容易造成部署不成功! 
 #建议这里使用和flannel端一样的默认网段参数：--pod-network-cidr=10.244.0.0/16
+#kubeadm使用与默认网关关联的接口来通告主IP，要使用其他网络接口则：--apiserver-advertise-address=<ip-address>
 [root@node129 ~]# kubeadm init  \
 --kubernetes-version=v1.14.0 \
 --pod-network-cidr=10.244.0.0/16 \
@@ -295,6 +293,8 @@ kube-scheduler-node129          1/1   Running  0        13m   192.168.70.129 nod
 #时，此声明清单中的pod端的CIDR默认就是: 10.244.0.0/16 ( 如果不一样，可能会使得Node间Cluster IP不通 )
 
 --------------------------------------------------------------------------------- HA
+# 高可用环境部署参考文档：
+# https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/
 
 #在需定制场景，可使用 "kubeadm config print init-defaults" 生成初始化部署时的YAML清单，而后再此基础上进行定制
 #基于这份清单，可使用 "kubeadm init --config default.yaml" 形式的命令根据这份清单进行初始化操作
@@ -327,10 +327,10 @@ kind: ClusterConfiguration
 kubernetesVersion: v1.14.0
 certificatesDir: /etc/kubernetes/pki
 clusterName: kubernetes
-controlPlaneEndpoint: 192.168.158.138         #VIP:PORT
+controlPlaneEndpoint: 192.168.158.138         # LOAD_BALANCER_DNS:LOAD_BALANCER_PORT ( VIP -> APIServer... )
 maxPods: 100
 
-#详细参数：https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
+# apiServer 详细参数：https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
 apiServer:
   timeoutForControlPlane: 4m0s
   extraArgs:
@@ -343,14 +343,15 @@ apiServer:
     - 192.168.70.140
     - 192.168.70.141
     - 192.168.158.138
-#详细参数：https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
+
+# controllerManager 详细参数：https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
 controllerManager: 
   extraArgs:
     bind-address: 0.0.0.0
     deployment-controller-sync-period: "50"
     #cluster-signing-key-file: /home/johndoe/keys/ca.key
 
-#详细参数：https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/
+# scheduler 详细参数：https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/
 scheduler: 
   extraArgs:
     address: 0.0.0.0
@@ -391,19 +392,21 @@ kubeadm config images list --config kubeadm.yml
 #拉取镜像
 kubeadm config images pull --config kubeadm.yml
 
-#部署
-kubeadm init --config HA-Deploy.yaml --upload-certs [ --control-plane ]
+#基于HA-Deploy.yaml文件部署HA环境
+kubeadm init --config HA-Deploy.yaml [ --upload-certs ] [ --control-plane ]
 
 #当执行 "kubeadm init" 后
 #Node节点用 "kubeadm join <master-ip> --token xxx --discovery-token-ca-cert-hash xxx" 的方式加入集群
 #但这个token有有效期限，如果超时仍没加入集群，需要重新生成token：
-[root@node129 ~]# kubeadm token create
-0bzans.3e8j9x0vzpllb2si
+# [root@node129 ~]# kubeadm token create
+# 0bzans.3e8j9x0vzpllb2si
 
 #拷贝相关证书到master2、master3
-for ip in 192.168.x.x 192.168.x.x
+CONTROL_PLANE_IPS="master2 master3"
+for ip in ${CONTROL_PLANE_IPS}
 do
-    ssh $ip "mkdir -p /etc/kubernetes/pki/etcd; mkdir -p ~/.kube/"
+    ssh $ip "mkdir -p /etc/kubernetes/pki/etcd ; mkdir -p ~/.kube/"
+
     scp /etc/kubernetes/pki/ca.crt $ip:/etc/kubernetes/pki/ca.crt
     scp /etc/kubernetes/pki/ca.key $ip:/etc/kubernetes/pki/ca.key
     scp /etc/kubernetes/pki/sa.key $ip:/etc/kubernetes/pki/sa.key
@@ -433,11 +436,11 @@ kubectl taint nodes master-3 node-role.kubernetes.io/master=true:NoSchedule
 kubectl apply -f "https://raw.githubusercontent.com/coreos/flannel\
 /a70459be0084506e4ec919aa1c114638878db11b/Documentation/kube-flannel.yml"
 
-#生成令牌: kubeadm token generate
-#删除令牌: kubeadm token delete [token-value]
-#列出需要的镜像：kubeadm config images list
-#列出所有引导令牌: kubeadm token list [flags]
-#打印出默认配置: kubeadm config print
+# 生成令牌: kubeadm token generate
+# 删除令牌: kubeadm token delete [token-value]
+# 列出需要的镜像：kubeadm config images list
+# 列出所有引导令牌: kubeadm token list [flags]
+# 打印出默认配置: kubeadm config print
 
 ```
 
@@ -526,10 +529,6 @@ token: {{JOIN_TOKEN}}
 nodeName: {{HOSTNAME}}
 certificatesDir: /etc/kubernetes/pki
 imageRepository: ufleet.io/google_containers
-```
-#### kubeadm -h
-```bash
-
 ```
 #### 重置
 ```bash

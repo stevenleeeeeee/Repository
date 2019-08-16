@@ -17,7 +17,9 @@ spec:
   selector:
     app: node-exporter
   type: ClusterIP
+
 ---
+
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:

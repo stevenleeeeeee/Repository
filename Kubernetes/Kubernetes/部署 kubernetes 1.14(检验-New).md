@@ -467,9 +467,9 @@ After=network.target
 ExecStart=/kubernetes/bin/kube-apiserver \
  --logtostderr=false --v=2 --log-dir=/kubernetes/logs \
  --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ResourceQuota,DefaultStorageClass,ServiceAccount,NodeRestriction \
- --anonymous-auth=true \
+ --anonymous-auth=false \
  --authorization-mode=Node,RBAC \
- --enable-bootstrap-token-auth --token-auth-file=/kubernetes/config/token.csv \
+ --enable-bootstrap-token-auth=true --token-auth-file=/kubernetes/config/token.csv \
  --advertise-address=0.0.0.0 --bind-address=0.0.0.0 --secure-port=6443 --insecure-port=0 \
  --service-cluster-ip-range=10.0.0.0/24 --service-node-port-range=10000-40000 \
  --allow-privileged=true \
@@ -516,7 +516,8 @@ EOF
 
 systemctl daemon-reload && systemctl enable kube-apiserver --now
 
-#允许用token发起CSR：https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/
+# 允许用Token发起CSR：
+# https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/
 kubectl create clusterrolebinding create-csrs-for-bootstrapping \
   --clusterrole=system:node-bootstrapper \
   --group=system:bootstrappers
@@ -831,7 +832,7 @@ done
 
 systemctl daemon-reload && systemctl enable kubelet --now
 
-#在Master端签发Kubelet证书!
+# 在Master端签发Kubelet证书:
 kubectl get csr | awk 'NR>1{print $1}' | xargs -n 1 kubectl certificate approve
 ```
 #### kube-proxy
@@ -850,7 +851,7 @@ ExecStart=/kubernetes/bin/kube-proxy \
 --logtostderr=false --v=2 \
 --bind-address=0.0.0.0 \
 --cluster-cidr=172.17.0.0/16 \ 
---hostname-override=master \
+--hostname-override=<当前主机地址> \
 --metrics-bind-address=0.0.0.0 --metrics-port=10249 \
 --healthz-bind-address=0.0.0.0 --healthz-port=10256 \
 --kubeconfig=/kubernetes/config/kube-proxy-bootstrap \

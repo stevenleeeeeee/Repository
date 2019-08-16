@@ -1,26 +1,26 @@
-apiVersion: extensions/v1beta1   #接口版本
-kind: Deployment                 #接口类型
-metadata:
-  name: cango-demo               #Deployment名称
-  namespace: cango-prd           #命名空间
-  labels:
-    app: cango-demo              #标签
+apiVersion: extensions/v1beta1    #接口版本
+kind: Deployment                  #接口类型
+metadata: 
+  name: cango-demo                #Deployment名称
+  namespace: cango-prd            #命名空间
+  labels: 
+    app: cango-demo               #标签
 spec:
   replicas: 3
    strategy:
-    rollingUpdate:      #由于replicas为3 则整个升级 pod个数在2-4个之间
-      maxSurge: 1       #滚动升级时会先启动1个pod 
-      maxUnavailable: 1 #滚动升级时允许的最大Unavailable ( 不可用 ) 的pod个数
+    rollingUpdate:                #由于replicas为3 则整个升级 pod个数在2-4个之间
+      maxSurge: 1                 #滚动升级时会先启动1个pod 
+      maxUnavailable: 1           #滚动升级时允许的最大Unavailable ( 不可用 ) 的pod个数
   template:         
     metadata:
       labels:
         app: cango-demo  #模板名称必填
     sepc: #定义容器模板，该模板可以包含多个容器
       containers:                                                                   
-        - name: cango-demo                                                           #镜像名称
-          image: swr.cn-east-2.myhuaweicloud.com/cango-prd/cango-demo:0.0.1-SNAPSHOT #镜像地址
-          command: [ "/bin/sh","-c","cat /etc/config/path/to/special-key" ]    #启动命令
-          args:                                                                #启动参数
+        - name: cango-demo                                                            #镜像名称
+          image: swr.cn-east-2.myhuaweicloud.com/cango-prd/cango-demo:0.0.1-SNAPSHOT  #镜像地址
+          command: [ "/bin/sh","-c","cat /etc/config/path/to/special-key" ]           #启动命令
+          args:                                                                       #启动参数
             - '-storage.local.retention=$(STORAGE_RETENTION)'
             - '-storage.local.memory-chunks=$(STORAGE_MEMORY_CHUNKS)'
             - '-config.file=/etc/prometheus/prometheus.yml'

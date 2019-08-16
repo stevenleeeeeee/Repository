@@ -173,20 +173,7 @@ kubectl get –raw apis/metrics.k8s.io/v1beta1/namespace//pods/
 #### 查看APIServer资源
 ```bash
 [root@master metrics]# kubectl api-versions
-admissionregistration.k8s.io/v1beta1
-apiextensions.k8s.io/v1beta1
-apiregistration.k8s.io/v1
-apiregistration.k8s.io/v1beta1
-apps/v1 apps/v1beta1
-apps/v1beta2 authentication.k8s.io/v1 
-authentication.k8s.io/v1beta1 
-authorization.k8s.io/v1 
-authorization.k8s.io/v1beta1 
-autoscaling/v1 
-autoscaling/v2beta1 
-batch/v1 
-batch/v1beta1 
-certificates.k8s.io/v1beta1 
+...............
 crd.projectcalico.org/v1 
 events.k8s.io/v1beta1 
 extensions/v1beta1 
