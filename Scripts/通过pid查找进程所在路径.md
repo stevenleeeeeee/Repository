@@ -2,3 +2,5 @@
 
 过滤出网络进程的pid信息：`netstat -atupnl | grep java`
 通过此pid信息查找其路径：`ls /proc/$pid/exe`
+
+> pwdx <PID>

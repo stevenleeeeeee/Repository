@@ -13,13 +13,13 @@ SECURITY_LOAD_LEVEL=float(CPU_NUMBERS * 0.5)  #保持在负载安全阈值
 print "this cpu numbers:" + str(CPU_NUMBERS)  #主机CPU数
 print "my pid:" + str(os.getpid())            #PID
 
-#获取主机1分钟负载信息
+# 获取主机1分钟负载信息
 def get_load():
     f = open("/proc/loadavg")
     loadstate=f.read().split()
     return loadstate[0]
 
-#跑起来
+# 跑起来
 def Oh(x):
     while True:
         if float(get_load()) >= SECURITY_LOAD_LEVEL:  #当负载高于安全阈值执行Sleep

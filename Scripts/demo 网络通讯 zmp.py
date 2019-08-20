@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # need pip install pyzmq
 
-#服务端程序
+# 服务端程序
 import zmq
 context = zmq.Context()
 socket = context.socket(zmq.REP)
@@ -11,7 +11,8 @@ while True :
     msg = socket.recv()
     socket.send(msg)
 
-#客户端端程序
+
+# 客户端端程序
 import zmq
 context = zmq.Context()
 socket = context.socket(zmq.REQ)

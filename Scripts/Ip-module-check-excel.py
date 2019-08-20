@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-#coding=utf-8
-
-#---------------------------------------------------------
-#需要先下载处理Excel的python模块：openpyxl
-#本脚本用于将项目特定SHEET页下的：【IP】、【目录】列，并按行为基础，将每行结合日志的20个监控关键字输出为20行到EXCEL中
-#USE:
-#	python demo.py <EXCEL源文件> <第X个SHEET页> <第X列> <第X列>
-#
-#
-#注：可自动略过EXCEL源文件中的空白行
-#---------------------------------------------------------
+# coding=utf-8
+ 
+# ---------------------------------------------------------
+# 需要先下载处理Excel的python模块：openpyxl
+# 本脚本用于将项目特定SHEET页下的：【IP】、【目录】列，并按行为基础，将每行结合日志的20个监控关键字输出为20行到EXCEL中
+# USE:
+# 	python demo.py <EXCEL源文件> <第X个SHEET页> <第X列> <第X列>
+# 
+# 
+# 注：可自动略过EXCEL源文件中的空白行
+# ---------------------------------------------------------
 
 from openpyxl import Workbook
 from openpyxl import load_workbook
