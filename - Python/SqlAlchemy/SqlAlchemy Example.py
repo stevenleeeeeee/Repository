@@ -1,69 +1,62 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# 用于将数据库表结构用对象表示出来
+# ORM 用于将数据库表结构用对象表示出来
 
 from sqlalchemy import Column, String, create_engine
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.schema import ForeignKey
 
-# 创建对象的基类
+# 创建ORM对象的基类，它实际上是一个元类，对所有继承自它的类进行了封装
 Base = declarative_base()
 
-# 定义User对象
-class User(Base):
-    # 表名字
-    __tablename__ = 'user'
-    
-    # 表结构
-    id = Column(String(20), primary_key = True)
-    name = Column(String(20))
+# 定义ORM的User对象
+class User(Base):  
+    __tablename__ = 'user'  # 表名
+    id = Column(String(20), primary_key = True) # 表结构
+    name = Column(String(20))                   #
     
 # 初始化数据库连接，字串表示连接信息：数据库类型+数据库驱动名称://用户名:口令@机器地址:端口号/数据库名
 engine = create_engine('mysql+mysqlconnector://root:wangh@localhost:3306/test')
-# 创建DBSession类型
+# 基于上面定义的engine对象来创建DBSession类
 DBSession = sessionmaker(bind = engine)
-# 初始化完成
 
 # 创建session对象
 session = DBSession()
 # 创建User对象，添加到session
 new_user = User(id = '5', name = 'Bob')
 session.add(new_user)
-# 提交及保存到数据库
-session.commit()
-# 关闭
-session.close()
 
-# 创建session并创建Query查询，filter是where条件，最后调用one 是返回为一行，all则返回所有行
-session = DBSession()
+# 提交变更到数据库
+session.commit()
+
+# 关闭会话
+# session.close()
+
+# 创建Query查询，filter是where条件，最后调用one 是返回为一行，all则返回所有行，Query的返回也可以按照列表切片的方式操作
+
 user = session.query(User).filter(User.id == '5').one()
-# 打印
 print 'type: ', type(user)
 print 'name: %s' % user.name
-session.close()
 
-# 如果一个User拥有多个Book，则可以对那个一一对多关系
+# 若一个User拥有多个Book，则可以定义一对多关系
 class User(Base):
     __tablename__ = 'user'
-    
     id = Column(String(20), primary_key = True)
     name = Colum(String(2))
-    
-    # 一对多
-    books = relationship('Book')
+    books = relationship('Book')                            # 一对多，将来查询时其返回的是与其关联的数据组成的列表
 
 class Book(Base):
     __tablename__ = 'book'
-    
     id = Column(String(20), primary_key = True)
     name = Column(String(20))
-    # ‘多’的一方book表是通过外键关联到user表
-    user_id = Column(String(20)), ForeignKey('user.id')
-# 当我们查询一个User对象时，该对象的books属性将返回一个包含若干个Book对象的list，这会不会影响效率，因为我值查询User，可能并不关心Book
+    user_id = Column(String(20)), ForeignKey('user.id')     # 多的一方book表通过外键关联到user表
 
-# -------------------------------------------------
+# 当查询一个User对象时该对象的books属性将返回一个包含若干个Book对象的list
+# 这会不会影响效率，因为只是查询User，可能并不关心Book
+
+# ------------------------------------------------- Little Demo
 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
@@ -72,7 +65,7 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('mysql+pymysql://fxq:123456@192.168.100.101/sqlalchemy')
+engine = create_engine('mysql+pymysql://username:password@xx.xx.xx.xx/sqlalchemy')
 DBsession = sessionmaker(bind=engine)
 session = DBsession()
 
@@ -119,23 +112,25 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 my_stdent = session.query(Student).filter_by(name="fengxiaoqing2").first()
-print(my_stdent)
-# 在查询出来的数据sqlalchemy直接给映射成一个对象
-# 对象和建表时的class是一致的，也可以直接通过对象的属性就可以直接调用:
+print(my_stdent) 
+# 在查询出来的数据sqlalchemy直接给映射为一个对象
+# 对象和建表时的class是一致的，即直接通过对象属性就可以直接调用:
 my_stdent = session.query(Student).filter_by(name="fengxiaoqing2").first()
-print(my_stdent.id, my_stdent.name, my_stdent.age, my_stdent.address)
+print(my_stdent.id)
+print(my_stdent.name)
+print(my_stdent.age)
+print(my_stdent.address)
 
-
-# Query通过指定与text()构造的使用可灵活地使用字符串，这是大多数方法所接受的。如 filter() / order_by()：
+# Query通过指定与text()构造的使用可灵活地使用字符串，这是大多数方法所接受的。如: filter()、order_by()：
 from sqlalchemy import text
-
 for user in session.query(User).filter( text( "id<224" ) ).order_by(text("id")).all():
     print(user.name)
 # ed
 # wendy
 # mary
 # fred
-# 可使用冒号使用基于字符串的SQL指定绑定参数:
+
+# text() 可使用冒号使用基于字符串的SQL指定绑定参数:
 session.query(User).filter(text("id<:value and name=:name")).params(value=224, name='fred').order_by(User.id)
 
 # 如果要使用整句文本SQL，可结合from_statement()使用
@@ -200,6 +195,10 @@ user1 = session.query(User).filter(User.id==1).first()
 
 # filter不支持组合查询，只能连续调用filter来变相实现。
 # 而filter_by的参数是**kwargs，直接支持组合查询。比如：
+# 按照两个条件过滤数据记录（where and）
+User.query.filter_by(role_id = 3, username = 'susan').first()
+User.query.filter_by(role_id = 3, username = 'susan').all()
+
 q = session.query(IS).filter(IS.node == node and IS.password == password).all()
 
 # 按照一个条件过滤数据记录:
@@ -207,23 +206,22 @@ User.query.filter_by(name = 'Administrator').first()
 User.query.filter_by(name = 'Administrator').all()
 User.query.filter_by(name = 'Administrator').one()
 
-# 按照两个条件过滤数据记录（where and）
-User.query.filter_by(role_id = 3, username = 'susan').first()
-User.query.filter_by(role_id = 3, username = 'susan').all()
-
 # 更新就是查出来然后直接更改就可以了:
 my_stdent = session.query(Student).filter(Student.id == 1002).first()
 my_stdent.name = "fengxiaoqing"
 my_stdent.address = "chengde"
 session.commit()
 
-# 删除其实也是跟查询相关的，直接查出来，调用delete()方法直接就可以删除：
+# 删除其实也是跟查询相关的，直接查出来，调用delete()方法直接删除：
 session.query(Student).filter(Student.id == 1001).delete()
 session.commit()
 session.close()
 
 # 统计：
 session.query(Student).filter(Student.name.like("%feng%")).count()
+
+# 引入SQL的函数功能
+from sqlalchemy import func
 
 # 求和：
 User.query.with_entities(func.sum(User.role_id)).all()
@@ -250,7 +248,7 @@ for instance in session.query(User).order_by(User.id):
 # 将ORM的查询语句转换为SQL
 str(User.query.limit(1))
 
-# ------------------------------------------------- relationship (替代了部分join查询的作用)
+# ------------------------------------------------- relationship
 # 一对多关系：
 # 一个客户可以创建多个订单，而一个订单只能对应一个客户：
 # 订单表通过外键（foreign key）来引用客户表，客户表通过 relationship() 方法来关联订单表：
@@ -279,11 +277,11 @@ class Order(Base):
 # 依据用户查询订单：
 order = session.query(User).filter(User.name == 'kein').first().order
 # 依据订单查询用户：
-user = session.query(Order).filter(Order.number == 1).first().users
+user = session.query(Order).filter(Order.number == 1).first().users     # 即：backref ...
 
 # 大多数情况下 relationship() 都能自行找到关系中的外键, 但有时却无法决定把哪一列作为外键
 # 例如 Order 模型中有两个或以上的列定义为 Role 模型的外键, SQLAlchemy 就不知道该使用哪列
-# 如果无法决定外键, 就要为 relationship() 提供额外参数, 从而确定所用外键
+# 如果无法决定外键, 就要为 relationship() 提供额外参数来确定所用外键
 
 
 # 一对一关系：
@@ -294,7 +292,7 @@ user = session.query(Order).filter(Order.number == 1).first().users
 # 多对多关系：
 # 一个表中的多个记录与另一个表中的多个记录相关联时即产生多对多关系
 # 而我们常用的关系数据库往往不支持直接在两个表之间进行多对多的联接，为了解决这个问题，就需要引入第三个表
-# 将多对多关系拆分为两个一对多的关系，我们称这个表为联接表
+# 将多对多关系拆分为两个一对多的关系，通常称这个表为联接表
 # 大学中选修课和学生之间的关系就是一个典型的多对多关系，一个学生可以选修多个选修课，一个选修课有多个学生学习
 
 from sqlalchemy import Table, Column, Integer, ForeignKey
@@ -303,10 +301,11 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-association_table = Table('association',Base.metadata,
-    Column('course_id', Integer, ForeignKey('course.id')),
-    Column('student_id', Integer, ForeignKey('student.id'))
-)
+association_table = Table(
+                        'association',Base.metadata,
+                        Column('course_id', Integer, ForeignKey('course.id')),
+                        Column('student_id', Integer, ForeignKey('student.id'))
+                    )
 
 class Course(Base):
     __tablename__ = 'course'
@@ -364,10 +363,11 @@ print(c1_student)
 #     2 rows in set (0.00 sec)
 
 # 如果不使用join的话，可以直接联表查询:
-session.query(User.name, Address.email_address)\
-    .filter(User.id == Address.user_id)\
-    .filter(Address.email_address =='test@test.com')\
+session.query(User.name, Address.email_address)  \
+    .filter(User.id == Address.user_id)  \
+    .filter(Address.email_address =='test@test.com')  \
     .all()
+    
 # SELECT users.name AS users_name, addresses.email_address AS addresses_email_address 
 # FROM users, addresses
 # WHERE users.id = addresses.user_id 
@@ -385,7 +385,7 @@ session.query(User).join(Address).filter(Address.email_address=='test@test.com')
 session.query(User).join(Address).filter(Address.email_address=='test@test.com').first().name
 session.query(User).join(Address).filter(Address.email_address=='test@test.com').first().addresses
 
-# 注意上面用法的前提是存在外键的情况下
+# 注意上面用法的前提是存在外键的情况下!
 # 如果没有外键，那么可以使用:
 query.join(Address, User.id==Address.user_id)    # explicit condition
 query.join(User.addresses)                       # specify relationship from left to right
@@ -402,7 +402,7 @@ query.join('addresses')
 #  +----+------+---------------+
 #  |  1 | jack |             2 |
 #  +----+------+---------------+
-#  1 row in set (0.00 sec)
+
 # 以上SQL可表现为如下形式：
 sbq = session.query(Address.user_id, func.count('*').label('address_count')).group_by(Address.user_id).subquery()
 session.query(User.name, sbq.c.address_count).outerjoin(sbq, User.id==sbq.c.user_id).all()

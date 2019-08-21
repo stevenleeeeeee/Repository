@@ -5,7 +5,7 @@ from concurrent import futures
 def test(num):
     import time
     return time.ctime(),num
- 
+
 def muti_exec(m,n):
     # m 并发次数
     # n 运行次数

@@ -14,7 +14,7 @@ ARG TZ="Asia/Shanghai"
 
 ENV TZ ${TZ}
 
-#JDK1.6
+# JDK1.6
 RUN groupadd weblogic -g 501 \
     && useradd weblogic -g 501 -u 501 -d /home/weblogic -s /bin/bash \
     && echo ${PASSWORD} | passwd weblogic --stdin \
@@ -33,7 +33,7 @@ RUN groupadd weblogic -g 501 \
 
 RUN source /etc/profile
 
-#Weblogic10.3.6
+# Weblogic10.3.6
 RUN source /etc/profile \
     && cd /tmp \
     && java -jar wls1036_generic.jar -Djava.io.tmpDir=/tmp -mode=silent -silent_xml=jdk6silent.xml -log=install.log \
@@ -47,18 +47,19 @@ RUN source /etc/profile \
     && sed -i '5aexport USER_MEM_ARGS="-Xms2048M -Xmx2048M -XX:MaxPermSize=512M"' /app/weblogic/Oracle/Middleware/user_projects/domains/base_domain/startWebLogic.sh
 
 EXPOSE 17001
-#EXPOSE 17002
+# EXPOSE 17002
 
 WORKDIR /app/weblogic/Oracle/Middleware/wlserver_10.3
 
 CMD ["/app/weblogic/Oracle/Middleware/user_projects/domains/base_domain/startWebLogic.sh"]
 
-#------------------------------------------------------------------------------------------ 构建上层应用：
-FROM 20.58.27.3:5000/jdk6-weblogic:10.3.6		#从基础镜像开始构建BPM
+#------------------------------------------------------------------------------------------ # 构建上层应用：
 
-#将应用写入镜像/var/app路径下（其实此构建过程也可以使用docker cp 的方式直接注入到上面的镜像中然后开始部署应用）
-COPY default        /var/app/default			
-COPY workspace      /var/app/workspace
+FROM 20.58.xx.xx:5000/jdk6-weblogic:10.3.6		#从基础镜像开始构建BPM
+
+# 将应用写入镜像/var/app路径下（其实此构建过程也可以使用docker cp 的方式直接注入到上面的镜像中然后开始部署应用）
+COPY default   /var/app/default			
+COPY workspace /var/app/workspace
 
 USER root
 
@@ -73,15 +74,16 @@ ARG DOMAIN_DIR=/app/weblogic/Oracle/Middleware/user_projects/domains/base_domain
 ARG USERNAME=weblogic
 ARG PASSWORD=xxxxxxxxx
 
-#USER weblogic
+# USER weblogic
 
-#指定工作目录及启动时执行的命令
+# 指定工作目录及启动时执行的命令
 WORKDIR ${DOMAIN_DIR}							
 CMD ["/app/weblogic/Oracle/Middleware/user_projects/domains/base_domain/startWebLogic.sh"]
 
-#构建BPM镜像时,需要在dockerfile所在目录执行构建命令: 
-Docker build -t ‘bpm-test:xxxxv1’ .  	#其中的xxx是版本,镜像名称实际上是可以自定义的,建议使用应用名称,容易识别.
-#镜像构建完成后,将在docker daemon自身的镜像信息中显示此打包好的镜像
+# 构建BPM镜像时,需要在dockerfile所在目录执行构建命令: 
+Docker build -t "bpm-test:xxxxv1" .  	
+# 其中的xxx是版本,镜像名称实际上是可以自定义的,建议使用应用名称,容易识别.
+# 镜像构建完成后,将在docker daemon自身的镜像信息中显示此打包好的镜像
 
 #----------------------------------------------- 将中间镜像
 docker commit -c "EXPOSE 17001" \
@@ -91,11 +93,11 @@ docker commit -c "EXPOSE 17001" \
 <容器ID>  <镜像名称>:<版本>		
 
 
-#注，容器ID通过docker ps 的第一列可以查看到
+# 注，容器ID通过docker ps 的第一列可以查看到
 
-#构建镜像完成后需要将镜像打tag, 存入docker仓库中:
+# 构建镜像完成后需要将镜像打tag, 存入docker仓库中:
 docker tag  bpm-test:xxxx 20.58.27.3:5000/bpm-test:xxxx
 docker push  20.58.27.3:5000/bpm-test:xxxx
 
-#----------------------------------------------- kubernetes中使用deployment进行部署
+# ----------------------------------------------- kubernetes中使用deployment进行部署
 .......

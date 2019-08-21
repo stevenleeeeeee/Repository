@@ -6,7 +6,7 @@ cp GeoLite2-City.mmdb /data/logstash/       #注:"/data/logstash"是Logstash�
 ```
 #### Logstash-filter-geoip
 ```bash
-if [message] !~ "^127\.|^192\.168\.|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[01]\.|^10\." {        #排除私网地址
+if [message] !~ "^127\.|^192\.168\.|^172\.1[6-9]\.|^172\.2[0-9]\.|^172\.3[01]\.|^10\." {        # 排除私网地址
     geoip {
         source => "message"     #设置解析IP地址的字段
         target => "geoip"       #将geoip数据保存到一个字段内
