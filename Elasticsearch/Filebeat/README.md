@@ -18,7 +18,7 @@ Filebeat如何保持文件状态：
 注: 转发时Filebeat会传输JOSN对象，且原生的Nginx等App的日志文本会作为JSON中的Message字段存在...
 默认的Elasticsearch需要的index template在安装Filebeat时已提供，RPM包路径为/etc/filebeat/filebeat.template.json
 可使用如下命令装载该模板：
-[wangyu@localhost ~]# curl -XPUT -d@/etc/filebeat/filebeat.template.json \
+[wangyu@localhost ~]# curl -XPUT -d @/etc/filebeat/filebeat.template.json \
 'http://localhost:9200/_template/filebeat?pretty'
 {
   "acknowledged" : true
@@ -38,9 +38,9 @@ Available Commands:
   export      Export current config or index template
   help        Help about any command
   keystore    Manage secrets keystore
-  modules     Manage configured modules
+  modules     Manage configured modules                             # 与filebeat模块相关的功能
   run         Run filebeat
-  setup       Setup index template, dashboards and ML jobs
+  setup       Setup index template, dashboards and ML jobs          # 在ES中部署kibana端进行可视化展示的界面数据
   test        Test config
   version     Show current version info
 
@@ -76,8 +76,7 @@ cat  /usr/share/filebeat/module/nginx/error/ingest/pipeline.json
       "field": "nginx.error.time",
       "target_field": "@timestamp",
       "formats": ["YYYY/MM/dd H:m:s"],
-      "timezone": "Asia/Shanghai"  # <-------
-    }
+      "timezone": "Asia/Shanghai"           # 修改时区
 }
 ```
 #### Filebeat的配置文件：filebeat.yml Demo
@@ -88,7 +87,7 @@ filebeat:
         - /www/wwwLog/www.lanmps.com_old/*.log
         - /www/wwwLog/www.lanmps.com/*.log
       input_type: log 
-      document_type: nginx-access-www.lanmps.com
+      document_type: nginx-access-www.lanmps.com 
     - paths:
         - /www/wwwRUNTIME/www.lanmps.com/order/*.log
       input_type: log 

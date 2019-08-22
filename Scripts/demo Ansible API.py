@@ -81,7 +81,6 @@ class PlayBookResultsCollector(CallbackBase):
                 "failed": t['failures']
             }
 
-
 class ANSRunner(object):
     """
     This is a General object for parallel execute modules.
@@ -265,3 +264,70 @@ if __name__ == '__main__':
     rbt.run_model('shell','uptime')
     result = json.dumps(rbt.get_model_result(),indent=4)
     print(result)
+
+
+# (python36) [root@xxx utils]# python ansible_api.py
+# {
+#     "success": {
+#         "192_168_111_137": {
+#             "changed": true,
+#             "end": "2019-03-07 22:13:41.418273",
+#             "stdout": " 22:13:41 up 1 day, 23:37,  3 users,  load average: 0.01, 0.08, 0.08",
+#             "cmd": "uptime",
+#             "rc": 0,
+#             "start": "2019-03-07 22:13:41.412754",
+#             "stderr": "",
+#             "delta": "0:00:00.005519",
+#             "invocation": {
+#                 "module_args": {
+#                     "creates": null,
+#                     "executable": null,
+#                     "_uses_shell": true,
+#                     "_raw_params": "uptime",
+#                     "removes": null,
+#                     "argv": null,
+#                     "warn": true,
+#                     "chdir": null,
+#                     "stdin": null
+#                 }
+#             },
+#             "_ansible_parsed": true,
+#             "stdout_lines": [
+#                 " 22:13:41 up 1 day, 23:37,  3 users,  load average: 0.01, 0.08, 0.08"
+#             ],
+#             "stderr_lines": [],
+#             "_ansible_no_log": false
+#         },
+#         "127_0_0_1": {
+#             "changed": true,
+#             "end": "2019-03-07 22:13:41.457239",
+#             "stdout": " 22:13:41 up 1 day, 23:37,  2 users,  load average: 0.01, 0.08, 0.08",
+#             "cmd": "uptime",
+#             "rc": 0,
+#             "start": "2019-03-07 22:13:41.450610",
+#             "stderr": "",
+#             "delta": "0:00:00.006629",
+#             "invocation": {
+#                 "module_args": {
+#                     "creates": null,
+#                     "executable": null,
+#                     "_uses_shell": true,
+#                     "_raw_params": "uptime",
+#                     "removes": null,
+#                     "argv": null,
+#                     "warn": true,
+#                     "chdir": null,
+#                     "stdin": null
+#                 }
+#             },
+#             "_ansible_parsed": true,
+#             "stdout_lines": [
+#                 " 22:13:41 up 1 day, 23:37,  2 users,  load average: 0.01, 0.08, 0.08"
+#             ],
+#             "stderr_lines": [],
+#             "_ansible_no_log": false
+#         }
+#     },
+#     "failed": {},
+#     "unreachable": {}
+# }
