@@ -119,13 +119,13 @@ output.file:
 #output.console:
 #    pretty: true
 ```
-#### 测试-2 输出到终端
+#### output.console
 ```yaml
 output：
   console:
     pretty: true
 ```
-#### 输出到 kafka
+#### Demo for output.kafka
 ```bash
 filebeat:
   prospectors:
@@ -167,6 +167,34 @@ output.kafka:
     required_acks: 1                        #需要Kafka端回应ack 
     max_message_bytes: 1000000
 ```
+```yaml
+filebeat.prospectors:
+- input_type: log
+  paths: 
+   - /var/log/messages
+  fields: 
+    log_topic: test
+  paths: 
+   - /etc/httpd/logs/*
+  fields: 
+    log_topic: webapache
+processors:
+- drop_fields:
+   fields: ["beat", "input_type", "source", "offset",]
+name: "192.168.37.134"
+output.kafka:
+  enabled: true
+  hosts: ["192.168.37.134:9092", "192.168.37.135:9092", "192.168.37.136:9092"]
+  version: "0.10"
+  topic: '%{[fields][log_topic]}'
+  partition.round_robin:
+    reachable_only: true
+  worker: 2
+  required_acks: 1
+  compression: gzip
+  max_message_bytes: 10000000
+logging.level: debug
+```
 #### 多行匹配的关键字
 ```bash
 multiline：#适用于日志中每一条日志占据多行的情况，如各种语言的报错信息调用栈。此配置又包含如下子配置
@@ -176,7 +204,7 @@ multiline：#适用于日志中每一条日志占据多行的情况，如各种�
     max_lines：  #合并的最多行数（包含匹配pattern的那一行）
     timeout：    #到了timeout之后，即使没有匹配一个新的pattern（发生新的事件）也把已经匹配的日志事件发送出去
 ```
-#### Multiline在Filebeat中的配置方式
+#### Multiline 在 Filebeat 中的配置方式
 ```yaml
 filebeat.prospectors:
   - paths:
@@ -190,11 +218,11 @@ output:
   logstash:
     hosts: ["localhost:5044"]
 ```
-#### 启动 filebeat
+#### start filebeat
 ```bash
 nohup ./filebeat -e -c filebeat.yml >/dev/null 2>&1 &
 ```
-#### 例子: Logstash-input-beats 接收 Filebeat 的日志数据
+#### Logstash-input-beats
 ```txt
 input {
   beats {

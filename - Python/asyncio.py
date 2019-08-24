@@ -14,7 +14,7 @@ def hello():
     r = yield from asyncio.sleep(1)
     print("Hello again!")
 
-# 3.5+版本中的新语法：（这里定义了一个协程函数，其返回的是协程对象）
+# 3.5+版本的新语法：（这里定义了一个协程函数，其返回的是协程对象）
 async def hello():
     print("Hello world!")
     r = await asyncio.sleep(1)      # 协程里不能有阻塞操作，这里用await将耗时操作进行包装，可提供上下文切换
@@ -147,12 +147,12 @@ def running1():
 if __name__ == '__main__':
     running1()
 
-输出：
-1
-3
-4
-2
-Callback： return
+# 输出：
+# 1
+# 3
+# 4
+# 2
+# Callback： return
 
 #------------------------------------------------------------------------- 协程函数的回调函数接收多个参数
 
@@ -181,13 +181,13 @@ def running2():
 if __name__ == '__main__':
     running2()
 
-输出：
-1
-3
-4
-2
-p1 p2
-Callback： oooo
+# 输出：
+# 1
+# 3
+# 4
+# 2
+# p1 p2
+# Callback： oooo
 
 
 #------------------------------------------------------------------------- 
@@ -237,7 +237,6 @@ loop.close()
 # www.163.com header > Server: Cdn Cache Server V2.0
 # ...
 
-
 #------------------------------------------------------------------------- 协程停止 
 
 def running3():
@@ -255,6 +254,7 @@ def running3():
     ]
 
     loop = asyncio.get_event_loop()
+
     try:
         loop.run_until_complete(asyncio.wait(tasks))
     except KeyboardInterrupt as e:
@@ -268,10 +268,49 @@ def running3():
 if __name__ == '__main__':
     running3()
 
-输出：
-1
-1
-1
-2
-2
-2
+# 输出：
+# 1
+# 1
+# 1
+# 2
+# 2
+# 2
+
+# ------------------------------------------------------------------------- async for ... Example -1
+
+class AsyncIteratorWrapper:
+    def __init__(self, obj):
+        self._it = iter(obj)
+
+    async def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            value = next(self._it)
+        except StopIteration:
+            raise StopAsyncIteration
+        return value
+
+# async for letter in AsyncIteratorWrapper("abc"):
+#     print(letter)
+
+
+# ------------------------------------------------------------------------- async for ... Example -2
+
+class Cursor:
+    def __init__(self):
+        self.buffer = collections.deque()
+ 
+    async def _prefetch(self):
+        ...
+ 
+    def __aiter__(self):
+        return self
+ 
+    async def __anext__(self):
+        if not self.buffer:
+            self.buffer = await self._prefetch()
+            if not self.buffer:
+                raise StopAsyncIteration
+        return self.buffer.popleft()

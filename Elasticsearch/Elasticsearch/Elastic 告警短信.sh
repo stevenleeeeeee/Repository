@@ -22,7 +22,7 @@ function alert() {
     ADMINISTRATOR=$1
     ALERTMESSAGES=$2
     curl -kd "Apikey=6fe47cdf4fcc9ed803fb55a249205b23&Username=zxzndtsub&Billid=${ADMINISTRATOR}&Rspid=7175" \
-    --data-urlencode "InfoMap={\"info\":\"${ALERTMESSAGES}\"}" 'https://192.168.135.242:20080/sendtempsms'
+    --data-urlencode "InfoMap={\"info\":\"${ALERTMESSAGES}\"}" 'https://xx.xx.xx.xx:20080/sendtempsms'
 }
 
 #扫描并将进程DOWN信息调用短信接口
