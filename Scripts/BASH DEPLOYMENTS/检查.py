@@ -33,12 +33,12 @@ def check_repo():
     if os.path.isfile('/etc/yum.repos.d/rhel7.repo'):
         with open('/etc/yum.repos.d/rhel7.repo',"r") as f:
             for line in f.readlines():
-                if 'http://20.58.27.3/html/centos7-x86_64-epel' in line:
+                if 'http://xx.xx.xx.xx/html/centos7-x86_64-epel' in line:
                     return dict(repo = 1)
     elif os.path.isfile('/etc/yum.repos.d/rhel6.repo'):
         with open('/etc/yum.repos.d/rhel6.repo',"r") as f:
             for line in f.readlines():
-                if 'http://20.58.27.3/html/centos6-x86_64-epel' in line:
+                if 'http://xx.xx.xx.xx/html/centos6-x86_64-epel' in line:
                     return dict(repo = 1)
     else:
         return dict(repo = 0)
