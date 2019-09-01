@@ -1,4 +1,3 @@
-#### 说明
 ```txt
 1. PE：     '8e'默认块:4M
 2. PV：     物理卷
@@ -14,7 +13,6 @@
 减小： ---------   vgreduce      lvreduce
 其他： pvmove      vgchange      resize2fs
 ```
-
 #### 创建LV
 ```bash
 [root@localhost ~]# lsblk | grep "^sd*"

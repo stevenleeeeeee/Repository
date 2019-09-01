@@ -1,4 +1,3 @@
-
 from flask import Flask, current_app, request, render_template
 from flask_wtf import FlaskForm
 from wtforms import StringField
