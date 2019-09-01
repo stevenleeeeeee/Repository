@@ -26,7 +26,7 @@ function alert() {
 }
 
 #扫描并将进程DOWN信息调用短信接口
-curl -s "http://192.168.157.11:9213/_cat/nodes" | awk '{print $1"\t"$NF}' | sort -n > alive-node-system
+curl -s "http://xx.xx.xx.xx:xx.xx/_cat/nodes" | awk '{print $1"\t"$NF}' | sort -n > alive-node-system
 if diff alive-node-system all-node-system | grep -qE '<|>'; then
     MESSAGES="日志平台ES节点Down! -> $(diff alive-node-system all-node-system | grep -E '<|>')"
     for i in ${PHONE[@]}

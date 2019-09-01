@@ -48,6 +48,5 @@ cat /tmp/elasticsearch-${CLUSTER}-${TIME} | awk '{if($11 > 90){print $0}}' > /tm
 #CPU  75%
 cat /tmp/elasticsearch-${CLUSTER}-${TIME} | awk '{if($13 > 75){print $0}}' > /tmp/elasticsearch-${CLUSTER}-high.cpu-${TIME}.log
 
-
 cat /tmp/elasticsearch-${CLUSTER}-${TIME}
 
