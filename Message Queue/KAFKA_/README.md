@@ -1,48 +1,58 @@
 ```txt
-分布式、支持分区/副本，基于Zookeeper进行协调的分布式消息系统，其消息被持久化到磁盘并支持数份防丢，支持上千C端
-Kafka只是分为拥有1~N个分区的主题的集合，分区是消息的线性有序序列，其中每个消息由它们的索引 (称为偏移) 来标识
-集群中的所有数据都是不相连的分区联合。传入消息写在分区末尾（消息由消费者顺序读取）通过将消息复制到不同的代理提供持久性
+分布式、支持分区/副本，基于Zookeeper进行协调的分布式消息系统，其消息被持久化到磁盘，支持上千C端
+Kafka只是分为拥有1~N个分区的主题的集合，分区是消息的线性有序序列，Topic的每个具体的消息由它们的索引 (偏移) 标识
+集群中所有数据都是不相连的分区联合。传入消息写在分区末尾（消息由消费者顺序读取）通过将消息复制到不同的代理提供持久性
 
 Zookeeper在kafka中的作用：
-    无论kafka集群还是producer和consumer，都依赖于zookeeper来保证系统可用性，其保存 meta data
+    无论kafka集群还是producer、consumer，都依赖于zookeeper来保证系统可用性，其保存 metadata
     注: 老版本中Topic的消费和偏移信息存放在zookeeper，新版本中Topic的消费和偏移信息存放在broker的一个特殊的可压缩Topic中
     Kafka使用ZK作为其分布式协调框架，很好的将消息的生产、存储、消费的过程结合在一起
     借助zk能将生产、消费者和broker在内的组件在无状态情况下建立起生产/消费者的订阅关系/并实现生产与消费的负载均衡
     Kafka采用zookeeper作为管理，记录了producer到broker的信息以及consumer与broker中partition的对应关系
-    Broker通过ZK进行 leader -> followers 选举，消费者通过ZK保存读取的位置"Offset"及读取的topic的partition信息!...
+    Broker通过ZK进行 leader -> followers 选举，旧版本的消费者通过ZK保存读取的位置"Offset"及读取的topic的partition信息
+    它也使用了zookeeper的watch机制来发现meta信息的变更并作出相应的动作 (如consumer失效、触发负载均衡等) 
 
     1. 启动zookeeper的server --->  启动kafka的server
     2. Producer若生产了数据，会先通过ZK找到broker，然后将数据存放到broker
     3. Consumer若要消费数据，会先通过ZK找对应的broker，然后消费 (消费的同时保存本次消费分区的segement中的位置)
     
 replication（副本）、partition（分区）: 
-    如果Topic配置了复制因子( replication facto)为N 那么可以允许N-1服务器宕机而不丢失任何已经增加的消息
-    副本数决定了有多少个Broker来存放写入的数据! 简单说副本是以Partition为单位进行复制的 ( 副本不提供读和写的能力，仅复制 )
+    如果Topic配置了复制因子"replication facto"为N 那么可以允许N-1服务器宕机而不丢失任何已经增加的消息
+    副本数决定了有多少个Broker来存放写入的数据! 简单说副本是以Partition为单位进行复制的 ( 副本仅复制而不提供读/写能力 )
     存放副本也可以这样简单的理解，其用于备份若干Partition、但仅有1个Partition被选为Leader用于读写!...
-    kafka中的producer能直接发送消息到对应partition的Leader处，而Producer能来实现将消息推送到哪些Partition
+    Producer能实现将消息推送到Topic的哪些Partition!，并且producer能直接发送消息到对应partition的Leader处!
     kafka中相同group的consumer不可同时消费同一partition，在同一topic中同一partition同时只能由一个Consumer消费
-    对相同group的consumer来说kafka可被其认为是一个队列消息服务，各consumer均衡的消费相应partition中的数据
-    假如所有消费者都在一个消费者组中那么这就变成了queue模型。 假如所有消费者都在不同的组那么就完全变成了发布-订阅模型
 
-Broker：   消息处理结点，一个Kafka节点就是一个Broker，多个Broker组成一个KAFKA集群
-Topic：    消息的分类，比如page view、click日志等都能够以Topic的形式存在。Kafka集群能同一时刻负责多个Topic的分发
-Partition：Topic物理上的分组。一个Topic可分为多个Partition，每个Partition就是一个有序的队列
-           Kafka仅保证Topic的以分区为单位进行顺序处理，不能保证跨分区的消息的先后处理顺序...
-           所以如果想要顺序的处理Topic的所有消息那就只提供一个分区...
+    对相同group的consumer来说kafka可被其认为是一个队列消息服务，各consumer均衡的消费相应partition中的数据！
+    因此：
+    假如所有消费者都在一个消费者组中那么这就变成了queue模型!
+    假如所有消费者都在不同的组那么就完全变成了发布/订阅模型!
 
-Segment：  Partition物理上由多个Segment组成
+Broker：   消息处理结点，1个Kafka节点就是1个Broker，多个Broker组成KAFKA集群
+Topic：    消息的分类，比如page view、click日志等都能够以Topic的形式存在。Kafka集群能同时刻负责多个Topic的分发
+Partition：Topic物理上的分组。一个Topic可分为多个Partition(分区)，每个Partition就是一个有序的队列
+           Kafka仅保证Topic以不同的分区为单位从而在每个分区内进行顺序处理，不能保证跨分区的消息的先后处理顺序...
+           所以如果想要顺序的处理Topic的所有消息那就只为其提供提供1个分区...
+
+Segment：  Partition物理上又由多个Segment组成
+
 offset：   每个Partition都由一系列有序的、不可变的消息组成，这些消息被连续的追加到Partition中
            partition中的每个消息都有一个连续的序列号：offset
-           它用于partition中唯一标识这条消息（消费者能够以分区为单位自定义读取的位置）
+           offset用于在partition中唯一标识这条消息（消费者能够以分区为单位自定义读取的位置）
+           注意：
+           老版本consumer的位移是提交到zookeeper中的：/consumers/<group.id>/offsets/<topic>/<partitionId>
+           新版本consumer不再保存位移到zookeeper中，而是保存在KAFKA的Broker中的特殊的Topic中保存: "__consumeroffsets"
+           新版本中这个特殊的__consumers_offsets topic配置了compact策略，使得它总是能够保存最新的位移信息
 
 由于Broker采用了 Topic -> Partition 的思想，使得某个分区内部的顺序可保证有序性，但分区间的数据不保证有序性!...
-想要顺序的处理Topic的所有消息那就只提供一个分区...
-
 ----------------------------------------------------------------------------------------------
-分区被分布到集群中的多个服务器上，每个服务器处理它分到的分区，根据配置每个分区还可复制到其它服务器作为备份容错。 
+分区被分布到集群中的多个服务器上，每个服务器处理它分到的分区，根据配置每个分区还可复制到其它服务器作为备份容错
 每个分区有一个leader零或多个follower。Leader处理此分区的所有的读写请求而follower被动的复制数据
-在同一topic中的同一partition同时只能由一个Consumer消费，当同一topic同时需有多个Consumer消费时可创建更多的partition
-如果同一消费者组内的消费者数量超过其消费的Topic的分区数量，那么有一部分消费者就会被闲置，不会接收到任何消息!
+在同一topic中的同一partition同时只能由一个Consumer消费!，当同一topic同时需有多个Consumer消费时可创建更多的partition
+如果同一消费者组内的消费者数量超过其消费的Topic的分区数量，那么有一部分消费者就会被闲置!
+
+注意，副本数要大于！：
+假设设置了数据默认副本数为3，那么会选举其中的某1个partition（备份以partition为单位）为leader，另外2个为follower!
 ```
 ```bash
 AR：assigned replicas
@@ -89,25 +99,27 @@ dataDir=/var/zookeeper                      #ZK的快照存储路径
 clientPort=2181                             #客户端访问端口
 maxClientCnxns=0                            #最大客户端连接数
 
-[root@localhost config]# vim /home/kafka/config/server.properties        #Kafka配置，需要在每个节点设置
-broker.id=0                                 #注意，在集群中不同节点不能重复
+[root@localhost config]# vim /home/kafka/config/server.properties
+broker.id=0                                 #Broker编号，在集群不同节点间不能重复
 port=9092                                   #客户端使用端口，producer或consumer在此端口连接
-host.name=192.168.133.128                   #节点主机名称，直接使用本机ip ( 如果不设置默认返回主机名给zk_server )
+host.name=192.168.133.128                   #节点主机名称，直接使用IP ( 如果不设置默认返回主机名给zk_server )
+#listeners=PLAINTEXT://:9092                #新版本中使用此配置代替了旧版本的host.name字段
+#advertised.listeners=PLAINTEXT://IP:9092   #新版本中使用此配置代替了旧版本，没有设置时如果配置了"listeners"就使用"listeners"的值
 num.network.threads=3                       #处理网络请求的线程数，线程先将收到的消息放到内存，再从内存写入磁盘
 num.io.threads=8                            #消息从内存写入磁盘时使用的线程数，处理磁盘IO的线程数
 socket.send.buffer.bytes=102400             #发送套接字的缓冲区大小
 socket.receive.buffer.bytes=102400          #接受套接字的缓冲区大小
 socket.request.max.bytes=104857600          #请求套接字的缓冲区大小
+log.dirs=/tmp/kafka-logs                    #数据存放路径（注意要先创建：mkdir -p  /tmp/kafka-logs）
 replica.fetch.max.bytes=                    #默认1M，即使在Topic定义max.message.bytes=52428700，但此值不会随着更新!
 replica.lag.time.max.ms=500ms               #只要follower每500ms能发FetchRequest给leader，则不会被标记dead并踢出ISR
 replica.lag.max.messages=4000               #容忍follower最多与leader消息同步滞后数量，否则踢出ISR（新版本已经移除）
 num.replica.fetchers=1                      #leader中进行复制的线程数，增大这个数值会增加relipca的IO
-log.dirs=/tmp/kafka-logs                    #数据存放路径（注意需要先创建：mkdir -p  /tmp/kafka-logs）
-#num.partitions=1                           #每个主题的日志分区的默认数量（重要）
-log.segment.bytes=1073741824                #日志文件中每个segment的大小，默认1G
-log.retention.hours=168                     #segment文件保留的最长时间，默认7天，超时将被删除，单位hour
-num.recovery.threads.per.data.dir=1         #segment文件默认被保留7天，这里设置恢复和清理data下数据时使用的的线程数
+num.partitions=3                            #若创建topic时没有给出划分partitions个数，则使用此默认数值代替
+log.segment.bytes=1073741824                #日志文件中每个segment文件的上限容量，默认1G
 log.retention.check.interval.ms=300000      #定期检查segment文件有没有到达上面指定的限制容量的周期，单位毫秒
+log.retention.hours=168                     #segment文件保留的最长时间，默认7天，超时将被删除，单位hour
+num.recovery.threads.per.data.dir=1         #设置恢复和清理data下数据时使用的的线程数，用于在启动时日志恢复/关闭时刷新
 log.cleaner.enable=true                     #日志清理是否打开
 offsets.topic.replication.factor=1
 transaction.state.log.replication.factor=1
@@ -133,19 +145,19 @@ group.initial.rebalance.delay.ms=0
 # 这时客户端拿到这个主机名将解析到自己，操作失败。
 # 所以需要配置broker的host.name参数为监听的IP，这时broker就会返回IP...
 ```
-#### 运维
+#### 操作备忘
 ```bash
-#关键字说明：
-Topic:      #主题名称
-Partition:  #分片编号
-Leader:     #该Topic的分区的leader节点
-Replicas:   #该副本存在于哪个broker节点
-Isr:        #活跃状态的broker ( 进度已经在跟随着leader节点 )
+#关键字：
+Topic:      # 主题名称
+Partition:  # 分片编号
+Leader:     # 该Topic的分区的leader节点
+Replicas:   # 该副本存在于哪个broker节点
+Isr:        # 活跃状态的broker ( 进度已经在跟随着leader节点 )
 
 #创建主题（保存时长：delete.retentin.ms）
 ./kafka-topics.sh --zookeeper 192.168.133.130:2181 --create --partitions 1 --replication-factor 1 --topic TEST \
 --config delete.retention.ms=86400000    #定义保存时间（1天）
---config retention.bytes=1073741824      #定义保存容量（针对的是每个分区，因此实际占用容量 = 此值 * 分区数）
+--config retention.bytes=1073741824      #定义保存容量（针对的是每个分区，因此实际占用容量=此值*分区数）
 
 #生产建议将kafka自动创建topic功能禁用，修改conf/server.properties为手动创建："auto.create.topics.enable=false"
 #parttitions和replication－factor是两个必备选项（需要严格读取Topic消息顺序的时候，只使用1个partition）
@@ -310,8 +322,8 @@ log.dirs：/data/kafka           #配置文件中定义的数据存储路径
                    TEST-1       #partiton:2
                         \
                          \...
-                         xxxx.index     #索引
-                         xxxx.log       #数据
+                          xxxx.index     #索引
+                          xxxx.log       #数据 （ 每个partition在物理存储层面由多个log file组成 （即"segment"）
 ```
 #### logstash 消费 kafka
 ```bash

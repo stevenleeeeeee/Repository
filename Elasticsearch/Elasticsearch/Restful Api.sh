@@ -223,31 +223,6 @@ shards disk.indices disk.used disk.avail disk.total disk.percent host           
     27      988.1gb    14.8tb     11.7tb     26.6tb           55 192.168.157.11  192.168.157.11  157.11data-2
     28      866.8gb      14tb     12.5tb     26.6tb           52 192.168.157.14  192.168.157.14  157.14data-4
 
-#修改触及"low disk watermark"阈值的磁盘使用比例（默认超过85%将不落主分片的副本）
-#cluster.routing.allocation.disk.watermark.low:
-#若磁盘使用超过85%则ES不允许在分配新的分片。当配置具体的大小如100MB时，表示若磁盘空间小于100MB则不允许分配分片
-#cluster.routing.allocation.disk.watermark.high:
-#磁盘空间使用高于90%时ES将尝试分配分片到其他节点
-curl -XPUT 'localhost:9200/_cluster/settings' -d
-'{
-    "transient": {  
-      "cluster.routing.allocation.disk.watermark.low": "90%",
-      "cluster.routing.allocation.disk.watermark.high"："95%"
-    }
-}'
-
-#更新磁盘阈值限制
-curl -XPUT "http://localhost:9200/_cluster/settings" -d'
-{
-  "persistent": {
-    "cluster": {
-      "routing": {
-        "allocation.disk.threshold_enabled": false
-      }
-    }
-  }
-}'
-
 #index/分片数 / 主分片还是副本分片 / 是否处于 unassigned 状态 / unassigned 的原因
 curl -XGET -s  '192.168.157.11:9212/_cat/shards?v&h=index,shard,prirep,state,unassigned.reason' \
 | grep UNASSIGNED \
@@ -361,20 +336,6 @@ host        ip          heap.percent ram.percent load node.role master name
   "active_shards_percent_as_number" : 100.0
 }
 
-#强制迁移主分片
-curl -XPOST 'localhost:9200/_cluster/reroute' -d '{
-    "commands": [
-        {
-            "allocate": {
-                "allow_primary": "true",
-                "index": "constant-updates",
-                "node": "<NODE_NAME>",
-                "shard": 0
-            }
-        }
-    ]
-}'
-
 #查看节点详细信息
 curl -XGET  s '192.168.166.66:9212/_nodes/<NODE_NAME>?pretty' | head -n 30
 
@@ -410,7 +371,6 @@ PUT _cluster/settings
 }'
 
 #在升级下个节点前，请等待群集完成分片分配。可通过提交_cat/health请求来检查进度：GET _cat / health
-
 
 #同时为多个索引映射到一个索引别名
 curl -XPOST 'http://192.168.80.10:9200/_aliases' -d '

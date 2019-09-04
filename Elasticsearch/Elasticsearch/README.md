@@ -82,21 +82,26 @@ node.name: "node1"                      # Node Name
 node.master: true                       # 是否Master节点
 node.data: false                        # 是否Data节点 ( 是否允许该节点存储数据 )
 node.max_local_storage_nodes: 3         # 限制单节点上可以开启的ES存储实例的最大数
-node.attr.rack: n2                      # 指定节点的部落属性，这是一个比集群更大的范围
+# node.attr.rack: n2                    # 指定节点的部落属性，这是一个比集群更大的范围
+# node.rack: rack314                    # 指定节点所在机架的属性，用于分片策略
+# node.tag: value1                      # 为节点打tag
 network.host: 0.0.0.0                   # 与其他节点交互时使用的地址
 transport.tcp.port: 9300                # 参与集群事物的端口
+transport.tcp.compress: true            # 是否开启TCP传输时压缩
 http.port: 9200                         # 接收用户请求，提供Restfule-API接口的端口
 http.cors.enabled: true                 # 支持跨域访问
 http.cors.allow-origin: "*"             # 
 path.data: /home/elastic/elasticsearch-5.5.0/data     # 数据存储路径，建议使用默认
 path.logs: /home/elastic/elasticsearch-5.5.0/logs     # 日志存储路径
 bootstrap.memory_lock: true             # java虚拟机将会在开启时锁定堆大小 (Xms == Xmx)
+# cluster.routing.allocation.node_initial_primaries_recoveries: 4   # 初始化数据恢复时并发恢复线程的个数,默认为4 
+# cluster.routing.allocation.node_concurrent_recoveries: 2          # 添加删除节点或负载均衡时并发恢复线程的个数,默认为2 
 discovery.zen.minimum_master_nodes: 2   # Master 最小存活数量
-discovery.seed_hosts:                   # 传递初始主机列表以在启动此节点时执行发现
+discovery.seed_hosts:                   # 传递初始主节点列表以在启动此节点时执行发现（7.X版本）
     - "node1"
     - "node2"
     - "node3"
-cluster.initial_master_nodes:           # 设置一系列符合主节点条件的节点的主机名或 IP 来引导启动集群
+cluster.initial_master_nodes:           # 设置一系列符合主节点条件的节点的主机名或 IP 来引导启动集群（7.X版本）
     - "node1"
     - "node2"
     - "node3"
@@ -116,8 +121,8 @@ action.destructive_requires_name: true
 
 # 在 Elasticsearch 主节点启动之前配置 TLS，其他主节点可使用此命令生成的"elastic-certificates.p12" 其含公私钥:
 cd ~/elasticsearch-x.x.0
-bin/elasticsearch-certutil cert -out config/elastic-certificates.p12 -pass ""
-bin/elasticsearch-users useradd NAME -p PASS -r superuser     # 新增Elastic用户
+bin/elasticsearch-certutil cert -out config/elastic-certificates.p12 -pass "" （拷贝到所有节点的config下）
+bin/elasticsearch-users useradd NAME -p PASS -r superuser     # 新增Elastic用户（在所有节点执行）
 bin/elasticsearch-users list                                  # 查看用户列表
 
 # 安装HEAD插件（可选）
