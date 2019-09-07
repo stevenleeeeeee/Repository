@@ -1,4 +1,4 @@
-curl -XPUT 'http://192.168.100.106:9200/_template/nginx_gd_template?pretty' -H 'Content-Type: application/json' -d '
+curl -XPUT 'http://xx.xx.xx.xx:9200/_template/nginx_gd_template?pretty' -H 'Content-Type: application/json' -d '
 {
   "template" : "nginx_gd_*",
   "mappings": {

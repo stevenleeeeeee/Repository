@@ -57,8 +57,8 @@ EOF
 
 cat >> /etc/sysctl.conf <<'EOF'
 fs.file-max = 1000000       # 系统最大打开文件描述符数
-vm.max_map_count=262144
-vm.swappiness = 1
+vm.max_map_count=262144     # 进程能拥有的最多内存区域
+vm.swappiness = 0
 EOF
 
 #添加or修改如下1行参数
@@ -75,6 +75,13 @@ sysctl -p
 
 #部署 Master Node
 tar -zxf elasticsearch-x.x.0.tar.gz -C ~/
+
+vim ~/elasticsearch-x.x.0/config/elasticsearch.yml
+ES_HEAP_SIZE=32g
+ES_JAVA_OPTS="-Xms32g"
+MAX_LOCKED_MEMORY=unlimited
+MAX_OPEN_FILES=65535
+
 vim ~/elasticsearch-x.x.0/config/elasticsearch.yml
 
 cluster.name: ES-Cluster                # Elastic Cluster Name
@@ -94,8 +101,7 @@ http.cors.allow-origin: "*"             #
 path.data: /home/elastic/elasticsearch-5.5.0/data     # 数据存储路径，建议使用默认
 path.logs: /home/elastic/elasticsearch-5.5.0/logs     # 日志存储路径
 bootstrap.memory_lock: true             # java虚拟机将会在开启时锁定堆大小 (Xms == Xmx)
-# cluster.routing.allocation.node_initial_primaries_recoveries: 4   # 初始化数据恢复时并发恢复线程的个数,默认为4 
-# cluster.routing.allocation.node_concurrent_recoveries: 2          # 添加删除节点或负载均衡时并发恢复线程的个数,默认为2 
+# discovery.type: single-node           # 使用单节点模式运行Elasticsearch，主要用于测试
 discovery.zen.minimum_master_nodes: 2   # Master 最小存活数量
 discovery.seed_hosts:                   # 传递初始主节点列表以在启动此节点时执行发现（7.X版本）
     - "node1"
@@ -105,27 +111,30 @@ cluster.initial_master_nodes:           # 设置一系列符合主节点条件�
     - "node1"
     - "node2"
     - "node3"
-xpack.security.enabled: true            # 启用X-pack的安全认证功能 ( 7.x版本之前需先破解X-pack ) 
-xpack.security.transport.ssl.enabled: true
+xpack.security.enabled: true                    # 启用X-pack的安全认证功能 ( 7.x版本之前需先破解X-pack ) 
+xpack.security.transport.ssl.enabled: true      # 启用传输层安全通信功能
 xpack.security.transport.ssl.verification_mode: certificate
 xpack.security.transport.ssl.keystore.path: elastic-certificates.p12
 xpack.security.transport.ssl.truststore.path: elastic-certificates.p12
+xpack.security.audit.enabled: false     # 是否启用审计日志，默认路径：ES_HOME/logs/<clustername>_audit.json
 action.destructive_requires_name: true
 # xpack.watcher.enabled: false
 # xpack.monitoring.exporters.my_local:
 #   type: local
 #   index.name.time_format: YYYY.MM
-#index.number_of_shards:5           #
-#index.number_of_replicas:0         #
-#index.refresh_interval:120s        #
+# index.number_of_shards:5           #
+# index.number_of_replicas:0         #
+# index.refresh_interval:120s        #
+# cluster.routing.allocation.node_initial_primaries_recoveries: 4   # 初始化数据恢复时并发恢复线程的个数,默认为4 
+# cluster.routing.allocation.node_concurrent_recoveries: 2          # 添加删除节点或负载均衡时并发恢复线程的个数,默认为2 
 
-# 在 Elasticsearch 主节点启动之前配置 TLS，其他主节点可使用此命令生成的"elastic-certificates.p12" 其含公私钥:
+# 在 Elasticsearch 主节点启动之前配置 TLS，其他主节点可使用此节点生成的 "elastic-certificates.p12" 其内含公私钥:
 cd ~/elasticsearch-x.x.0
-bin/elasticsearch-certutil cert -out config/elastic-certificates.p12 -pass "" （拷贝到所有节点的config下）
-bin/elasticsearch-users useradd NAME -p PASS -r superuser     # 新增Elastic用户（在所有节点执行）
+bin/elasticsearch-certutil cert -out config/elastic-certificates.p12 -pass ""   # 拷贝到所有节点的config下
+bin/elasticsearch-users useradd NAME -p PASS -r superuser     # 新增ES用户（在所有节点执行）
 bin/elasticsearch-users list                                  # 查看用户列表
 
-# 安装HEAD插件（可选）
+# 安装HEAD插件
 tar -zxf elasticsearch-head-master.tar.gz -C ~/elasticsearch/
 ln -s ~/elasticsearch/elasticsearch-head-master ~/elasticsearch/head
 # 安装Nodejs（HEAD插件依赖）
@@ -135,9 +144,7 @@ export NODE_HOME=/home/elastic/elasticsearch/node-v8.1.4-linux-x64/
 export PATH=$NODE_HOME/bin:$PATH
 EOF
 
-# 验证：
-. /etc/bash_profile
-node -v && npm -vs
+. /etc/bash_profile             # 验证：node -v && npm -vs
 
 #由于head的代码还是2.6版本，有很多限制，如无法跨机器访问。因此要修改两个地方:
 [wangyu@localhost ~]$ vim +92 ~/elasticsearch/head/Gruntfile.js

@@ -1,0 +1,60 @@
+{
+    "persistent": {
+       "cluster": {
+          "routing": {
+             "allocation": {
+                "enable": "new_primaries",
+                "cluster_concurrent_rebalance": "8",
+                "allow_rebalance": "indices_primaries_active",
+                "node_concurrent_recoveries": "8"
+             }
+          }
+       },
+       "indices": {
+          "breaker": {
+             "fielddata": {
+                "limit": "30%"
+             },
+             "request": {
+                "limit": "30%"
+             }
+          },
+          "recovery": {
+             "concurrent_streams": "10",
+             "max_bytes_per_sec": "200mb"
+          }
+       }
+    },
+    "transient": {
+       "indices": {
+          "store": {
+             "throttle": {
+                "type": "merge",
+                "max_bytes_per_sec": "50mb"
+             }
+          },
+          "recovery": {
+             "concurrent_streams": "8"
+          }
+       },
+       "threadpool": {
+          "bulk": {
+             "queue_size": "1000",
+             "size": "200"
+          },
+          "index": {
+             "queue_size": "1200",
+             "size": "64"
+          }
+       },
+       "cluster": {
+          "routing": {
+             "allocation": {
+                "enable": "all",
+                "cluster_concurrent_rebalance": "8",
+                "node_concurrent_recoveries": "15"
+             }
+          }
+       }
+    }
+ }

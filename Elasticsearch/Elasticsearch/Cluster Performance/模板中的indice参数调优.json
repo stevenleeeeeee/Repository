@@ -1,0 +1,52 @@
+PUT _template/demo_logs              # 以创建demo_logs模板为例，说明可以调优的参数及其数值设定原因
+{
+      "order": 6,
+      "template": "demo-*",
+      "settings": {
+         "index.merge.policy.segments_per_tier": "25",
+         "index.mapping._source.compress": "true",
+         "index.mapping._all.enabled": "false",
+         "index.warmer.enabled": "false",
+         "index.merge.policy.min_merge_size": "10mb",
+         "index.refresh_interval": "60s",
+         "index.number_of_shards": "7",
+         "index.translog.durability": "async",
+         "index.store.type": "mmapfs",
+         "index.merge.policy.floor_segment": "100mb",
+         "index.merge.scheduler.max_thread_count": "1",
+         "index.translog.translog.flush_threshold_size": "1g",
+         "index.merge.policy.merge_factor": "15",
+         "index.translog.translog.flush_threshold_period": "100m",
+         "index.translog.sync_interval": "5s",
+         "index.number_of_replicas": "1",
+         "index.indices.store.throttle.max_bytes_per_sec": "50mb",
+         "index.routing.allocation.total_shards_per_node": "2",
+         "index.translog.flush_threshold_ops": "1000000"
+      },
+      "mappings": {
+         "_default_": {
+            "dynamic_templates": [
+               {
+                  "string_template": {
+                     "mapping": {
+                        "index": "not_analyzed",        # 如果对分词没有需求，对参与搜索的字段设置为 not_analyzed
+                        "ignore_above": "10915",
+                        "type": "string"
+                     },
+                     "match_mapping_type": "string"
+                  }
+               },
+               {
+                  "level_fields": {
+                     "mapping": {
+                        "index": "no",                  # 对不参与搜索的字段(fields), 将其index方法设置为 no
+                        "type": "string"
+                     },
+                     "match": "Level*Exception*"
+                  }
+               }
+            ]
+         }
+        }
+      "aliases": {}
+   }

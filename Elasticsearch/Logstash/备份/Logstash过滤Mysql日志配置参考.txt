@@ -28,6 +28,7 @@ filter {
             if [message] =~ "# Time: " {
                  drop{}
             }
+
             multiline {
                 # anything not starting with # or SET is the actual query being run so roll it up with
                 # the previous entries
@@ -35,6 +36,7 @@ filter {
                 negate => true
                 what => "previous"
             }
+            
             grok {
                 match => {
                     message => [
