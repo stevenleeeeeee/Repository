@@ -1,18 +1,37 @@
 # 分片多的话可提升建立索引的能力，5~20个比较合适，分片数过少/多都会导致检索比较慢
 # 分片数过多会导致检索时打开较多文件，另外也会导致多台服务器间通讯，而分片数过少会导至单个分片索引过大，所以检索速度也会慢
 # 建议单个分片最多存储20G左右的索引数据，所以分片数量=数据总量/20G
-# 对于索引出现Unassigned 的情况，最好的解决办法是reroute,如果不能reroute，则考虑重建分片，通过number_of_replicas的修改进行恢复
+# 对于索引出现Unassigned的情况，最好的解决办法是reroute,如果不能reroute则考虑重建分片，通过number_of_replicas的修改进行恢复
 # 如果上述两种情况都不能恢复，则考虑reindex
 # 当节点离开集群时主节点会暂时延迟碎片重分配以避免在重新平衡碎片中不必要地浪费资源，原因是原始节点能够在特定时间内（默认1m）恢复
 # 段合并的计算量庞大，而且还要吃掉大量磁盘 I/O。合并在后台定期操作，因为他们可能要很长时间才能完成，尤其是比较大的段。
 # 这个通常来说都没问题，因为大规模段合并的概率是很小的。
+# 如果在项目开始的时候需要批量入库大量数据的话，建议将副本数设置为0
+# 因为在索引数据时如果有副本存在，数据也会马上同步到副本中，这会对es增加压力。可以等索引完成后将副本按需要改回来
 --------------------------------------------------------------------------------------------------------------------
 #启用或禁用特定种类的分片的分配
 cluster.routing.allocation.enable
     all             允许为所有类型的分片分配分片（默认）
     primaries       仅允许主分片的分片分配
     new_primaries   仅允许为新索引的主分片分配分片
-    none            任何索引都不允许任何类型的分片 
+    none            任何索引都不允许任何类型的分片
+
+# Example
+PUT /_cluster/settings
+{
+    "transient": {
+        "cluster.routing.allocation.enable": "all"
+    }
+}   # 重启正在工作的集群中的某个node时,应先设置为none,当节点加入集群后在恢复为all
+--------------------------------------------------------------------------------------------------------------------  
+# 针对不使用的index建议close，减少内存占用
+# 因为只要索引处于open状态，索引库中的segement就会占用内存，close之后就只会占用磁盘空间了
+curl -XPOST 'localhost:9200/zhouls/_close'
+
+# 删除文档：
+# 在es中删除文档，数据不会马上在硬盘上除去，而是在es索引中产生一个.del的文件，而在检索过程中这部分数据也会参与检索，
+# es在检索过程会判断是否删除了，如果删除了在过滤掉。这样也会降低检索效率。所以可以执行清除删除文档
+curl -XPOST 'http://192.168.xx.xx:9200/zhouls/_optimize?only_expunge_deletes=true'
 --------------------------------------------------------------------------------------------------------------------  
 #处理脏页数据导致主机夯死：
 [root@localhost ~]# cat /proc/meminfo | grep -E '^(Cached|Dirty)'
@@ -103,56 +122,22 @@ for line in $(curl -s "http://${IP_PORT}/_cat/shards" | fgrep UNASSIGNED); do
   }'  
 done 
 
-#Elasticsearch Version 6.4 ( 支持 5.5.0 )
-#move 将已启动的分片从一个节点移动到另一个节点。接受索引名称和分片编号
-#allocate_replica 将未分配的副本分片分配给节点。接受索引名称和分片编号，以及node分配分片
-POST /_cluster/reroute
-{
-    "commands" : [
-        {
-            "move" : {
-                "index" : "test", "shard" : 0,
-                "from_node" : "node1", "to_node" : "node2"
-            }
-        },
-        {
-          "allocate_replica" : {
-                "index" : "test", "shard" : 1,
-                "node" : "node3"
-          }
-        }
-    ]
-}
 
-#将主分片分配给含有陈旧副本分片的节点
-#此命令可能会导致所提供的分片ID发生数据丢失。如果稍后具有良好数据副本的节点重新加入群集，则该数据将被使用此命令强制分配的旧副本数据覆盖
-#为确保这些影响得到充分理解，需要accept_data_loss明确设置专用字段才能true使其工作
-{
-  "commands": [
-    {
-      "allocate_stale_primary": {
-        "index": "mail_store",
-        "shard": 1,
-        "node": "slave2",
-        "accept_data_loss": true
-      }
-    }
-  ]
-}
+# 将旧机器的索引分片迁移至新机器，命令样例如下：
+curl -XPOST '192.168.xx.xx:9200/_cluster/reroute' -d '{  
+    "commands" : [ {  
+        "move" :   
+            {  
+              "index" : "test", "shard" : 2,   
+              "from_node" : "node1", "to_node" : "node2"  
+            }  
+        }
+    ]  
+}'
 
-#设置每个节点的磁盘写入速率，默认20MB/s
-PUT /_cluster/settings
-{
-    "persistent" : {
-        "indices.store.throttle.max_bytes_per_sec" : "100mb"
-    }
-}
 
-#如果你使用的是机械磁盘而非 SSD，需要添加下面配置到 elasticsearch.yml 里：
-#机械磁盘在并发 I/O 支持方面比较差，所以我们需要降低每个索引并发访问磁盘的线程数
-index.merge.scheduler.max_thread_count: 1
-
-#对段进行合并 Segments
+# 对段进行合并 Segments
+# 要定时对索引进行合并优化，不然segment越多，占用的segment memory越多，查询的性能也越差
 POST /applog-prod-2016.12.18/_forcemerge?max_num_segments=1
 
 #在Kibana执行数据迁移 ( 先创建Mapping )

@@ -58,11 +58,11 @@ EOF
 cat >> /etc/sysctl.conf <<'EOF'
 fs.file-max = 1000000       # 系统最大打开文件描述符数
 vm.max_map_count=262144     # 进程能拥有的最多内存区域
-vm.swappiness = 0
+vm.swappiness = 1           # 当为1时其表示进行最少量的交换，而不禁用交换
 EOF
 
 #添加or修改如下1行参数
-cat >> /etc/security/limits.d/90-nproc.conf  <<'EOF'
+cat >> /etc/security/limits.d/90-nproc.conf <<'EOF'
 * soft nproc 102400
 EOF
 
@@ -77,8 +77,8 @@ sysctl -p
 tar -zxf elasticsearch-x.x.0.tar.gz -C ~/
 
 vim ~/elasticsearch-x.x.0/config/elasticsearch.yml
-ES_HEAP_SIZE=32g
-ES_JAVA_OPTS="-Xms32g"
+ES_HEAP_SIZE=32g                        # 设置ES_HEAP_SIZE 为机器内存的1/2 但不要超过32G
+ES_JAVA_OPTS="-Xms32g"                  # 如果遇到性能问题，最好的方法是安排更好的数据布局和增加节点数目
 MAX_LOCKED_MEMORY=unlimited
 MAX_OPEN_FILES=65535
 
@@ -100,9 +100,9 @@ http.cors.enabled: true                 # 支持跨域访问
 http.cors.allow-origin: "*"             # 
 path.data: /home/elastic/elasticsearch-5.5.0/data     # 数据存储路径，建议使用默认
 path.logs: /home/elastic/elasticsearch-5.5.0/logs     # 日志存储路径
-bootstrap.memory_lock: true             # java虚拟机将会在开启时锁定堆大小 (Xms == Xmx)
+bootstrap.memory_lock: true             # 设置memory_lock来锁定进程的物理内存地址,JVM会在开启时锁定堆大小 (Xms==Xmx)
 # discovery.type: single-node           # 使用单节点模式运行Elasticsearch，主要用于测试
-discovery.zen.minimum_master_nodes: 2   # Master 最小存活数量
+discovery.zen.minimum_master_nodes: 2   # Master 最小存活数量, 应该是有资格成为master的node数量的/2+1
 discovery.seed_hosts:                   # 传递初始主节点列表以在启动此节点时执行发现（7.X版本）
     - "node1"
     - "node2"
@@ -122,8 +122,8 @@ action.destructive_requires_name: true
 # xpack.monitoring.exporters.my_local:
 #   type: local
 #   index.name.time_format: YYYY.MM
-# index.number_of_shards:5           #
-# index.number_of_replicas:0         #
+# index.number_of_shards:3           #
+# index.number_of_replicas:1         #
 # index.refresh_interval:120s        #
 # cluster.routing.allocation.node_initial_primaries_recoveries: 4   # 初始化数据恢复时并发恢复线程的个数,默认为4 
 # cluster.routing.allocation.node_concurrent_recoveries: 2          # 添加删除节点或负载均衡时并发恢复线程的个数,默认为2 

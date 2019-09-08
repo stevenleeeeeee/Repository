@@ -20,11 +20,21 @@ PUT _cluster/settings
 }
 
 
-# 在索引级别设置节点分片总数，即设置索引在每个节点上最大能分配的分片个数，该配置可以使用API进行动态更新
+# 新加入集群的节点，分片总数远远低于其他节点。这时候如果有新索引创建，ES 的默认策略会导致新索引的所有主分片几乎全分配在这台新节点上。
+# 整个集群的写入压力压在一个节点上，结果很可能是这个节点直接被压死，集群出现异常。 
+# 所以对于 Elastic Stack 场景，强烈建议预先计算好索引的分片数后，配置好单节点分片的限额。比如一个5节点的集群，索引主分片10个，副本1份。则平均下来每个节点应该有4个分片，那么就配置：5
+# 在索引级别设置节点分片总数，即设置索引在每个节点上最大能分配的分片个数，该配置可以使用API进行动态更新:
 PUT <INDEX_NAME>/_settings
 {
-  "index.routing.allocation.total_shards_per_node" : 3    # 1个es-data节点上最多分3个分片
+  "index.routing.allocation.total_shards_per_node" : 5    # 1个es-data节点上最多分5个分片
 }
+# 注意，这里配置的是 5 而不是 4。因为我们需要预防有机器故障，分片发生迁移的情况。如果写的是 4，那么分片迁移会失败
+
+
+# Elasticsearch 中有一系列参数，相互影响，最终联合决定分片分配：
+cluster.routing.allocation.balance.shard    # 节点上分配分片的权重，默认为 0.45。数值越大越倾向于在节点层面均衡分片
+cluster.routing.allocation.balance.index    # 每个索引往单个节点上分配分片的权重，默认 0.55。值越大越倾向于在索引层面均衡分片
+
 
 
 # 参考：
@@ -75,8 +85,10 @@ curl -XPUT localhost:9200/test/_settings -d '{
 # 修改触及"low disk watermark"阈值的磁盘使用比例（默认超过85%将不落主分片的副本）
 # cluster.routing.allocation.disk.watermark.low:
 # 若磁盘使用超过85%则ES不允许在分配新的分片。当配置具体的大小如100MB时，表示若磁盘空间小于100MB则不允许分配分片
+
 # cluster.routing.allocation.disk.watermark.high:
 # 磁盘空间使用高于90%时ES将尝试分配分片到其他节点
+
 curl -XPUT 'localhost:9200/_cluster/settings' -d
 '{
     "transient": {  
@@ -85,7 +97,7 @@ curl -XPUT 'localhost:9200/_cluster/settings' -d
     }
 }'
 
-#更新磁盘阈值限制
+# 更新磁盘阈值限制
 curl -XPUT "http://localhost:9200/_cluster/settings" -d'
 {
   "persistent": {
@@ -96,6 +108,20 @@ curl -XPUT "http://localhost:9200/_cluster/settings" -d'
     }
   }
 }'
+
+
+# 设置每个节点的磁盘写入速率，默认20MB/s
+PUT /_cluster/settings
+{
+    "persistent" : {
+        "indices.store.throttle.max_bytes_per_sec" : "100mb"
+    }
+}
+
+
+# 如果你使用的是机械磁盘而非 SSD，需要添加下面配置到 elasticsearch.yml 里：
+# 机械磁盘在并发 I/O 支持方面比较差，所以我们需要降低每个索引并发访问磁盘的线程数
+index.merge.scheduler.max_thread_count: 1
 
 # ------------------------------------------------- 强制迁移主分片
 
@@ -111,3 +137,42 @@ curl -XPOST 'localhost:9200/_cluster/reroute' -d '{
         }
     ]
 }'
+
+# ------------------------------------------------- 
+
+#将主分片分配给含有陈旧副本分片的节点
+#此命令可能会导致所提供的分片ID发生数据丢失。如果稍后具有良好数据副本的节点重新加入群集，则该数据将被使用此命令强制分配的旧副本数据覆盖
+#为确保这些影响得到充分理解，需要accept_data_loss明确设置专用字段才能true使其工作
+{
+  "commands": [
+    {
+      "allocate_stale_primary": {
+        "index": "mail_store",
+        "shard": 1,
+        "node": "slave2",
+        "accept_data_loss": true
+      }
+    }
+  ]
+}
+
+# Elasticsearch Version 6.4 ( 支持 5.5.0 )
+# move 将已启动的分片从一个节点移动到另一个节点。接受索引名称和分片编号
+# allocate_replica 将未分配的副本分片分配给节点。接受索引名称和分片编号，以及node分配分片
+POST /_cluster/reroute
+{
+    "commands" : [
+        {
+            "move" : {
+                "index" : "test", "shard" : 0,
+                "from_node" : "node1", "to_node" : "node2"
+            }
+        },
+        {
+          "allocate_replica" : {
+                "index" : "test", "shard" : 1,
+                "node" : "node3"
+          }
+        }
+    ]
+}
