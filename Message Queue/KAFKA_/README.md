@@ -1,9 +1,16 @@
-```txt
-分布式、支持分区/副本，基于Zookeeper进行协调的分布式消息系统，其消息被持久化到磁盘，支持上千C端
-Kafka只是分为拥有1~N个分区的主题的集合，分区是消息的线性有序序列，Topic的每个具体的消息由它们的索引 (偏移) 标识
-集群中所有数据都是不相连的分区联合。传入消息写在分区末尾（消息由消费者顺序读取）通过将消息复制到不同的代理提供持久性
+#### 原理
+```bash
+# KAFKA是分布式、支持分区/副本，基于Zookeeper进行协调的分布式消息系统，其消息被持久化到磁盘，支持上千Client
+# Kafka只是分为拥有1~N个分区的主题的集合，分区是消息的线性有序序列，Topic的每个具体的消息由它们的索引 (偏移) 标识
+# 集群中所有数据都是不相连的分区联合。传入消息写在分区末尾（消息由消费者顺序读取）通过将消息复制到不同的代理提供持久性
 
-Zookeeper在kafka中的作用：
+# Topic
+    消息的分类，比如page view、click日志等都能够以Topic的形式存在。Kafka集群能同时刻负责多个Topic的分发
+
+# Broker
+    消息处理结点，1个Kafka节点就是1个Broker，多个Broker组成KAFKA集群
+
+# Zookeeper在kafka中的作用
     无论kafka集群还是producer、consumer，都依赖于zookeeper来保证系统可用性，其保存 metadata
     注: 老版本中Topic的消费和偏移信息存放在zookeeper，新版本中Topic的消费和偏移信息存放在broker的一个特殊的可压缩Topic中
     Kafka使用ZK作为其分布式协调框架，很好的将消息的生产、存储、消费的过程结合在一起
@@ -16,44 +23,62 @@ Zookeeper在kafka中的作用：
     2. Producer若生产了数据，会先通过ZK找到broker，然后将数据存放到broker
     3. Consumer若要消费数据，会先通过ZK找对应的broker，然后消费 (消费的同时保存本次消费分区的segement中的位置)
     
-replication（副本）、partition（分区）: 
+# replication & partition
     如果Topic配置了复制因子"replication facto"为N 那么可以允许N-1服务器宕机而不丢失任何已经增加的消息
-    副本数决定了有多少个Broker来存放写入的数据! 简单说副本是以Partition为单位进行复制的 ( 副本仅复制而不提供读/写能力 )
-    存放副本也可以这样简单的理解，其用于备份若干Partition、但仅有1个Partition被选为Leader用于读写!...
-    Producer能实现将消息推送到Topic的哪些Partition!，并且producer能直接发送消息到对应partition的Leader处!
-    kafka中相同group的consumer不可同时消费同一partition，在同一topic中同一partition同时只能由一个Consumer消费
+    每个Partition有1个leader与多个follower，producer往某个Partition中写入数据时只会往leader中写，然后数据会被异步/同步的方式复制到其他Replica
+    副本数决定了有多少个Broker来存放写入的数据! 简单说副本是以Partition为单位进行复制的 ( 副本仅复制而不提供读/写能力，这与Elasticsearch的概念有区别)
+    存放副本也可以这样简单的理解：根据设置的副本数备份若干数量的Partition并且其中仅有1个Partition被选为Leader用于读写!...
+    Producer能决策将消息推送到Topic的哪些Partition!，并且producer能直接发送消息到对应partition的Leader处!
+    kafka中相同group的consumer不可同时消费同一个partition，在同一topic中同一partition同时只能由一个Consumer消费，当同一topic同时需有多个Consumer消费时可创建更多的partition
+    如果同一消费者组内的消费者数量超过其消费的Topic的分区数量，那么有一部分消费者就会被闲置!
+    假设设置了数据默认副本数为3，那么会选举其中的某1个partition（备份以partition为单位）为leader，另外2个为follower!
+    Replica的数量 <= Broker节点的数量!，即：以Partition为单位来说，每个Broker上最多只会有此分区的1个Replica!，因此可以使用Broker id指定Partition的Replica
+    所有Partition的Replica默认情况会均匀分布到所有Broker上.
+
+    由于Broker采用了 Topic -> Partition 的思想，使得某个分区内部的顺序可保证有序性，但分区间的数据不保证有序性!
 
     对相同group的consumer来说kafka可被其认为是一个队列消息服务，各consumer均衡的消费相应partition中的数据！
     因此：
     假如所有消费者都在一个消费者组中那么这就变成了queue模型!
     假如所有消费者都在不同的组那么就完全变成了发布/订阅模型!
 
-Broker：   消息处理结点，1个Kafka节点就是1个Broker，多个Broker组成KAFKA集群
-Topic：    消息的分类，比如page view、click日志等都能够以Topic的形式存在。Kafka集群能同时刻负责多个Topic的分发
-Partition：Topic物理上的分组。一个Topic可分为多个Partition(分区)，每个Partition就是一个有序的队列
-           Kafka仅保证Topic以不同的分区为单位从而在每个分区内进行顺序处理，不能保证跨分区的消息的先后处理顺序...
-           所以如果想要顺序的处理Topic的所有消息那就只为其提供提供1个分区...
+# Partition & Segment
+    Topic物理上的分组。一个Topic可分为多个Partition(分区)，每个Partition就是一个有序的队列
+    Kafka仅保证Topic以不同的分区为单位从而在每个分区内进行顺序处理，不能保证跨分区的消息的先后处理顺序...
+    所以如果想要顺序的处理Topic的所有消息那就只为其提供提供1个分区...
+    Partition物理上又由多个Segment组成（段文件）
 
-Segment：  Partition物理上又由多个Segment组成
+# offset
+    每个Partition由一系列有序不可变的消息组成，这些消息被连续的追加到Partition中，并且每个消息都有个连续的序列号：offset
+    offset用于在partition内部唯一标识这条消息（消费者能够以分区为单位自定义读取的位置）
+    注意：
+    老版本consumer的位移是提交到zookeeper中的：/consumers/<group.id>/offsets/<topic>/<partitionId>
+    新版本consumer不再保存位移到zookeeper中，而是保存在KAFKA的Broker中的特殊的Topic中保存: "__consumeroffsets"
+    新版本中这个特殊的"__consumers_offsets" topic配置了compact策略，使得它总是能保存最新的位移信息
 
-offset：   每个Partition都由一系列有序的、不可变的消息组成，这些消息被连续的追加到Partition中
-           partition中的每个消息都有一个连续的序列号：offset
-           offset用于在partition中唯一标识这条消息（消费者能够以分区为单位自定义读取的位置）
-           注意：
-           老版本consumer的位移是提交到zookeeper中的：/consumers/<group.id>/offsets/<topic>/<partitionId>
-           新版本consumer不再保存位移到zookeeper中，而是保存在KAFKA的Broker中的特殊的Topic中保存: "__consumeroffsets"
-           新版本中这个特殊的__consumers_offsets topic配置了compact策略，使得它总是能够保存最新的位移信息
+            -----------------------------------------------------------------------------
 
-由于Broker采用了 Topic -> Partition 的思想，使得某个分区内部的顺序可保证有序性，但分区间的数据不保证有序性!...
-----------------------------------------------------------------------------------------------
-分区被分布到集群中的多个服务器上，每个服务器处理它分到的分区，根据配置每个分区还可复制到其它服务器作为备份容错
-每个分区有一个leader零或多个follower。Leader处理此分区的所有的读写请求而follower被动的复制数据
-在同一topic中的同一partition同时只能由一个Consumer消费!，当同一topic同时需有多个Consumer消费时可创建更多的partition
-如果同一消费者组内的消费者数量超过其消费的Topic的分区数量，那么有一部分消费者就会被闲置!
+# Data Replication如何处理Replica恢复
+    leader挂掉后从它的follower中选举一个作为leader，并把挂掉的leader从ISR中移除，继续处理数据
+    过段时间该leader重新启动时它知道它之前的数据到哪里了，尝试获取它挂掉后leader处理的数据，获取完成后它就加入了ISR
 
-注意，副本数要大于！：
-假设设置了数据默认副本数为3，那么会选举其中的某1个partition（备份以partition为单位）为leader，另外2个为follower!
+# Data Replication何时Commit
+    同步复制：  只有所有的follower把数据拿过去后才commit，一致性好，可用性不高.
+    异步复制：  只要leader拿到数据立即commit，等follower慢慢复制，可用性高，立即返回，一致性差.
+    Commit：   是指leader告诉客户端这条数据写成功了。kafka尽量保证commit后立即leader挂掉，其他flower都有该条数据
+
+# KAFKA不是完全意义上的同步/异步! 它在底层是一种ISR机制：
+1. 每个Topic下的每个分区的leader维护着与其基本保持同步的Replica列表，该列表称为ISR (in-sync Replica)，每个Partition都有ISR，且由leader动态维护
+2. 如果Topic下的某个分区的flower比leader落后了太多或超过特定时间未发起数据的Pull求，则leader将其重ISR中移除
+3. 默认当ISR中所有Replica都向Leader发送ACK时leader才commit!
+
+# 在Producer端可以设置究竟使用那种同步方式：
+    request.required.asks=
+        0   相当于异步，不需要leader给予回复，producer立即返回，发送就是成功
+        1   当leader接收到消息之后发送ack，丢会重发，丢的概率很小
+       -1   当所有的follower都同步消息成功后发送ack.  丢失消息可能性比较低
 ```
+#### 关键字解释
 ```bash
 AR：assigned replicas
     #通常情况下每个分区都会被分配多个副本
@@ -61,8 +86,8 @@ AR：assigned replicas
     #分区的AR数据保存在Zookeeper的/brokers/topics/<topic>节点中
 
 ISR：in-sync replicas
-    #与leader副本保持同步状态的副本集合(leader副本本身也在ISR中)
-    #ISR数据保存在Zookeeper的/brokers/topics/<topic>/partitions/<partitionId>/state节点中
+    # 与leader类型的分区副本保持同步状态的分区副本集合 (leader副本本身也在ISR中)
+    # ISR数据保存在Zookeeper的/brokers/topics/<topic>/partitions/<partitionId>/state节点中
 
 High Watermark：
     #副本高水位值简称 "HW" 它表示该分区最新的一条已经提交的消息(committed message)的位移
@@ -112,8 +137,8 @@ socket.receive.buffer.bytes=102400          #接受套接字的缓冲区大小
 socket.request.max.bytes=104857600          #请求套接字的缓冲区大小
 log.dirs=/tmp/kafka-logs                    #数据存放路径（注意要先创建：mkdir -p  /tmp/kafka-logs）
 replica.fetch.max.bytes=                    #默认1M，即使在Topic定义max.message.bytes=52428700，但此值不会随着更新!
-replica.lag.time.max.ms=500ms               #只要follower每500ms能发FetchRequest给leader，则不会被标记dead并踢出ISR
-replica.lag.max.messages=4000               #容忍follower最多与leader消息同步滞后数量，否则踢出ISR（新版本已经移除）
+replica.lag.time.max.ms=10000ms             #只要follower每10s能发FetchRequest给leader，则不会被标记dead并踢出ISR
+replica.lag.max.messages=10000              #容忍follower最多与leader消息同步滞后数量，否则踢出ISR（新版本已经移除）
 num.replica.fetchers=1                      #leader中进行复制的线程数，增大这个数值会增加relipca的IO
 num.partitions=3                            #若创建topic时没有给出划分partitions个数，则使用此默认数值代替
 log.segment.bytes=1073741824                #日志文件中每个segment文件的上限容量，默认1G

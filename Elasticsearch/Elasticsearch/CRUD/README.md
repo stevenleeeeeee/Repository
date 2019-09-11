@@ -8,6 +8,9 @@ curl -X DELETE /{index}/{type}/{id}
 # 查看文档总数量
 curl -X GET /{index}/{type}/_count
 
+# get操作允许设置fields字段，返回特定的字段：
+curl -X GET 'http://localhost:9200/twitter/tweet/1?fields=title,content'
+
 # 使用非DSL语言的查询格式：
 curl -X GET 'localhost:9200/index/_search?q=key=value'
 
@@ -444,7 +447,6 @@ GET /my_store/products/_search
     }
   }
 }
-
 
 # 聚合查询 -2：
 {

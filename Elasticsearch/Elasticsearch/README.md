@@ -98,7 +98,7 @@ transport.tcp.compress: true            # 是否开启TCP传输时压缩
 http.port: 9200                         # 接收用户请求，提供Restfule-API接口的端口
 http.cors.enabled: true                 # 支持跨域访问
 http.cors.allow-origin: "*"             # 
-path.data: /home/elastic/elasticsearch-5.5.0/data     # 数据存储路径，建议使用默认
+path.data: /home/elastic/elasticsearch-5.5.0/data     # 数据存储路径，建议配置多个路径以充分利用多个磁盘的IO
 path.logs: /home/elastic/elasticsearch-5.5.0/logs     # 日志存储路径
 bootstrap.memory_lock: true             # 设置memory_lock来锁定进程的物理内存地址,JVM会在开启时锁定堆大小 (Xms==Xmx)
 # discovery.type: single-node           # 使用单节点模式运行Elasticsearch，主要用于测试
@@ -125,8 +125,8 @@ action.destructive_requires_name: true
 # index.number_of_shards:3           #
 # index.number_of_replicas:1         #
 # index.refresh_interval:120s        #
-# cluster.routing.allocation.node_initial_primaries_recoveries: 4   # 初始化数据恢复时并发恢复线程的个数,默认为4 
-# cluster.routing.allocation.node_concurrent_recoveries: 2          # 添加删除节点或负载均衡时并发恢复线程的个数,默认为2 
+# cluster.routing.allocation.node_initial_primaries_recoveries: 4   # 初始化数据恢复时并发恢复线程数,默认 4 
+# cluster.routing.allocation.node_concurrent_recoveries: 2          # 添加删除节点或负载均衡时并发恢复线程数,默认 2 
 
 # 在 Elasticsearch 主节点启动之前配置 TLS，其他主节点可使用此节点生成的 "elastic-certificates.p12" 其内含公私钥:
 cd ~/elasticsearch-x.x.0

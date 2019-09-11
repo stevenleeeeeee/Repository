@@ -365,7 +365,7 @@ POST /bank/_doc/_count
   }
 }
 
-# 统计某字段有值的文档数
+# 统计某字段有值的文档总数
 POST /bank/_search?size=0
 {
   "aggs": {

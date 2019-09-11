@@ -123,7 +123,7 @@ for line in $(curl -s "http://${IP_PORT}/_cat/shards" | fgrep UNASSIGNED); do
 done 
 
 
-# 将旧机器的索引分片迁移至新机器，命令样例如下：
+# 将旧节点索引分片迁移至新节点，命令样例如下：
 curl -XPOST '192.168.xx.xx:9200/_cluster/reroute' -d '{  
     "commands" : [ {  
         "move" :   

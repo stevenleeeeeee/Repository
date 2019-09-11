@@ -1,0 +1,62 @@
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/analyzer.html
+
+curl -X PUT "localhost:9200/my_index?pretty" -H 'Content-Type: application/json' -d'
+{
+   "settings":{
+      "analysis":{
+         "analyzer":{
+            "my_analyzer":{             # my_analyzer analyzer which tokens all terms including stop words
+               "type":"custom",
+               "tokenizer":"standard",
+               "filter":[
+                  "lowercase"
+               ]
+            },
+            "my_stop_analyzer":{        # my_stop_analyzer analyzer which removes stop words
+               "type":"custom",
+               "tokenizer":"standard",
+               "filter":[
+                  "lowercase",
+                  "english_stop"
+               ]
+            }
+         },
+         "filter":{
+            "english_stop":{
+               "type":"stop",
+               "stopwords":"_english_"
+            }
+         }
+      }
+   },
+   "mappings":{
+       "properties":{
+          "title": {
+             "type":"text",
+             "analyzer":"my_analyzer",  # analyzer setting that points to the my_analyzer analyzer which will be used at index time
+             "search_analyzer":"my_stop_analyzer",  # search_analyzer setting that points to the my_stop_analyzer and removes stop words for non-phrase queries
+             "search_quote_analyzer":"my_analyzer"  # search_quote_analyzer setting that points to the my_analyzer analyzer and ensures that stop words are not removed from phrase queries
+         }
+      }
+   }
+}
+'
+curl -X PUT "localhost:9200/my_index/_doc/1?pretty" -H 'Content-Type: application/json' -d'
+{
+   "title":"The Quick Brown Fox"
+}
+'
+curl -X PUT "localhost:9200/my_index/_doc/2?pretty" -H 'Content-Type: application/json' -d'
+{
+   "title":"A Quick Brown Fox"
+}
+'
+curl -X GET "localhost:9200/my_index/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+   "query":{
+      "query_string":{
+         "query":"\"the quick brown fox\"" 
+      }
+   }
+}
+'
