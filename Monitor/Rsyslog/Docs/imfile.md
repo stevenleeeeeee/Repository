@@ -1,4 +1,4 @@
-`一般情况的包含关系：input(rulese(action(Template)))  注:若配置文件中没有 imput() 则整个Rsyslog上下文作为input！`
+`一般情况的包含关系：input(ruleset(if;action(Template)))  注:若配置文件中没有 input() 则整个Rsyslog上下文作为input！`
 #### imfile 参数
 ```bash
 #此模块提供将任何标准文本文件转换为系统日志消息的功能，标准文本文件是由可打印字符组成的文件，其中行由LF分隔
@@ -17,8 +17,8 @@ input(type="imfile"
     Tag="uat-scan"                  #打标签，用于消息文件原始的标签
     PollingInterval="5"             #对日志文件的轮询间隔，仅当imfile在轮询模式下运行时它才有效（建议使用inotify模式）
                                     #短轮询间隔提供更快速的消息转发，但需要更多的系统资源
-    PersistStateInterval="1"   #处理多少行后写入一次状态文件，默认0意味着只有当监控文件是被关闭时才写入一个新的状态文件
-                               #此设置影响imfile的性能
+    PersistStateInterval="1"        #处理多少行后写入一次状态文件，默认0意味着只有当监控文件是被关闭时才写入一个新的状态文件
+                                    #此设置影响imfile的性能
     reopenOnTruncate="on"           #告诉rsyslog当被处理的文件被截断后重新打开
 
     discardTruncatedMsg="off"       #当消息太长时将被截断并以被截断部分作为新消息处理。当打开时截断的部分不会被处理。

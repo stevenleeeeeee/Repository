@@ -41,6 +41,9 @@ cromm~1             # 会匹配到 from 和 chrome
 # 字段匹配200或404的文档
 response:(200 or 404)
 
+# 搜索状态为4xx而且扩展名为php或html的条目
+status:[400 TO 499] AND (extension:php OR extension:html)
+
 # 包含术语列表的多值字段的文档
 tags:(success and info and security)
 

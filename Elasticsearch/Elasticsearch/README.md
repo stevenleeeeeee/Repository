@@ -1,10 +1,11 @@
-```txt
-Elasticsearch是实时的分布式搜索和分析引擎，可用于全文搜索，结构化搜索以及分析。
-建立在全文搜索引擎 Apache Lucene 基础上，使用 Java 编写。
+
+```bash
+# Elasticsearch是实时的分布式搜索和分析引擎，可用于全文搜索，结构化搜索以及分析。
+# 建立在全文搜索引擎 Apache Lucene 基础上，使用 Java 编写。
 
 ES Version >= 5.x 的 head 不能放在ES的plugins、modules下且不再用 "elasticsearch-plugin install" ( 作为独立软件 )
 
-Elastic v5.5.0  
+# Elasticsearch v5.x: 
 其他依赖和插件：
     Jdk1.8   注: ES 7.0+版本自带jdk，不需要另外在安装了
     Nodejs   作为head插件的依赖
@@ -12,6 +13,16 @@ Elastic v5.5.0
     Kibana   提供数据可视化、搜索、开发者工具等功能
     x-pack   必须运行与ES版本相匹配的X-Pack版本 ( Elasticsearch自7.x版本开始，X-pack安全功能部分免费使用 )
     ik       同上，此插件需maven进行打包...
+
+# Elasticsearch v7.x:
+ES7.0是2019年4月发布的，底层是Lucene 8.0。其他还有需要了解的是：
+    废除单个索引下多 Type 的支持
+    ES Security 免费使用
+    ECK - ES Operator on K8s
+    新功能：New Cluster coordination
+    新功能：完整的 High Level REST Client
+    新功能：Script Score Query
+    性能：默认 Primary Shard 数从 5 到 1 ，避免 Over Sharding；性能优化更快的 Top K
 ```
 #### Software
 ```txt
@@ -24,7 +35,7 @@ Download: https://www.elastic.co/cn/downloads/
    16M    node-v8.1.4-linux-x64.tar.gz
   153M    x-pack-x.x.0.zip   (7.x版本之后自带X-pack模块，部分功能实现免费)
 ```
-#### Setup Elasticsearch x.x
+#### Deploy Elasticsearch x.x
 ```bash
 # ES5.X依赖JAVA Version >= 1.8，注! ES不能运行在CentOS7以下的版本上
 # 集群中的节点可分为：Master nodes、Data nodes、Client node、...
@@ -32,8 +43,12 @@ Download: https://www.elastic.co/cn/downloads/
 # 只要启动1个新的Elastic节点并设置和集群相同的名称，此节点即被加入到集群
 # ES需运行在非Root用户下
 
-tar -zxf jdk.tar.gz -C /
+tar -zxf jdk.tar.gz -C /                # ES 7.x 不需要本地 JDK 环境支持！
 ln -s /jdk1.8.0_101 /jdk
+
+# Elasticsearch 5，安装需要 JDK 8 以上
+# Elasticsearch 6.5，安装需要 JDK 11 以上
+# Elasticsearch 7.2.1，内置了 JDK 12！
 
 cat > /etc/profile.d/java.sh <<'EOF'
 export JAVA_HOME=/jdk
@@ -68,18 +83,24 @@ EOF
 
 sysctl -p
 
-# Elasticsearch 三个配置文件说明
-# config/elasticsearch.yml      主配置文件
-# config/jvm.options            JVM参数配置，需要将-Xms的值与-Xmx的值相等，建议最大不要超过32G
-# cofnig/log4j2.properties      日志配置
 
 #部署 Master Node
 tar -zxf elasticsearch-x.x.0.tar.gz -C ~/
 
+# Elasticsearch 7.2.1 目录结构如下：
+    bin ：      脚本文件，包括 ES 启动 & 安装插件等等
+    config ：   elasticsearch.yml（主配置文件）、jvm.options（JVM配置）、log4j2.properties （日志配置文件）、...
+    JDK ：      内置的 JDK，JAVA_VERSION="12.0.1"
+    lib ：      类库
+    logs ：     日志文件
+    modules ：  ES 所有模块，包括 X-pack
+    plugins ：  ES 已安装的插件。默认没有插件
+    data ：     ES 启动时会有该目录，用来存储文档数据（默认）
+
 vim ~/elasticsearch-x.x.0/config/elasticsearch.yml
-ES_HEAP_SIZE=32g                        # 设置ES_HEAP_SIZE 为机器内存的1/2 但不要超过32G
+ES_HEAP_SIZE=32g                        # 不要超过32G，建议设为物理内存50%，剩余内存由Lucene作为非堆内存使用，通常来说设置 ES_HEAP_SIZE 比直接写 -Xmx、-Xms 更好
 ES_JAVA_OPTS="-Xms32g"                  # 如果遇到性能问题，最好的方法是安排更好的数据布局和增加节点数目
-MAX_LOCKED_MEMORY=unlimited
+MAX_LOCKED_MEMORY=unlimited             # 
 MAX_OPEN_FILES=65535
 
 vim ~/elasticsearch-x.x.0/config/elasticsearch.yml
@@ -92,22 +113,23 @@ node.max_local_storage_nodes: 3         # 限制单节点上可以开启的ES存
 # node.attr.rack: n2                    # 指定节点的部落属性，这是一个比集群更大的范围
 # node.rack: rack314                    # 指定节点所在机架的属性，用于分片策略
 # node.tag: value1                      # 为节点打tag
-network.host: 0.0.0.0                   # 与其他节点交互时使用的地址
-transport.tcp.port: 9300                # 参与集群事物的端口
-transport.tcp.compress: true            # 是否开启TCP传输时压缩
+network.host: 0.0.0.0                   # 与其他节点交互时使用的地址 ( 用来同时设置network.bind_host、network.publish_host )
+network.publish_host: xx.xx.xx.xx       # 其它节点与该节点交互时使用的地址，如果不设置它会自动判断，值必须是个真实的ip
 http.port: 9200                         # 接收用户请求，提供Restfule-API接口的端口
+transport.tcp.port: 9300                # 参与节点间集群事物的端口
+transport.tcp.compress: true            # 是否开启TCP传输时压缩
 http.cors.enabled: true                 # 支持跨域访问
 http.cors.allow-origin: "*"             # 
 path.data: /home/elastic/elasticsearch-5.5.0/data     # 数据存储路径，建议配置多个路径以充分利用多个磁盘的IO
 path.logs: /home/elastic/elasticsearch-5.5.0/logs     # 日志存储路径
 bootstrap.memory_lock: true             # 设置memory_lock来锁定进程的物理内存地址,JVM会在开启时锁定堆大小 (Xms==Xmx)
 # discovery.type: single-node           # 使用单节点模式运行Elasticsearch，主要用于测试
-discovery.zen.minimum_master_nodes: 2   # Master 最小存活数量, 应该是有资格成为master的node数量的/2+1
-discovery.seed_hosts:                   # 传递初始主节点列表以在启动此节点时执行发现（7.X版本）
+# discovery.zen.minimum_master_nodes: 2 # Master最小存活数, 应该是有资格成为master的node数的/2+1  / discovery.zen.* 属性集合构成了zen发现协议。单/多播均是发现协议的有效组成部分（7.X版本中移除）
+discovery.seed_hosts:                   # 传递初始主节点列表以在启动此节点时执行发现（此配置为7.X版本，相当于旧配置中的："discovery.zen.ping.unicast.hosts"）
     - "node1"
     - "node2"
     - "node3"
-cluster.initial_master_nodes:           # 设置一系列符合主节点条件的节点的主机名或 IP 来引导启动集群（7.X版本）
+cluster.initial_master_nodes:           # 设置一系列符合主节点条件的节点的主机名或IP来负责引导启动集群（7.X版本）
     - "node1"
     - "node2"
     - "node3"
@@ -116,8 +138,10 @@ xpack.security.transport.ssl.enabled: true      # 启用传输层安全通信功
 xpack.security.transport.ssl.verification_mode: certificate
 xpack.security.transport.ssl.keystore.path: elastic-certificates.p12
 xpack.security.transport.ssl.truststore.path: elastic-certificates.p12
-xpack.security.audit.enabled: false     # 是否启用审计日志，默认路径：ES_HOME/logs/<clustername>_audit.json
+xpack.security.audit.enabled: false             # 是否启用审计日志，默认路径：ES_HOME/logs/<clustername>_audit.json
 action.destructive_requires_name: true
+cluster.routing.allocation.node_initial_primaries_recoveries: 4   # 初始化数据恢复时并发恢复线程数,默认 4 
+cluster.routing.allocation.node_concurrent_recoveries: 4          # 添加/删除节点或负载均衡时并发恢复线程数,默认 2 
 # xpack.watcher.enabled: false
 # xpack.monitoring.exporters.my_local:
 #   type: local
@@ -125,8 +149,6 @@ action.destructive_requires_name: true
 # index.number_of_shards:3           #
 # index.number_of_replicas:1         #
 # index.refresh_interval:120s        #
-# cluster.routing.allocation.node_initial_primaries_recoveries: 4   # 初始化数据恢复时并发恢复线程数,默认 4 
-# cluster.routing.allocation.node_concurrent_recoveries: 2          # 添加删除节点或负载均衡时并发恢复线程数,默认 2 
 
 # 在 Elasticsearch 主节点启动之前配置 TLS，其他主节点可使用此节点生成的 "elastic-certificates.p12" 其内含公私钥:
 cd ~/elasticsearch-x.x.0

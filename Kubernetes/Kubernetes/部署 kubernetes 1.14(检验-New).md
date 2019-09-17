@@ -389,7 +389,7 @@ WorkingDirectory=/var/lib/etcd
 ExecStart=/kubernetes/bin/etcd \
 --name=node1 \
 --listen-peer-urls=https://192.168.70.138:2380 \
---listen-client-urls=https://192.168.70.138:2379,http://127.0.0.1:2379 \ #prometheus: https://x.x.x.x:#/metrics
+--listen-client-urls=https://192.168.70.138:2379,http://127.0.0.1:2379 \ # prometheus: https://x.x.x.x:#/metrics
 --advertise-client-urls=https://192.168.70.138:2379 \
 --initial-advertise-peer-urls=https://192.168.70.138:2380 \
 --initial-cluster=node1=https://192.168.70.138:2380,node2=https://192.168.70.140:2380,node3=https://192.168.70.141:2380 \
@@ -401,12 +401,15 @@ ExecStart=/kubernetes/bin/etcd \
 --peer-key-file=/kubernetes/ssl/server-key.pem \
 --trusted-ca-file=/kubernetes/ssl/ca.pem \
 --peer-trusted-ca-file=/kubernetes/ssl/ca.pem \
+--max-snapshots=10 \
+--max-wals=10 \
 --snapshot-count=10000 \
+--heartbeat-interval=200 \
 --data-dir=/var/lib/etcd \
---heartbeat-interval=250 \
 --election-timeout=2000 \
 --peer-client-cert-auth \
---client-cert-auth
+--client-cert-auth \
+--enable-v2=true
 
 Type=notify
 Restart=on-failure

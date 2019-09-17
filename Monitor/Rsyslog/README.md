@@ -1,36 +1,43 @@
-`日志流向:   Rsyslog ---> Kafka ---> Logstash ---> Elasticsearch ---> Kibana `
+#### Rsyslog ---> Kafka ---> Logstash ---> Elasticsearch ---> Kibana
+```bash
+Rsyslog已发展几十年，目前支持3种不同配置格式：
 
-```txt
-Rsyslog已发展几十年，目前已支持3种不同的配置格式：
+    1、basic: 以前称为 sysklogd 格式，是最常用于表达基本内容的格式，其语句适合单行配置，源于最初的 syslog.conf 格式
+              其最常见的用例是匹配 "设施.严重性" 并将匹配的消息写入日志文件、Example： 
 
-    1、basic: 以前称为 sysklogd 格式，是最常用于表达基本内容的格式，其语句适合单行的位置，源于最初的syslog.conf格式
-              其最常见的用例是匹配 "设施.严重性" 并将匹配的消息写入日志文件
-              Example： mail.info   /var/log/mail.log   <--- ( format: 选择器.操作 动作 )
-                        mail.err    @@server.example.net
-                        注：对于任何更高级的功能，应该使用 advanced 格式!
+              mail.info   /var/log/mail.log     # <--- ( 格式: 选择器.优先级 动作 )
+              mail.err    @@server.example.net  # TCP
+              #注：对于任何更高级的功能，应该使用 advanced 格式!
 
     2、advanced:   以前称为 RainerScript 格式，此格式首先在 version 6 提供，并且是当前最佳和最精确的格式
-                   这种新的样式格式专门针对更高级的用例，如：转发到可能部分脱机的远程主机
-                   Example:  mail.info action(type="omfwd" protocol="tcp" queue.type="linkedList")
-                   注：Action对象描述了对消息的处理方式。它们通过输出模块 (以om开头的模块是输出专用模块) 实现 ( 翻译 )
+                   这种新的样式格式专门针对更高级的用例，如：转发到可能部分脱机的远程主机、Example:
+                   
+                   mail.info action(type="omfwd" protocol="tcp" queue.type="linkedList")
+                   #注：Action对象描述了对消息的处理方式。它们通过输出模块 (以om开头的模块是输出专用的各类模块前缀) 实现
 
     3、obsolete legacy:   以前简称为 legacy 格式，正如其名称所暗示的那样已过时
 
-    实质上以 "$" 符开头的单行上写的所有内容都是传统的格式，鼓励这种格式的用户迁移到 basic 或 advanced 格式
+#实质上以 "$" 符开头的单行上写的所有内容都是传统的格式，鼓励这种格式的用户迁移到 basic 或 advanced 格式
+
 ----------------------------------------
-Rsyslog的日志处理流程：
-    1. 消息在输入模块的帮助下输入rsyslog。然后它们被传递到规则集，其有条件地应用规则
-    2. 当规则匹配时，消息将传输到某个操作
-    3. 操作会对消息执行某些操作，例如将其写入文件、数据库或转发到远程主机
+
+# Rsyslog的日志处理流程：---> input(ruleset(if;action(Template)))
+#     1. 消息在输入模块的帮助下输入rsyslog。然后它们被传递到规则集，规则集有条件地应用规则
+#     2. 当规则匹配时，消息将传输到某个操作
+#     3. 操作会对消息执行某些操作，例如将其写入文件、数据库或转发到远程主机
 ```
-#### 基础
+#### Example for rsyslog configuration 
 ```bash
-#格式：（服务名称[.=!]信息等级）
-    .               从指定等级开始
-    =               指定等级
+# 设施/服务名称：
+    auth，authpriv，cron，daemon，ftp，kern，lpr，mail，mark，news，security（与auth相同）
+    syslog，user，uucp和local0到local7
+
+# 格式:( 服务名称[.=!]消息等级 ) 
+    .               从指定等级作为开始，包含其上的消息等级
+    =               特定等级
     !               排除等级
     
-#等级：
+# 等级：( The keywords warn, error and panic are deprecated and should not be used anymore )
     debug           调试信息
     info            基本信息
     notice          除info外需注意信息
@@ -39,60 +46,66 @@ Rsyslog的日志处理流程：
     crit            严重错误
     alert           严重警告
     emerg(panic)    崩溃状态
-    none            不记录...
-    *               所有级别（星号代表所有设施或所有优先级，具体取决于它出现在"."的位置）
-----------------------------------------
-#备忘：
-# 运行："rsyslogd -N 1" 检查conf文件语法，运行："rsyslogd -dn" 查看日志输出结果
-# 每个输入都需要加载输入模块并为其定义一个监听器
-# 输出也称为动作! 通过 action(type="type" ...) 调用动作。type指定要调用的插件的名称（如：omfile / omkafka ）
-# 可在每个条目前加上减号 "-" 以避免在出现每个消息后立即同步文件（异步当时写入日志文件）
-# 可使用分号 ";" 分隔符为多个选择器指定单个操作
-# 若希望 syslogd 忽略此优先级和所有更高优先级，可以在优先级前加感叹号: ！
+    none            不记录... 
+    *               所有级别（星号代表所有设施或所有优先级，具体含义取决于其出现在"."的位置）
+
+# ---------------------------------------- 备忘：
+# 运行："rsyslogd -N 1" 检查/etc/rsyslog.conf与/etc/rsyslog.d/*.conf的配置语法，运行："rsyslogd -dn" 查看日志输出
+# 每个输入都需要加载输入模块并为其定义一个监听器才能工作
+# 输出也称为动作! 通过 action(type="type" ...) 调用动作。其中的type参数指定要调用的输出模块的名称，如：omfile、omkafka
+# 可在每个条目前添加减号 "-" 以避免在出现每个消息后立即同步文件，其表示使用异步方式写入
+# 可使用分号 ";" 分隔符为多个选择器指定单个操作：mail=err;kern.none   /var/adm/critical
+# 若希望 syslogd 忽略此优先级和所有更高优先级，可在优先级前加感叹号: ！
 # 若希望 syslogd 仅忽略此单个优先级，甚至可以同时使用感叹号和等式符号: mail=!info
 # 将消息转发到其他主机，请在主机名前添加 @、@@ (分别代表UDP/TCP方式传输)
-# 紧急消息通常发送给当前在线的所有用户，此时应使用星号，如： *.emerg   *
-# call 语句用于将规则集绑定在一起。它以通常的编程语言 call 语句为模型，其可用于调用任何类型的规则集
+# 紧急消息通常发送给当前在线的所有用户，此时应使用星号作为动作： *.emerg      *
+# call 语句用于将规则集绑定在一起。它以通常的编程语言 call 语句为模型，其可用于调用任何类型的规则集 ( Ruleset )
+# call 语句代替了已弃用的 omruleset 模块并以更有效的方式工作
 # 若规则集已分配队列，则该消息将发布到该队列并异步处理，否则将同步执行并当规则集完成执行后，再返回到调用处继续向下执行
-# call 语句替换了已弃用的 omruleset 模块，并且以更有效的方式工作
-# 规则集和规则构成了 rsyslog 处理的基础。简而言之规则就是是rsyslog处理特定消息的方式
-# 规则集一般需要 "绑定"（或称分配）到特定的输入
+# 规则集和其内部的规则构成了 rsyslog 处理的基础。简而言之规则就是是rsyslog处理特定消息的方式
+# 规则集一般需要 "绑定"（或称分配）到特定的输入中才能使用
+
+# 处理原则：
+# 默认将收到的消息提交给规则集，如果规则集未明确绑定则使用默认规则集，默认情况下有一个规则集: RSYSLOG_DefaultRuleset
+# 每个Ruleset规则集包含零或多个规则，规则由过滤器和操作列表构成，其提供了True/false决策，从而实现了流量控制能力
+# 规则从给定规则集内的第一个规则到最后一个规则按顺序进行评估。并且不执行无关规则集的规则
+# 不论过滤器是否匹配，所有规则总是被完全"评估"完毕（因此不会在第一次被匹配住后停止后面的匹配）。若需停止消息处理则必须确执行"stop"操作（由'~'或停止命令表示）
+# 如果执行了丢弃则消息处理立即停止，而不评估任何进一步的规则
 
 Example:
 
-    *.=crit;kern.none   /var/adm/critical           #存储优先级为crit的所有消息，但不包括任何内核消息（none即不记录）
-    kern.*              /var/adm/kernel             #将内核所有级别的消息写入到文件
-    kern.crit           @finlandia                  #将内核指定级别的消息重定向到远程主机
-    kern.crit           /dev/console                #将内核指定级别的消息重定向到控制台
-    kern.info;kern.!err /var/adm/kernel-info        #将除err级别的信息保存到文件（使用 ! 进行过滤）
-    mail,news.=info    -/var/adm/info               #提取mail.info或news.info中的所有消息（"-"表示异步方式）
-    *.=info;*.=notice;mail.none /var/log/messages   #将所有带有info或notice优先级的消息记录到文件，但mail设施的除外
-    *.=emerg            :omusrmsg:*                 #将所有紧急消息写入所有当前登录的用户：(多个用户时使用逗号分隔)
+    mail,news.=info    -/var/adm/info               # 提取mail.info或news.info中的所有消息（"-"表示异步方式）
+    *.=crit;kern.none   /var/adm/critical           # 存储任何设置的优先级为crit的所有消息，但不包括任何内核消息（none即不记录）
+    kern.*              /var/adm/kernel             # 将内核所有级别的消息写入到文件
+    kern.crit           @finlandia                  # 将内核指定级别的消息重定向到远程主机
+    kern.crit           /dev/console                # 将内核指定级别的消息重定向到控制台
+    kern.info;kern.!err /var/adm/kernel-info        # 将除err级别的信息保存到文件（使用 ! 进行过滤）
+    *.=info;*.=notice;mail.none /var/log/messages   # 将所有带有info或notice优先级的消息记录到文件，但mail设施的除外
+    *.=info;mail,news.none      /var/log/messages   # 记录除去mail、news设施类型的消息之外的所有info级别的日志
+    *.=emerg            :omusrmsg:*                 # 将所有紧急消息写入所有当前登录的用户：(多个用户时使用逗号分隔)
+    *.alert             root,joey                   # 将所有优先级警报或更高级别的消息定向到用户（如果他们已登录）
+    :msg, contains, "informational"  ~              # 丢弃包含informational关键字的所有消息
 
-    #调用插件的一般例子（老版本的格式）： --->  设施.级别    :模块名:参数;模板 
-    *.*                 :ommysql:dbhost,dbname,dbuser,dbpassword;dbtemplate     #写入Mysql数据库
+    *.*       @192.168.0.10                         # 单个符号表示消息将通过UDP协议
+    *.*       @192.168.0.10:10514                   # UDP，带端口号
+    *.*       @@192.168.0.10                        # TCP，默认端口
+    *.*       @@(o,z9)192.168.0.1:1470              # 消息通过TCP转发到目的IP:Port，并设置最大压缩级别，使用TCP传输时，压缩也会打开syslog-transport-tls框架（o选项的作用）
 
-    *.alert      root,joey            #将所有优先级警报或更高级别的消息定向到用户（如果他们已登录）
+    #调用插件的一般例子（老版本格式）： --->           设施.级别    :模块名:参数;模板 
+    *.*       :ommysql:dbhost,dbname,dbuser,dbpassword;dbtemplate     #写入Mysql
 
-    *.*       @192.168.0.10           # 单个符号表示消息将通过UDP协议
-    *.*       @192.168.0.10:10514     # 带端口号
-    *.*       @@192.168.0.10          # TCP
-
-    *.*       @@(o,z9)192.168.0.1:1470  #消息通过TCP转发到目的IP:Port，并且最大的压缩级别
-    #使用TCP传输时，压缩也会打开syslog-transport-tls框架:（o选项的作用）
-
-    *.*       ^/Path/Scripts;template           #调用SHELL执行，程序将模板生成的消息作为唯一的命令行参数传递
+    *.*       ^/Path/Scripts;template               # 调用SHELL执行，程序将模板生成的消息作为唯一的命令行参数传递
     
-    *.=crit :omusrmsg:rger                      #You can have multiple actions for a single selector 
-    & root
+    *.=crit :omusrmsg:rger                          # You can have multiple actions for a single selector 
+    & root                                          # 
     & /var/log/critmsgs
 
-    *.=crit :omusrmsg:rger                      #Using multiple actions per selector (同时指定多个操作)
+    *.=crit :omusrmsg:rger                          # Using multiple actions per selector (同时指定多个操作)
     *.=crit root
     *.=crit /var/log/critmsgs
 
-    $template <模板名称>,"<%PRI%>%TIMESTAMP% %syslogtag%%msg%"
-    *.*  @192.168.0.1;<模板名称>                #在对消息传输之前调用模板先进行处理
+    $template <模板名称>,"<%PRI%>%TIMESTAMP% %syslogtag% %msg%"
+    *.*  @192.168.1.1;<模板名称>                         # 在传输消息之前调用模板先进行处理之后在传输
 
     *.* /var/log/file1                                  # 传统方式
     if $msg contains 'error' then /var/log/errlog       # 基于表达式的方式 ( 判断消息内容是否含有 error 关键字 )
@@ -113,23 +126,27 @@ Example:
     #基于表达式的过滤器当前不支持正则表达式! 稍后在函数支持添加到表达式引擎时将添加这些内容
     #原因是正则表达式将是一个单独的可加载模块，在实现之前需要一些更多的先决条件
 
+# 对日志内容/属性的比较操作 ( 主要用于过滤 ):
+    contains	    # 匹配提供的字符串值是否是属性的一部分，如果不区分大小写，使用contains_i
+    isequal	        # 比较属性和值是否相等
+    startswith	    # 属性是否以指定字符串开始 (startswith_i)
+    regex	        # 正则表达式(POSIX BRE 基本正则)匹配
+    ereregex	    # 正则表达式(POSIX ERE 扩展正则)匹配
+    isempty	        # 判断属性是否为空，不需要 value
 
-#对日志内容/属性的比较操作:
-contains	    #匹配提供的字符串值是否是属性的一部分，如果不区分大小写，使用contains_i
-isequal	        #比较属性和值是否相等
-startswith	    #属性是否以指定字符串开始(startswith_i)
-regex	        #正则表达式(POSIX BRE 基本正则)匹配
-ereregex	    #正则表达式(POSIX ERE 扩展正则)匹配
-isempty	        #判断属性是否为空，不需要 value
-#Example：
-    :msg, contains, "error"
-    :hostname, isequal, "host1"
-    :msg, !regex, "fatal .* error"
+# old version Example：
+# format：基于属性的过滤器必须以第1列中的冒号开头。这告诉rsyslogd它是新的过滤器类型。冒号后面必须跟有属性名，逗号，要执行的比较操作的名称
+#  :property, [!]compare-operation, "value"     # 前面的感叹号表示取反 
+# Example:
+#  :msg, contains, "error"
+#  :hostname, isequal, "host1"
+#  :msg, !regex, "fatal .* error"
+#  :msg, contains, "informational"  ~           # 丢弃包含informational关键字的所有消息
 
-#控制结构 Demo：
+# version 7.0+ Example：
 if ($msg contains "important") then {
-   set $.foo = $.bar & $.baz;
-   #每个ACTION后面都可跟1个模板名称。如果有则用于消息格式化否则使用硬编码的默认模板进行操作
+   if ( $.foo != "" ) then set $.foo = $.bar & $.baz;
+   #每个action后面都可跟1个模板名称。如果有则用于消息格式化，否则调用其硬编码的默认模板
    action(type="omfile" file="/var/log/important.log" template="outfmt")
 } else if ($msg startswith "slow-query:") then {
    action(type="omfile" file="/var/log/slow_log.log" template="outfmt")
@@ -138,11 +155,17 @@ if ($msg contains "important") then {
    action(type="omfile" file="/var/log/general.log" template="outfmt")
 }
 
-#遍历数组，下面的collection变量是数组 ---> [1, "2", {"a": "b"}, 4]
+#遍历数组，下面的collection变量可以是是数组or对象 ---> [1, "2", {"a": "b"}, 4] 其使用无序的方式遍历
 foreach ($.i in $.collection) do {
    ...
+   # When $.collection holds an object {"a": "b", "c" : [1, 2, 3], "d" : {"foo": "bar"}}, 
+   # value of $.i across invocations would be {"key" : "a", "value" : "b"}, {"key" : "c", "value" : [1, 2, 3]} and {"key" : "d", "value" : {"foo" : "bar"}}
+   # (not necessarily in the that order). In this case key and value will need to be accessed as $.i!key and $.i!value respectively.
+   # 输出key:     $.i!key
+   # 输出value:   $.i!value
 }
 
+# Here is an example of a nested foreach statement:
 foreach ($.quux in $!foo) do {
    action(type="omfile" file="./rsyslog.out.log" template="quux")
    foreach ($.corge in $.quux!bar) do {
@@ -182,70 +205,70 @@ foreach ($.quux in $!foo) do {
     "$!": null
 }
 
-#部分Rsyslog自带属性：( data items在rsyslog中叫做：properties，Message Properties)
-    msg                 #匹配 message 中的 msg 部分
-    hostname            #消息发送方主机名
-    source              #发送方主机别名
-    fromhost            #收到消息的来源的主机名（在中继链中，这是紧接在我们面前的系统，不一定是原始发送者）
-    fromhost-IP         #与fromhost相同，不过获取的是ip。本地输入如 imklog 在此属性中使用 ---> 127.0.0.1
-    syslogtag           #来自消息的Tag ( 即标签 ) message 的 tag
-    PROGRAMNAME         #来自消息的Tag，但它是标签的"静态"部分，例如tag是 named[123456] 则programname是: named
-    #例：在输入端打标签：$InputFileTag APPNAME / 接收端匹配：if $programname == 'APPNAME' then @<ip>:<port>;模板
+# 部分Rsyslog自带属性：( data items在rsyslog中叫做：properties，Message Properties)
+    msg                 # 匹配 message 中的 msg 部分
+    hostname            # 消息发送方主机名
+    source              # 发送方主机别名
+    fromhost            # 收到消息的来源的主机名（在中继链中，这是紧接在我们面前的系统，不一定是原始发送者）
+    fromhost-IP         # 与fromhost相同，不过获取的是ip。本地输入如 imklog 在此属性中使用 ---> 127.0.0.1
+    syslogtag           # 来自消息的Tag ( 即标签 ) message 的 tag
+    PROGRAMNAME         # 来自消息的Tag，但它是标签的"静态"部分，例如tag是 named[123456] 则programname是: named
+    # 例：在输入端打标签：$InputFileTag APPNAME / 接收端匹配：if $programname == 'APPNAME' then @<ip>:<port>;模板
                         # 1. end of tag
                         # 2. nonprintable character
                         # 3. ':'
                         # 4. '['
                         # 5. '/'
-    PRI                 #PRI部分消息，未解码（单值） message的PRI 即优先级!
-    pri-text            #消息的PRI部分采用文本形式，数字PRI附加在括号中（例如 "local0.err <133>"）
-    app-name            #The contents of the APP-NAME field from IETF draft draft-ietf-syslog-protocol
-    IUT                 #监视器InfoUnitType - 与 MonitorWare后端通信时使用（也适用于 Adiscon LogAnalyzer）
-    syslogfacility      #来自消息的设施 - 以数字形式
-    syslogfacility-text #来自消息的设施 - 以文本形式
-    syslogseverity      #消息严重性 - 数字形式
-    syslogseverity-text #消息严重性 - 文本形式
-    timegenerated       #消息收到时的时间戳 ( message被本地syslog接收到的时间 )
-    timereported        #消息体中的时间戳（分辨率取决于消息中提供的内容） 即 message 被创建的时间
-    timestamp           #alias for timereported
-    inputname           #生成消息的输入模块的名称（并非所有模块都必须提供此属性。如果未提供，则为空字符串）
-    jsonmesg            #自rsyslog 8.3.0起（ 整个消息对象为JSON表示 ）
+    PRI                 # PRI部分消息，未解码（单值） message的PRI 即优先级!
+    pri-text            # 消息的PRI部分采用文本形式，数字PRI附加在括号中（例如 "local0.err <133>"）
+    app-name            # The contents of the APP-NAME field from IETF draft draft-ietf-syslog-protocol
+    IUT                 # 监视器InfoUnitType - 与 MonitorWare后端通信时使用（也适用于 Adiscon LogAnalyzer）
+    syslogfacility      # 来自消息的设施 - 以数字形式
+    syslogfacility-text # 来自消息的设施 - 以文本形式
+    syslogseverity      # 消息严重性 - 数字形式
+    syslogseverity-text # 消息严重性 - 文本形式
+    timegenerated       # 消息收到时的时间戳 ( message被本地syslog接收到的时间 )
+    timereported        # 消息体中的时间戳（分辨率取决于消息中提供的内容） 即 message 被创建的时间
+    timestamp           # alias for timereported
+    inputname           # 生成消息的输入模块的名称（并非所有模块都必须提供此属性。如果未提供，则为空字符串）
+    jsonmesg            # 自rsyslog 8.3.0起（ 整个消息对象为JSON表示 ）
 
-#系统属性：
-    $myhostname		    #The name of the current host as it knows itself
-    $bom			    #The UTF-8 encoded Unicode byte-order mask (BOM)
-    $now			    #当前日期，格式 YYYY-MM-DD ,now是指当前message被处理的时间
-    $year			    #当前年份 (4-digit)
-    $month			    #当前月份 (2-digit)
-    $day			    #当前日期 (2-digit)
-    $hour			    #当前小时 (24 hour) time (2-digit)
-    $hhour			    #From minute 0 to 29, this is always 0 while from 30 to 59 it is always 1.
-    $minute			    #当前分钟 (2-digit)
+# 系统属性：
+    $myhostname		    # The name of the current host as it knows itself
+    $bom			    # The UTF-8 encoded Unicode byte-order mask (BOM)
+    $now			    # 当前日期，格式 YYYY-MM-DD ,now是指当前message被处理的时间
+    $year			    # 当前年份 (4-digit)
+    $month			    # 当前月份 (2-digit)
+    $day			    # 当前日期 (2-digit)
+    $hour			    # 当前小时 (24 hour) time (2-digit)
+    $hhour			    # From minute 0 to 29, this is always 0 while from 30 to 59 it is always 1.
+    $minute			    # 当前分钟 (2-digit)
 
-#属性选项 (不区分大小写)：
-    uppercase           #仅将属性转换为大写
-    lowercase           #将属性文本仅转换为小写
-    fixed-width         #更改toChar的宽度，以便在源字符串较短的情况下使用空格填充源字，最大值为toChar。在v8.13引入
-    json                #对值进行编码以便在JSON字段中使用。这意味着根据JSON规范转义了几个字符如 US-ASCII LF 被"\n"替换
-    jsonf[:outname]     #表示该属性应表示为JSON字段。这意味着不仅要编写属性，而且还要使用格式中的完整JSON字段
-    csv                 #格式化RFC 4180中指定的CSV格式的结果字段（在所有修改之后）
-    drop-last-lf            #例如： %msg:::drop-last-lf%    即：日志的完整消息文本，移出最後的換行符
-    date-utc                #在输出数据之前将数据转换为UTC
-    date-mysql              #格式为mysql日期
-    date-rfc3164            #格式为RFC 3164日期
-    date-rfc3164-buggyday   #类似date-rfc3164但模拟了常见的编码错误：RFC3164要求为1位数天写入1个空格，使用此选项将写入0
-    date-rfc3339            #格式为RFC 3339日期
-    date-unixtimestamp      #格式化为unix时间戳（自纪元以来的秒数）
+# 属性选项 (不区分大小写)：
+    uppercase           # 仅将属性转换为大写
+    lowercase           # 将属性文本仅转换为小写
+    fixed-width         # 更改toChar的宽度，以便在源字符串较短的情况下使用空格填充源字，最大值为toChar。在v8.13引入
+    json                # 对值进行编码以便在JSON字段中使用。这意味着根据JSON规范转义了几个字符如 US-ASCII LF 被"\n"替换
+    jsonf[:outname]     # 表示该属性应表示为JSON字段。这意味着不仅要编写属性，而且还要使用格式中的完整JSON字段
+    csv                 # 格式化RFC 4180中指定的CSV格式的结果字段（在所有修改之后）
+    drop-last-lf            # 例如： %msg:::drop-last-lf%    即：日志的完整消息文本，移出最後的換行符
+    date-utc                # 在输出数据之前将数据转换为UTC
+    date-mysql              # 格式为mysql日期
+    date-rfc3164            # 格式为RFC 3164日期
+    date-rfc3164-buggyday   # 类似date-rfc3164但模拟了常见的编码错误：RFC3164要求为1位数天写入1个空格，使用此选项将写入0
+    date-rfc3339            # 格式为RFC 3339日期
+    date-unixtimestamp      # 格式化为unix时间戳（自纪元以来的秒数）
     date-year
     date-month
     date-day
     date-hour
     date-minute
     date-second
-    date-subseconds         #只是时间戳的亚秒（对于低精度时间戳，总是0）
-    date-tzoffshour         #只是时间戳的时区偏移小时部分（2位数）
+    date-subseconds         # 只是时间戳的亚秒（对于低精度时间戳，总是0）
+    date-tzoffshour         # 只是时间戳的时区偏移小时部分（2位数）
     date-tzoffsmin
     date-tzoffsdirection
-    date-ordinal            #返回给定日期的序数，例如1月2日为2
+    date-ordinal            # 返回给定日期的序数，例如1月2日为2
     date-week
     date-wday
     date-wdayname
@@ -255,17 +278,18 @@ foreach ($.quux in $!foo) do {
     compressspac
     sp-if-no-1st-sp
     secpath-drop
-    secpath-replace         #用下划线替换字段内的斜杠（如"a/b"变为"a_b"）
+    secpath-replace         # 用下划线替换字段内的斜杠（如"a/b"变为"a_b"）
 ```
 #### 使用 stop 关键字截断处理流程...
 ```bash
 # ... module loading ...
 if $fromhost-ip == '192.0.2.1' then {
     action(type="omfile" file="/var/log/remotefile02")  # process remote messages
-    stop    #是丢弃操作！其会将下面的配置信息不被匹配、执行 
-}
+    stop    #是丢弃操作！其会将下面的配置信息不被匹配、执行
 
-# only messages not from 192.0.2.1 make it past this point          <-----------------
+}
+# 由于上面的判断使用了在全局中（默认规则集）执行了stop，则下面的配置将不生效：
+# only messages not from 192.0.2.1 make it past this point
 authpriv.*                            /var/log/secure
 mail.*                                /var/log/maillog
 *.emerg                               * # Everybody gets emergency messages
@@ -283,11 +307,6 @@ if ( $syslogtag == "test_1" ) then {
     stop
     ...
 }
-
-if ( $syslogtag == "test_2" ) then {
-    action(...)
-}
-...
 ```
 #### Rsyslog Modules ...
 ```bash
@@ -319,11 +338,11 @@ if ( $syslogtag == "test_2" ) then {
 #### MODULES ####
 # 注（ 旧版本载入模块使用：$ModLoad <mod_name> ）
 # The imjournal module bellow is now used as a message source instead of imuxsock.
-$ModLoad imuxsock       #为本地系统日志记录提供支持（例如，通过记录器命令）
-$ModLoad imjournal      #提供对systemd日志的访问
-#$ModLoad imklog        #读取内核消息（同样从日志中读取）
-#$ModLoad immark        #提供 --MARK-- 消息功能
-$ModLoad ommysql        #提供将日志写入Mysql的功能
+$ModLoad imuxsock       # 为本地系统日志记录提供支持（例如，通过记录器命令）
+$ModLoad imjournal      # 提供对systemd日志的访问
+#$ModLoad imklog        # 读取内核消息（同样从日志中读取）
+#$ModLoad immark        # 提供 --MARK-- 消息功能
+$ModLoad ommysql        # 提供将日志写入Mysql的功能
 
 # 远程服务器接收日志 ( 老版本，新版兼容 )
 $ModLoad imudp
@@ -364,7 +383,7 @@ mail.*                                                  -/var/log/maillog
 #文件名可以是静态的（始终相同）或动态的 （根据收到的消息而不同）
 #使用定制的模板（日志文件名称）将local5的所有信息追加到此模板定义的文件名...
 $template DynamicFile,"/var/log/test_logs/%$YEAR%_%$MONTH%_%$DAY%-local5.log"
-local5.* -?DynamicFile              #通过指定问号"?"而不是斜杠来说明是动态生成的文件名，?后跟此动态名称的模板，- 为异步
+local5.* -?DynamicFile              #通过指定问号"?"而不是斜杠来说明是动态生成的文件名，?后跟此动态名称的模板，-为异步
 local5.* -?DynamicFile;Mytemplate   #也可以在分号后面指定输出格式的模板
 
 #将日志写入mysql数据库...（需加载mysql模块：$ModLoad ommysql）
@@ -385,14 +404,12 @@ DEMO.*    :ommysql:127.0.0.1,Syslog,syslogwriter,topsecret
 ```
 #### 模板 template
 ```bash
-#模板由 template() 指定（新版），也可以通过 $template legacy 指定（传统），模板的关键元素是 rsyslog 属性!
-
-#介绍：
+#模板在新版本中由 template() 指定，也可通过旧语法：$template legacy 指定，模板的关键元素是 rsyslog 属性!
 #模板允许设置自己的格式，例如用来生成动态的日志文件名称，每个rsyslog的输出都会用到Templates
-#可指定多个模板，使得不同日志输出到不同模板，若未指定 Templates 则使用默认的 Templates
-#可用老版本的配置语法： $template，也可使用新版本的配置语法: template()，但是官方建议使用新语法
+#可指定多个模板，使得不同日志输出到不同模板，若未指定则使用默认的 Templates
+#可用老版本配置语法： $template，也可使用新版本的配置语法: template()，官方建议使用新语法
 
-# 系统中有一些内置的使用RSYSLOG_开头的保留模板，如：
+# 系统中有一些内置的使用RSYSLOG_开头的保留模板：
 #   RSYSLOG_TraditionalFileFormat
 #   RSYSLOG_FileFormat 
 #   RSYSLOG_TraditionalForwardFormat
@@ -402,42 +419,27 @@ DEMO.*    :ommysql:127.0.0.1,Syslog,syslogwriter,topsecret
 #   RSYSLOG_DebugFormat 
 
 #定义模板的三种格式：
- $template name,param[,options]                 #旧版本格式
- template(parameters)                           #新版本格式 ( parameter主要的2个参数：name、type )
- template(parameters) { list-descriptions }     #新版本的扩展格式
+ $template name,param[,options]                 # 旧版本格式
+ template(parameters)                           # 新版本格式 ( parameter主要的2个参数：name、type )
+ template(parameters){ list-descriptions }      # 新版本的扩展格式
 
-#关键参数说明：
-# name：指定一个模板名称
-# type：指定模板的类型，不同类型指定了不同的模板指定方法，一般有 list、subtree、string、plugin 四中类型！
-# 其中string、list两种类型最常用，两者区别如下：
+# 关键参数说明：
+# name：指定模板名称
+# type：指定模板类型，不同类型使用了不同的模板指定方法，有 list、subtree、string、plugin 四中类型！
+# 其中string、list两种类型最常用：
 # string类型是老版本的配置方式，允许使用Rsyslog提供的属性对日志进行格式化，语法如下：
-# template(name="xxx" type="string" string="xxx")
-# list类型可以把固定不变的内容和动态变化的内容分开:  ( list类型的template比string的更加清晰和简洁 )
-# 静态内容用: constant(value="固定不变的内容" ) 表示
-# 动态内容用: property(name="属性名" property statement) 表示
+#       template(name="xxx" type="string" string="xxx")
+# list类型可把固定不变的内容和动态变化的内容分开:  ( type=list 的 template比string的更清晰和简洁 )
+#       静态内容用: constant(value="固定不变的内容" )              # constant表示常量文本，其name参数定义使用的常量值、另外outname参数可设置输出字段名称
+#       动态内容用: property(name="属性名" property statement)    # property描述了属性访问，其name参数定义要访问的属性、另外outname参数可设置输出字段名称
 
-#调用模板的格式：
-#下面的例子为分离各client汇报上来的数据，存放在不同的目录而使用模板技术:
-#老版本:
-#$template TmplMsg, "/var/log/rsyslog_custom/%HOSTNAME%/%PROGRAMNAME%.log" 
-#新版本:
-template(
-    name="FTM66666"
-    type="string"
-    string="/var/log/rsyslog_custom/%fromhost-ip%/%$YEAR%/%$MONTH%/%$DAY%/%PROGRAMNAME%.log"
-) 
-*.*   ?FTM66666[;Template]
 
-#Example:
-$template SpaceTmpl,"%msg:2:$%\n" #定义模块，用于去掉占用开头2个字符的空格 (以$开头为老版本使用的格式)
-$template ChannelmanageErrorDynaFile,"/app/rsyslog/%fromhost-ip%/channelmanage/error_%$YEAR%-%$MONTH%-%$DAY%.log"
-:rawmsg,contains,"channe-10.139.54.53-8080" ?ChannelmanageInfoDynaFile;SpaceTmpl
-
-template(name="tpl3" type="string" string="%TIMESTAMP:::date-rfc3339% %HOSTNAME% %syslogtag%%msg:::sp-if-no-1st-sp%%msg:::drop-last-lf%\n")
-template(name="TraditionalFormat" type="string" string="%timegenerated% %HOSTNAME% %syslogtag%%msg%\\n")
-template(name="DynFile" type="string" string="/var/log/system-%HOSTNAME%.log")
-# %%  ---> 之间的大写变量是可以替换的
-# ::: ---> 后面跟的是对应的一些属性
+# template Example:
+# template(name="tpl1" type="list") {
+#      constant(value="tag is: '")     property(name="$!usr!msgnum")
+#      constant(value="', ")      property(name="timereported" dateFormat="rfc3339" caseConversion="lower")
+#      constant(value="\n")
+# }
 
     #常量和属性语句，常量描述常量文本、属性描述属性访问
     #以下list类型可理解为：---> ["Syslog MSG is: '","%msg%",',"%timereported%","\n"] （也可理解为构成一个字串形式）
@@ -458,7 +460,7 @@ template(name="DynFile" type="string" string="/var/log/system-%HOSTNAME%.log")
     # format - 以字段为基础指定格式。支持的值是：
     #     "csv"       用于生成csv-data时使用
     #     "json"      格式化正确的json内容 (但没有字段标题)
-    #     "jsonf"     格式化为完整的json字段 ( 完整的 )
+    #     "jsonf"     格式化为完整的json字段 (完整的)
     #     "jsonr"     避免双重转义值，但使json字段安全
     #     "jsonfr"    是"jsonf"和"jsonr"的组合
     # position.from - 从这个位置开始获取子串（1是第一个位置）
@@ -474,11 +476,6 @@ template(name="DynFile" type="string" string="/var/log/system-%HOSTNAME%.log")
     # regex.submatch - 要使用的子匹配
     # droplastlf - 如果存在则丢弃尾随LF
 
-    template(name="outfmt" type="list") {
-        property(name="$!usr!msgnum")
-        constant(value="\n" outname="IWantThisInMyDB")
-    }
-
     #要生成常量json字段，可以使用format参数
     template(name="outfmt" type="list" option.jsonf="on") {
        property(outname="message" name="msg" format="jsonf") #outname相当于key，输出字段名称（用于结构化输出）
@@ -491,16 +488,35 @@ template(name="DynFile" type="string" string="/var/log/system-%HOSTNAME%.log")
     constant(value="-")
     property(name="timereported" dateformat="day")
 
-#每个ACTION后面都可跟1个模板名称。如果有则该模板用于消息格式化。否则使用硬编码的默认模板进行操作。
+
+# 每个ACTION后面都可跟1个模板名称。如果有则该模板用于消息格式化。否则使用硬编码的默认模板进行操作。
+# 下面的例子为分离各client汇报上来的数据，存放在不同的目录而使用模板技术:
+# 老版本:
+# $template TmplMsg, "/var/log/rsyslog_custom/%HOSTNAME%/%PROGRAMNAME%.log" 
+# 新版本:
+template( name="FTM66666" type="string" string="/log/%fromhost-ip%/%$YEAR%/%$MONTH%/%$DAY%/%PROGRAMNAME%.log")
+*.*   ?FTM66666[;Template]
+
+# template Properties Example:
+$template SpaceTmpl,"%msg:2:$%\n" #定义模块，用于去掉占用开头2个字符的空格 (以$开头为老版本使用的格式)
+$template ChannelmanageErrorDynaFile,"/app/rsyslog/%fromhost-ip%/channelmanage/error_%$YEAR%-%$MONTH%-%$DAY%.log"
+:rawmsg,contains,"channe-10.xx.xx.xx-8080" ?ChannelmanageInfoDynaFile;SpaceTmpl
+template(name="tpl3" type="string" string="%TIMESTAMP:::date-rfc3339% %HOSTNAME% %syslogtag%%msg:::sp-if-no-1st-sp%%msg:::drop-last-lf%\n")
+# %% --> 白分号之间的大写变量是可以替换的、  ::: --> 后面跟的是对应的一些属性
+# template Properties Example:
+#   %msg:1:2%           获取消息文本的前2个字符（偏移从1开始）
+#   %msg:10:$%          从第10位提取到结尾字符串
+#   %msg:::lowercase%   将完整的消息文本转换为小写
+
 
 #新旧模板语法对比:
 $template secureTemplate,"INSERT INTO var_log_secure (received_at, source_ip, source_hostname, logged_at, severity, service, message, severity_int, syslogtag) VALUES ('%timegenerated:::date-rfc3339%', '%fromhost-ip%', '%hostname%', '%timereported:::date-rfc3339%', '%syslogseverity-text%', '%programname%', '%msg%', '%syslogseverity%', '%syslogtag%')",STDSQL
-
+#
 template(name="secureTemplate" type="string" option.stdsql="on"
   string="INSERT INTO var_log_secure (received_at, source_ip, source_hostname, logged_at, severity, service, message, severity_int, syslogtag) values ('%timegenerated:::date-rfc3339%', '%fromhost-ip%', '%hostname%', '%timereported:::date-rfc3339%', '%syslogseverity-text%', '%programname%', '%msg%', '%syslogseverity%', '%syslogtag%')"
 )
 
-# 一般情况下的包含关系： input(rulese(action(Template)))  注：若配置文件中没有imput() 则整个Rsyslog上下文作为input！
+# 一般情况下的包含关系： input(rulese(if;action(Template)))  注：若配置文件中没有imput()则整个Rsyslog上下文作为input
 ```
 #### Demo
 ```bash
@@ -566,22 +582,7 @@ useragent=ios_h5_zjcap&apiver=2&WKWebView=1" "ios_h5_zjcap" 0.001 -
 "%msg:F,32+:2%" :
 ==》如果多个分隔符(比如：日志中有n个空格作为分割，那么可以添加一个+)
 
----------------------------------------------------------------------
 
-module(load="imfile" PollingInterval="10")
-input(type="imfile" File="/path/to/file1" Tag="tag1" StateFile="statefile1" Severity="error" Facility="local7")  
-action(type="omfwd" Target="192.168.0.1" Port="514" Protocol="tcp" )
-
-当要截取输入日志内容的话，就需要用到过滤器例如：
-$template mymark6,"%timestamp% %fromhost-ip% %msg:32:$%\n"
-if $programname == 'test-run' then @@192.168.15.161:514;mymark6
-
-当用到数据库并且默认的格式不符合我们的要求的话，我们就需要另外定义：
-$template tpl6666,"insert into SystemEvents (Message, Facility, FromHost, Priority, DeviceReportedTime, \
-ReceivedAt, InfoUnitID, SysLogTag) values (‘%msg%’, %syslogfacility%, ‘%HOSTNAME%’, %syslogpriority%, \
-‘%timereported:::date-mysql%’, ‘%timegenerated:::date-mysql%’, %iut%, ‘%syslogtag%’)",SQL\
-
-*.* :ommysql:localhost,Syslog,rsyslog,123456;tpl6666
 ```
 #### 输出通道 outchannel
 ```bash

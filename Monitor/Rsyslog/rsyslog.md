@@ -297,11 +297,11 @@ $SystemLogRateLimitInterval 0
 
 #### RULES ####
 *.info;mail.none;authpriv.none;cron.none   /var/log/messages
-authpriv.*  /var/log/secure
-cron.*      ~
-kern.*	    /var/log/kern.log
-daemon.*	  /var/log/daemon.log
-syslog.*	  /var/log/syslog
+authpriv.*      /var/log/secure
+cron.*          ~
+kern.*	        /var/log/kern.log
+daemon.*	    /var/log/daemon.log
+syslog.*	    /var/log/syslog
 
 $WorkDirectory /data/rsyslog
 #http://www.rsyslog.com/doc/master/rainerscript/queue_parameters.html
