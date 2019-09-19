@@ -41,18 +41,36 @@ geoip {
                "dma_code", "ip", "latitude", "longitude", "postal_code", "region_name", "timezone"]
 }
 ```
-#### logstash 的正则表达式
+#### 正则表达式 & grok
 ```bash
-#调用自带的正则模式：         %{SYNTAX:field_name}
-#Logstash自定义正则的格式：  (?<field_name>the pattern)   或： (?<field_name>(the pattern))
-#自定义正则内套用自带正则：   (?<str>(%{USERNAME}))
-#当自定义正则未匹配时输出"-"  (?:%{}|-)
+#调用自带的正则模式：( 下例中："SYNTAX"为其内置预定义的正则、field_name为将匹配的内容赋与的Key名字 )           
+%{SYNTAX:field_name} 
 
-#先使用|左边的表达式进行匹配，若匹配不成功在使用右边的: 注:包裹表达式的括号没有特殊含义
-(?:(?:[0-9]+(?:\.[0-9]+)?)|(?:\.[0-9]+))        #此处 | 的含义！
+#grok中自定义正则的格式：( 下例中："field_name"为将匹配的内容赋予的key名字，其后的the pattern为正则表达式
+(?<field_name>the pattern)                      # 或： (?<field_name>(the pattern))
+
+#自定义正则内套用自带正则：     
+(?<str>(%{USERNAME}))
+
+#当自定义正则未匹配时输出"-"    
+(?:%{}|-)
+
+#先使用|左边的表达式进行匹配，若匹配不成功在使用右边的: 注:下面包裹表达式的括号没有特殊含义
+(?:(?:[0-9]+(?:\.[0-9]+)?)|(?:\.[0-9]+))        # 此处 | 的含义！
 
 #使用多个表达式进行测试匹配:
 (?:%{CISCOMAC}|%{WINDOWSMAC}|%{COMMONMAC})
+
+#Example:
+(?<temMsg>(.*)(?=Report)/?)             # 获取Report之前的字符
+(?<temMsg>(?=Report)(.*)/?)             # 获取Report之后的字符
+(?<temMsg>(?<=report).*?(?=msg))        # 截取report和msg之间的值 不包含report和msg本身
+(?<temMsg>report.*?(?=msg))             # 截取包含report但不包含msg
+(?<temMsg>(?<=report).*?(msg))          # 截取不包含report但包含msg
+(?<temMsg>report.*?(msg|request))       # 输出以report开头,以msg或request结尾的所有包含头尾信息
+(?<temMsg>report.*?(?=(msg|request)))   # 输出以report开头,以msg或request结尾的不包含头尾信息
+(?<MYELF>([\s\S]{500}))                 # 截取日志500个字符 作为MYELF的值
+(?<My_key>(.*?)(?=[[:digit:]]))         # 非贪婪匹配所有以数字结尾的任意串，但不包含数字
 
 #正则表达式中对分组进行命名：
 #用户可以自己指定子表达式的组名。要指定一个子表达式的组名，请使用这样的语法：(?<Word>\w+)
@@ -63,7 +81,7 @@ geoip {
 #常用分组语法：
 (exp)	            #匹配exp,并捕获文本到自动命名的组里
 (?<name>exp)	    #匹配exp,并捕获文本到名称为name的组里，也可以写成(?'name'exp)
-(?:exp)	            #匹配exp,不捕获匹配的文本，也不给此分组分配组号? ( 匹配pattern但不获取匹配结果，说这是非获取匹配 )
+(?:exp)	            #匹配exp,不捕获匹配的文本，也不给此分组分配组号 ( 匹配pattern但不获取匹配结果，说这是非获取匹配 )
 (?<=exp)	        #匹配exp后面的位置，Example: grep -oP '(?<=<(\w+)>).*(?=<\/\1>)'
 (?=exp)	            #匹配exp前面的位置，Example: grep -oP '(?<=begin).*(?=end)'
 (?<!exp)	        #匹配前面不是exp的位置： (?<![a-z])\d{7} ---> 匹配前面不是小写字母的七位数字
@@ -144,9 +162,14 @@ filter {
 
 #add_tag增加一些标签
 
-#mutate过滤器允许对字段执行常规突变。可重命名、删除、替换、修改事件中的字段
-#它提供了丰富的基础类型数据处理能力。包括类型转换，字符串处理和字段处理等
-#示例：
+
+#如果日志中含有DEBUG的，就drop掉
+if [level] == "DEBUG" {
+   drop { }
+}
+
+# mutate过滤器允许对字段执行常规突变。可重命名、删除、替换、修改事件中的字段
+# 它提供了丰富的基础类型数据处理能力。包括类型转换，字符串处理和字段处理等：
 mutate {
         convert => ["reqTime","integer","statusCode","integer","bytes","integer"]
         convert => {"port"=>"integer"}

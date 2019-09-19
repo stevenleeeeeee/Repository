@@ -1,60 +1,60 @@
-###### filebeat     -->     kafka     -->     logstash     -->     Elasticsearch     -->     Kibana
+###### filebeat --->  kafka --->  logstash --->  Elasticsearch --->  Kibana
 #### Filebeat
 ```bash
 filebeat:
-  registry_file: .filebeat            #记录filebeat处理日志文件的位置的文件，默认在启动的根目录下
-  prospectors:
-    - paths:
-        - /home/wangyu/Test/*.log
-      input_type: log
-      document_type: oslog            #输出时的document的type字段，在logstash中使用 [type] 对其值进行判断
-      scan_frequency: 10s             #Every 10s scan ..
-      encoding: plain
-      include_lines: ["^ERR", "^WARN"]  #含正则列表的行（默认所有）include_lines执行之后会执行exclude_lines
-      exclude_lines: ["^DBG"]         #要排除的行
-      exclude_files: [".gz$"]         #忽略掉符合正则表达式列表的文件
-      close_older: 1h                 #若文件在某个时间段内没有发生更新则关闭监控的文件handle（默认1h）
-      max_bytes: 10485760             #增加1行算1个事件，max_bytes限制在1次日志事件中最多上传的字节，多出的被丢弃
-      tail_files: false               #是否从文件尾部开始监控文件新增内容
-      backoff: 1s                     #检测到了EOF（文件结尾）后，每次等待多久再去检测文件是否有更新，默认1s
-      fields:                         #添加额外的信息
-         level: debug                 #新增一个JSON的key
-output.kafka: 
-  enabled: true 
-  hosts: ["10.0.0.3:9092"]
-  topic: ES                           #MQ Topic
-  partition.round_robin:
-    required_acks: 1                  #Need kafka Ack
+  registry_file: .filebeat              # 记录filebeat处理日志文件的位置的文件，默认在启动的根目录下
+  prospectors: 
+    - paths: 
+        - /home/wangyu/Test/*.log 
+      input_type: log 
+      document_type: oslog              # 输出时的document的type字段，在logstash中使用 [type] 对其值进行判断
+      scan_frequency: 10s               # Every 10s scan ..
+      encoding: plain 
+      include_lines: ["^ERR", "^WARN"]  # 含正则列表的行（默认所有）include_lines执行之后会执行exclude_lines
+      exclude_lines: ["^DBG"]           # 要排除的行
+      exclude_files: [".gz$"]           # 忽略掉符合正则表达式列表的文件
+      close_older: 1h                   # 若文件在某个时间段内没有发生更新则关闭监控的文件handle（默认1h）
+      max_bytes: 10485760               # 增加1行算1个事件，max_bytes限制在1次日志事件中最多上传的字节，多出的被丢弃
+      tail_files: false                 # 是否从文件尾部开始监控文件新增内容
+      backoff: 1s                       # 检测到了EOF（文件结尾）后，每次等待多久再去检测文件是否有更新，默认1s
+      fields:                           # 添加额外的信息
+         level: debug                   # 新增一个JSON的key
+output.kafka:  
+  enabled: true  
+  hosts: ["10.0.0.3:9092"] 
+  topic: ES                             # MQ Topic
+  partition.round_robin: 
+    required_acks: 1                    # Need kafka Ack
     max_message_bytes: 1000000
 #output.console:
 #    pretty: true
 ```
 #### Kafka
 ```bash
-#在Kafka的Broker端创建"Logstash"消费的主题
+# 在Kafka的Broker端创建"Logstash"消费的主题
 kafka-topics.sh --create --zookeeper 10.0.0.3:21811 --replication-factor 1 --partitions 1 --topic ES
 ```
 #### Logstash
 ```bash
-#注:
-#logstash的 --config.test_and_exit 选项解析配置文件并报告任何错误 )
-#logstash的 --config.reload.automatic 选项启用自动配置重新加载，因此每次修改配置文件时都不必停止并重新启动Logstash
-#logstash的名为@metadata的特殊字段的内容在输出时不会成为你的任何事件的一部分！
-#这使得它很适合用于条件或者扩展和构建带有字段引用和sprintf格式的事件字段
-#logstash中的@metadata包含的字段默认不会作为事件的一部分输出!
-#如果指定了metadata => true 时，只有 rubydebug codec 允许显示 @metadata 字段的内容。
+# 注:
+# logstash的 --config.test_and_exit 选项解析配置文件并报告任何错误 )
+# logstash的 --config.reload.automatic 选项启用自动配置重新加载，因此每次修改配置文件时都不必停止并重新启动Logstash
+# logstash的名为@metadata的特殊字段的内容在输出时不会成为你的任何事件的一部分！
+# 这使得它很适合用于条件或者扩展和构建带有字段引用和sprintf格式的事件字段
+# logstash中的@metadata包含的字段默认不会作为事件的一部分输出!
+# 如果指定了metadata => true 时，只有 rubydebug codec 允许显示 @metadata 字段的内容。
 
-#logstash的logstash.yml文件还支持bash风格的通过环境变量插值设置值：
+# logstash的logstash.yml文件还支持bash风格的通过环境变量插值设置值：
 pipeline:
   batch:
     size: ${BATCH_SIZE}
-    delay: ${BATCH_DELAY:50}  #此处当未设置BATCH_DELAY环境变量时，将使用默认值："50"
+    delay: ${BATCH_DELAY:50}  # 此处当未设置BATCH_DELAY环境变量时，将使用默认值："50"
 node:
   name: "node_${LS_NODE_NAME}"
 path:
    queue: "/tmp/${QUEUE_DIR:queue}"
 
-#logstash的判断语法格式：
+# logstash的判断语法格式：
 if "_grokparsefailure" not in [tags] {
   ......
 } else if [status] !~ /^2\d\d/ and [url] == "/noc.gif" {
@@ -63,8 +63,19 @@ if "_grokparsefailure" not in [tags] {
   ......
 }
 
-#生成带日期的索引的2种方式：
-#方式1：
+# logstash条件类似于编程语言。条件支持if、else if、else语句，可以嵌套：
+# 比较操作如下： 
+    # 相等:           ==, !=, <, >, <=, >= 
+    # 正则:           =~(匹配正则), !~(不匹配正则) 
+    # 包含:           in(包含), not in(不包含) 
+    # 布尔操作：      and(与), or(或), nand(非与), xor(非或) 
+    # 一元运算：      !"取反"、()"复合表达式"、!()"对复合表达式结果取反"
+
+# 在logstash中引用字段内容使用："%{foo}" 引用字段使用: [foo]
+
+
+# 生成带日期的索引的2种方式：
+# 方式1：
 output {
     elasticsearch {
         hosts => ["127.0.0.1"]
@@ -72,13 +83,13 @@ output {
         document_type => "logs_type"
     }
 }
-#方式2：( 推荐使用ruby插件进行时间的解析，它解决了时区的问题 )
+# 方式2：( 推荐使用ruby插件进行时间的解析，它解决了时区的问题 )
 filter {
     ruby {
             code => "event['index_day'] = event['@timestamp'].localtime.strftime('%Y.%m.%d')"
     }
 }
-#输出:
+# 输出:
 {
        "message" => "test",
       "@version" => "1",
@@ -87,17 +98,17 @@ filter {
      "index_day" => "2015.03.29"
 }
 
-#logstash的input中的路径匹配的几种方式：
-"/var/log/*.log"            #在指定的路径中匹配以.log结尾的日志文件。
-"/var/log/**/*.log"         #匹配以指定路径下的子目录中的.log结尾的日志文件。
-"/path/to/logs/{app1,app2,app3}/data.log"   #匹配指定路径下的app1，app2和app3子目录中的应用程序日志文件。
+# logstash的input中的路径匹配的几种方式：
+"/var/log/*.log"            # 在指定的路径中匹配以.log结尾的日志文件。
+"/var/log/**/*.log"         # 匹配以指定路径下的子目录中的.log结尾的日志文件。
+"/path/to/logs/{app1,app2,app3}/data.log"   # 匹配指定路径下的app1，app2和app3子目录中的应用程序日志文件。
 
-#在logstash的配置文件中引用变量的方式: "%{[varname]}，若引用系统的环境变量则: "${TCP_PORT:default_value}"
+# 在logstash的配置文件中引用变量的方式: "%{[varname]}，若引用系统的环境变量则: "${TCP_PORT:default_value}"
 $ export ENV_TAG="tag2"
 
 filter {
   mutate {
-    add_tag => [ "tag1", "${ENV_TAG}" ] #使用系统环境变量设置标签值
+    add_tag => [ "tag1", "${ENV_TAG}" ] # 使用系统环境变量设置标签值
   }
 }
 
@@ -111,43 +122,43 @@ output {
   }
 }
 
-#Example:
+# Example:
 input{
     kafka {
-        bootstrap_servers => "10.0.0.3:9092"    #Kafka Address
-        group_id => "logstash"                  #要启用消费组，同组的消费者间"竞争"消费相同主题的1个消息
-        topics => "ES"                          #消费主题，生产环境中可使用列表类型来订阅多个主题
-        consumer_threads => 2
-        decorate_events => true                 #将当前topic、offset、group、partition等信息也写入message
-        auto_commit_interval_ms => 1000         #消费间隔，毫秒
-        auto_offset_reset => latest             #从最后消费
-        codec => "json"                         #将Filebeat传输的消息解析为JSON格式
+        bootstrap_servers => "10.0.0.3:9092"    # Kafka Address
+        group_id => "logstash"                  # 要启用消费组，同组的消费者间"竞争"消费相同主题的1个消息
+        topics => "ES"                          # 消费主题，生产环境中可使用列表类型来订阅多个主题
+        consumer_threads => 2 
+        decorate_events => true                 # 将当前topic、offset、group、partition等信息也写入message
+        auto_commit_interval_ms => 1000         # 消费间隔，毫秒
+        auto_offset_reset => latest             # 从最后消费
+        codec => "json"                         # 将Filebeat传输的消息解析为JSON格式
     }
 }
 
 filter{
     grok {
         match => { 
-            #Grok从message语义中按Patterns获取并分割成Key，其表达式很像C语言中的宏定义
+            # Grok从message语义中按Patterns获取并分割成Key，其表达式很像C语言中的宏定义
             "message" => '%{IP:client} - \[%{DATA:time}\] "%{DATA:verb} %{DATA:url_path}
             %{DATA:httpversion}" %{NUMBER:response} %{NUMBER:} "-" \"%{DATA:agent}\"
             "-" \"%{NUMBER:request_time}\" -' 
         }
     }
     mutate{ 
-        remove_field => ["tags","topic","source","version","name"]  #删除Logstash中部分不需要的"语义"Key
-        add_field => [ "log_ip", "10.0.0.3" ]                       #添加指定KEY
+        remove_field => ["tags","topic","source","version","name"]  # 删除Logstash中部分不需要的"语义"Key
+        add_field => [ "log_ip", "10.0.0.3" ]                       # 添加指定KEY
     }
 }
 
 output{
     if [type] == "log" {
         elasticsearch {
-            hosts => ["10.0.0.3:9200"]          #会根据请求体中提供的数据自动创建映射 (由Logstash端创建)
+            hosts => ["10.0.0.3:9200"]          # 会根据请求体中提供的数据自动创建映射 (由Logstash端创建)
             index => "es"
             timeout => 300
-            flush_size：100                     #默认500，logstash攒够500条数据再一次性向es发送
-            idle_flush_time：2                  #默认1s，如果1s内没攒够500条还是会一次性将攒的数据发出去给es
+            flush_size：100                     # 默认500，logstash攒够500条数据再一次性向es发送
+            idle_flush_time：2                  # 默认1s，如果1s内没攒够500条还是会一次性将攒的数据发出去给es
         }
     }
     stdout {
@@ -155,7 +166,7 @@ output{
     }
 }
 
-#execute ...
+# execute ...
 cd ~/logstash
 nohup bin/logstash -f run-configs/demo.config \
 --path.data=run.data/demo/ -l run-logs/demo/ --node.name=demo -u 200 -b 2000 &
@@ -171,8 +182,8 @@ nohup bin/logstash -f run-configs/demo.config \
 ```
 #### Kibana 监控 Logstash
 ```bash
-#在logstash/config/logstash.yml中增加如下：
-#logstash把自身监控数据发送到es的index中，kibana读取该index获取数据
+# 在logstash/config/logstash.yml中增加如下：
+# logstash把自身监控数据发送到es的index中，kibana读取该index获取数据
 xpack.monitoring.enabled: true
 xpack.monitoring.collection.interval: 10s
 xpack.monitoring.elasticsearch.url: http://172.19.52.87:9211    #ES节点地址
@@ -180,7 +191,7 @@ http.host: "172.19.72.65"   #本机地址
 ```
 #### logstash 从日志获取时间
 ```bash
-#配置：
+# 配置：
 input { stdin { } }
 filter {
     grok { match => [ "message", "%{HTTPDATE:[@metadata][timestamp]}" ] }
@@ -190,7 +201,7 @@ output {
     stdout { codec => rubydebug }
 }
 
-#输出：
+# 输出：
 $ bin/logstash -f ../test.conf
 Pipeline main started
 02/Mar/2014:15:36:43 +0100
@@ -203,11 +214,11 @@ Pipeline main started
 ```
 #### logstash piplines.yml
 ```yml
-#当logstash有很多个input类型需要处理，或者说要在同一进程中运行多个管道时:
-#Logstash提供了一种通过名为pipelines.yml的配置文件来完成此操作的方法
-#为更方便管理，需要使用一个.conf(input->filter->output)配置文件来对应一个pipeline。
-#在不带参数的情况下启动Logstash时，它将读取pipelines.yml文件并实例化文件中指定的所有管道
-#当使用-e或-f时，Logstash会忽略pipelines.yml文件并记录警告
+# 当logstash有很多个input类型需要处理，或者说要在同一进程中运行多个管道时:
+# Logstash提供了一种通过名为pipelines.yml的配置文件来完成此操作的方法
+# 为更方便管理，需要使用一个.conf(input->filter->output)配置文件来对应一个pipeline。
+# 在不带参数的情况下启动Logstash时，它将读取pipelines.yml文件并实例化文件中指定的所有管道
+# 当使用-e或-f时，Logstash会忽略pipelines.yml文件并记录警告
 
 - pipeline.id: nginx_local
   pipeline.workers: 1
@@ -217,23 +228,23 @@ Pipeline main started
   pipeline.workers: 1
   path.config: "/usr/local/pkg/logstash/conf.d/kibana_nginx.conf"
 
-#pipeline.id
-#标识位，用于区分不同的pipeline。
-#如果所有的conf配置文件都使用一个id的话，那么input数据流就会流进各个output中。从而导致所有index数据一致。
+# pipeline.id
+# 标识位，用于区分不同的pipeline。
+# 如果所有的conf配置文件都使用一个id的话，那么input数据流就会流进各个output中。从而导致所有index数据一致。
 
-#path.config
-#每一个不同id位的conf生效文件。绝对路径
+# path.config
+# 每一个不同id位的conf生效文件。绝对路径
 
-#测试一下：bin/logstash --config.reload.automatic
+# 测试一下：bin/logstash --config.reload.automatic
 ```
 #### Java堆栈跟踪 / 多行日志处理
 ```bash
-#Java堆栈跟踪由多行组成，每行以最后一行开头，如下例所示：
+# Java堆栈跟踪由多行组成，每行以最后一行开头，如下例所示：
 Exception in thread "main" java.lang.NullPointerException
         at com.example.myproject.Book.getTitle(Book.java:16)
         at com.example.myproject.Author.getBookTitles(Author.java:25)
         at com.example.myproject.Bootstrap.main(Bootstrap.java:14)
-#要将这些行整合到Logstash中的单个事件中，请对多行编解码器使用以下配置：
+# 要将这些行整合到Logstash中的单个事件中，请对多行编解码器使用以下配置：
 input {
   stdin {
     codec => multiline {        #此配置将以空格开头的所有行合并到上一行
@@ -243,10 +254,10 @@ input {
   }
 }
 
-#来自Elasticsearch等服务的活动日志通常以时间戳开始，然后是关于特定活动的信息，如下例所示：
+# 来自Elasticsearch等服务的活动日志通常以时间戳开始，然后是关于特定活动的信息，如下例所示：
 [2015-08-24 11:49:14,389][INFO ][env ] [Letha] using [1] data paths, mounts [[/
 (/dev/disk1)]], net usable_space [34.5gb], net total_space [118.9gb], types [hfs]
-#要将这些行整合到Logstash中的单个事件中，请对多行编解码器使用以下配置：
+# 要将这些行整合到Logstash中的单个事件中，请对多行编解码器使用以下配置：
 input {
   file {
     path => "/var/log/someapp.log"
@@ -261,8 +272,8 @@ input {
 #### Kibana ( X-pack )
 ```bash
 xpack.monitoring.elasticsearch.url: "http://10.40.23.79:9200" 
-#xpack.monitoring.elasticsearch.username: "logstash_system" 
-#xpack.monitoring.elasticsearch.password: "changeme"
+# xpack.monitoring.elasticsearch.username: "logstash_system" 
+# xpack.monitoring.elasticsearch.password: "changeme"
 ```
 #### logstash 参数说明
 ```bash
