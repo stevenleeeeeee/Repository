@@ -26,4 +26,7 @@ cat > ~/.pip/pip.conf << EOF
 trusted-host=mirrors.aliyun.com
 index-url=https://mirrors.aliyun.com/pypi/simple/
 EOF
+
+# Example:
+# pip install --trusted-host=mirrors.aliyun.com --index-url=https://mirrors.aliyun.com/pypi/simple/ thrift
 ```

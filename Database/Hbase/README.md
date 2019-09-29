@@ -1,10 +1,10 @@
 #### Hbase 备忘
 ```txt
-hbase是bigtable的开源山寨版。是建立的hdfs之上，提供高可靠性、高性能、列存储、可伸缩、实时读写的数据库系统
-它介于Nosql和RDBMS之间，仅能通过主键(row key)和主键的range来检索数据
-仅支持单行事务(可通过hive支持来实现多表join等复杂操作)。主要用来存储非结构化和半结构化的松散数据。
-与hadoop一样，Hbase依靠横向扩展，通过不断增加廉价的商用服务器来增加计算和存储能力
-HBase的RowKey天生自带索引，并且按字节顺序排列，而且天然分布式。因此设计RowKey就成了用好HBase的关键
+Hbase是bigtable的开源山寨版。建立在HDFS之上，是高可靠、高性能、面向列、可伸缩、实时读写的数据库系统
+介于Nosql和RDBMS之间，仅能通过主键 (row key) 和主键的range来检索数据，主要用来存储非结构化和半结构化的松散数据
+仅支持单行事务 (可通过hive支持来实现多表join等复杂操作)。处理由成千上万的行/列组成的大型数据（大规模结构化存储集群）
+与Hadoop一样，Hbase依靠横向扩展，通过不断增加廉价的商用服务器来增加计算和存储能力
+HBase的row key天生自带索引，并且按字节顺序排列，且天然分布式。因此设计RowKey就成了用好HBase的关键
 HBase以表的形式存储数据。表由行、列组成。列划分为若干列族(row family)
 HBase中的存储一切皆是字节，HBase的RowKey会按照字节顺序排序，并且添加索引
 HBase会按照row数量自动切割成Region，保持负载均衡与冗余 (策略可改)
@@ -25,7 +25,7 @@ HBase中的表一般有这样的特点：
 
 Row Key：
 Table中的所有行都按照row key的字典序排列，Table在行的方向上分割为多个Hregion
-Table在行的方向上分隔为多个Region。Region是HBase中分布式存储和负载的最小单元，即不同region可分别在不同Region Server上
+Table在行的方向上分隔为多个Region。Region是HBase中分布式存储和负载的最小单元 ( 不同region可分布在不同Region Server上 )
 与nosql数据库类似的，row key是用来检索记录的主键。访问hbase table中的行只有三种方式：
     1 通过单个row key访问
     2 通过row key的range
@@ -46,17 +46,18 @@ HBase中通过row和columns确定的唯一的存贮单元称为cell。每个cell
     2 保存最近一段时间的版本（如最近七天）。用户可针对每个列族进行设置
 
 Cell：
-由 {row key, column( =<family> + <label>), version} 唯一确定的单元
-其中的数据是没有类型的，全部是字节码形式存贮
+由 {row key, column(=<family>+<label>), version} 唯一确定的单元
+其中数据没有类型，全是字节码形式存贮
 ```
-#### 系统架构
+
+#### 架构
 ```txt
 Client:
 包含访问hbase的接口，client维护着一些cache来加快对hbase的访问，如regione的位置信息
 
 HBase依赖项 Zookeeper:
-1 保证任何时候，集群中只有一个master
-2 存贮所有Region的寻址入口
+1 保证任何时候集群中只有一个Master(可启动多个HMaster，通过Zookeeper的Master Election机制保证总有一个Master在运行)
+2 存贮所有Region的寻址入口(主要负责Table和Region的管理工作)
 3 实时监控Region Server的状态，将Region server的上线和下线信息实时通知给Master
 4 存储Hbase的schema,包括有哪些table，每个table有哪些column family
 
@@ -69,7 +70,9 @@ HMaster没有单点问题，可启动多个HMaster，通过Zookeeper的Master El
 5 处理schema更新请求
 
 从节点 Hregion Server：
-每个HRegion对应Table中一个Region，HRegion由多个HStore组成，每个HStore对应Table中一个Column Family的存储
+每个HRegion对应Table中一个Region
+每个HRegion由多个HStore组成
+每个HStore对应Table中一个Column Family的存储
 Column Family就是一个集中的存储单元，故将具有相同IO特性的Column放在一个Column Family会更高效
 1 Region server维护Master分配给它的region，处理对这些region的IO请求
 2 Region server负责切分在运行过程中变得过大的region
