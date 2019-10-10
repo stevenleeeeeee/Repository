@@ -50,12 +50,12 @@ ln -s /jdk1.8.0_101 /jdk
 # Elasticsearch 6.5，安装需要 JDK 11 以上
 # Elasticsearch 7.2.1，内置了 JDK 12！
 
-cat > /etc/profile.d/java.sh <<'EOF'
-export JAVA_HOME=/jdk
-export PATH=$JAVA_HOME/bin:$PATH
-EOF
-
-. /etc/profile
+# 以下JDK部署仅针对老版本Elasticsearch进行（低于ES7.X）
+# cat > /etc/profile.d/java.sh <<'EOF'
+# export JAVA_HOME=/jdk
+# export PATH=$JAVA_HOME/bin:$PATH
+# EOF
+# . /etc/profile
 
 # Elastic对内核ulimit有要求
 # 需先使用Root权限对运行ES的用户修改ulimit配额，最终使用非root账户启动ES
@@ -90,7 +90,7 @@ tar -zxf elasticsearch-x.x.0.tar.gz -C ~/
 # Elasticsearch 7.2.1 目录结构如下：
     bin ：      脚本文件，包括 ES 启动 & 安装插件等等
     config ：   elasticsearch.yml（主配置文件）、jvm.options（JVM配置）、log4j2.properties （日志配置文件）、...
-    JDK ：      内置的 JDK，JAVA_VERSION="12.0.1"
+    JDK ：      默认内置JDK，JAVA_VERSION="12.0.1"
     lib ：      类库
     logs ：     日志文件
     modules ：  ES 所有模块，包括 X-pack
@@ -98,8 +98,8 @@ tar -zxf elasticsearch-x.x.0.tar.gz -C ~/
     data ：     ES 启动时会有该目录，用来存储文档数据（默认）
 
 vim ~/elasticsearch-x.x.0/config/elasticsearch.yml
-ES_HEAP_SIZE=32g                        # 不要超过32G，建议设为物理内存50%，剩余内存由Lucene作为非堆内存使用，通常来说设置 ES_HEAP_SIZE 比直接写 -Xmx、-Xms 更好
-ES_JAVA_OPTS="-Xms32g"                  # 如果遇到性能问题，最好的方法是安排更好的数据布局和增加节点数目
+ES_HEAP_SIZE=30g                        # 不要超过32G，建议设为物理内存50%，剩余内存由Lucene作为非堆内存使用，通常来说设置 ES_HEAP_SIZE 比直接写 -Xmx、-Xms 更好
+ES_JAVA_OPTS="-Xms30g"                  # 如果遇到性能问题，最好的方法是安排更好的数据布局和增加节点数目
 MAX_LOCKED_MEMORY=unlimited             # 
 MAX_OPEN_FILES=65535
 
@@ -109,12 +109,12 @@ cluster.name: ES-Cluster                # Elastic Cluster Name
 node.name: "node1"                      # Node Name
 node.master: true                       # 是否Master节点
 node.data: false                        # 是否Data节点 ( 是否允许该节点存储数据 )
-node.max_local_storage_nodes: 3         # 限制单节点上可以开启的ES存储实例的最大数
+# node.max_local_storage_nodes: 3       # 限制单节点上可以开启的ES存储实例的最大数
 # node.attr.rack: n2                    # 指定节点的部落属性，这是一个比集群更大的范围
 # node.rack: rack314                    # 指定节点所在机架的属性，用于分片策略
 # node.tag: value1                      # 为节点打tag
 network.host: 0.0.0.0                   # 与其他节点交互时使用的地址 ( 用来同时设置network.bind_host、network.publish_host )
-network.publish_host: xx.xx.xx.xx       # 其它节点与该节点交互时使用的地址，如果不设置它会自动判断，值必须是个真实的ip
+network.publish_host: xx.xx.xx.xx       # 其它节点与该节点交互时使用的地址，如果不设置它会自动判断，值必须是个真实的ip ( 采用单播方式时建议设置 )
 http.port: 9200                         # 接收用户请求，提供Restfule-API接口的端口
 transport.tcp.port: 9300                # 参与节点间集群事物的端口
 transport.tcp.compress: true            # 是否开启TCP传输时压缩
@@ -123,25 +123,28 @@ http.cors.allow-origin: "*"             #
 path.data: /home/elastic/elasticsearch-5.5.0/data     # 数据存储路径，建议配置多个路径以充分利用多个磁盘的IO
 path.logs: /home/elastic/elasticsearch-5.5.0/logs     # 日志存储路径
 bootstrap.memory_lock: true             # 设置memory_lock来锁定进程的物理内存地址,JVM会在开启时锁定堆大小 (Xms==Xmx)
+# discovery.zen.ping.timeout: 3s        # 设置Ping其他节点时的超时时间，网络比较慢时可将该值设大
 # discovery.type: single-node           # 使用单节点模式运行Elasticsearch，主要用于测试
-# discovery.zen.minimum_master_nodes: 2 # Master最小存活数, 应该是有资格成为master的node数的/2+1  / discovery.zen.* 属性集合构成了zen发现协议。单/多播均是发现协议的有效组成部分（7.X版本中移除）
+# discovery.zen.minimum_master_nodes: 2 # Master最小存活数, 应是有资格成为master的node数的/2+1，用于防止脑裂 / discovery.zen.* 属性集合构成了zen发现协议。单/多播均是发现协议的有效组成部分（7.X版本中移除）
+# cluster.fault_detection.leader_check.interval: 5s      # ES7新增，设置每个节点在选中的主节点的检查之间等待的时间。默认1秒
+# discovery.cluster_formation_warning_timeout: 30s       # ES7新增，启动后30秒如果集群未形成，那将会记录一条警告信息，警告信息为Master not fount开始，默认10秒
 discovery.seed_hosts:                   # 传递初始主节点列表以在启动此节点时执行发现（此配置为7.X版本，相当于旧配置中的："discovery.zen.ping.unicast.hosts"）
-    - "node1"
-    - "node2"
-    - "node3"
-cluster.initial_master_nodes:           # 设置一系列符合主节点条件的节点的主机名或IP来负责引导启动集群（7.X版本）
-    - "node1"
-    - "node2"
-    - "node3"
-xpack.security.enabled: true                    # 启用X-pack的安全认证功能 ( 7.x版本之前需先破解X-pack ) 
+    - "node1:9300"
+    - "node2:9300"
+    - "node3:9300"
+cluster.initial_master_nodes:           # 设置一系列符合主节点条件的节点的主机名或IP来负责引导启动集群（7.X版）初始化一个新的集群时需要此配置来选举Master
+    - "node1:9300"                      # 写入候选主节点的设备地址，来开启服务时就可以被选为主节点
+    - "node2:9300"                      # 只在首次形成集群时才需要（新节点加入集群可忽略此配置?）
+    - "node3:9300"
+xpack.security.enabled: true                    # 启用X-pack的安全认证功能 ( 7.x版本后X-pack安全功能默认免费开放 ) 
 xpack.security.transport.ssl.enabled: true      # 启用传输层安全通信功能
 xpack.security.transport.ssl.verification_mode: certificate
 xpack.security.transport.ssl.keystore.path: elastic-certificates.p12
 xpack.security.transport.ssl.truststore.path: elastic-certificates.p12
 xpack.security.audit.enabled: false             # 是否启用审计日志，默认路径：ES_HOME/logs/<clustername>_audit.json
 action.destructive_requires_name: true
-cluster.routing.allocation.node_initial_primaries_recoveries: 4   # 初始化数据恢复时并发恢复线程数,默认 4 
-cluster.routing.allocation.node_concurrent_recoveries: 4          # 添加/删除节点或负载均衡时并发恢复线程数,默认 2 
+cluster.routing.allocation.node_initial_primaries_recoveries: 16   # 初始化数据恢复时并发恢复线程数,默认 4 
+cluster.routing.allocation.node_concurrent_recoveries: 8           # 添加/删除节点或负载均衡时并发恢复线程数,默认 2 
 # xpack.watcher.enabled: false
 # xpack.monitoring.exporters.my_local:
 #   type: local
@@ -151,10 +154,10 @@ cluster.routing.allocation.node_concurrent_recoveries: 4          # 添加/删�
 # index.refresh_interval:120s        #
 
 # 在 Elasticsearch 主节点启动之前配置 TLS，其他主节点可使用此节点生成的 "elastic-certificates.p12" 其内含公私钥:
-cd ~/elasticsearch-x.x.0
-bin/elasticsearch-certutil cert -out config/elastic-certificates.p12 -pass ""   # 拷贝到所有节点的config下
-bin/elasticsearch-users useradd NAME -p PASS -r superuser     # 新增ES用户（在所有节点执行）
-bin/elasticsearch-users list                                  # 查看用户列表
+cd ~/elasticsearch-x.x.0/bin
+./elasticsearch-certutil cert -out config/elastic-certificates.p12 -pass ""     # 此文件拷贝到所有节点的config下
+./elasticsearch-users useradd NAME -p PASS -r superuser                         # 新增ES用户（必须在所有节点执行）
+./elasticsearch-users list                                                      # 查看用户列表
 
 # 安装HEAD插件
 tar -zxf elasticsearch-head-master.tar.gz -C ~/elasticsearch/
