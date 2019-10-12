@@ -139,8 +139,8 @@ cluster.initial_master_nodes:           # 设置一系列符合主节点条件�
 xpack.security.enabled: true                    # 启用X-pack的安全认证功能 ( 7.x版本后X-pack安全功能默认免费开放 ) 
 xpack.security.transport.ssl.enabled: true      # 启用传输层安全通信功能
 xpack.security.transport.ssl.verification_mode: certificate
-xpack.security.transport.ssl.keystore.path: elastic-certificates.p12
-xpack.security.transport.ssl.truststore.path: elastic-certificates.p12
+xpack.security.transport.ssl.keystore.path: elastic-certificates.p12        # 包含私钥和证书的Java Keystore文件的路径
+xpack.security.transport.ssl.truststore.path: elastic-certificates.p12      # 包含要信任的证书的Java Keystore文件的路
 xpack.security.audit.enabled: false             # 是否启用审计日志，默认路径：ES_HOME/logs/<clustername>_audit.json
 action.destructive_requires_name: true
 cluster.routing.allocation.node_initial_primaries_recoveries: 16   # 初始化数据恢复时并发恢复线程数,默认 4 
