@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IP_PORT="172.22.241.174:9200"
+IP_PORT="xx.xx.xx.xx:9200"
 NODE_USER="zyzx_test"
 
 TIME=$(date +%Y%m%d%H%M%S)

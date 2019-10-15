@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#脚本所在位置 jenkins@192.168.151.62: ~/.es_alert/monitor.sh
+#脚本所在位置 jenkins@xx.xx.xx.xx: ~/.es_alert/monitor.sh
 
-IP_port='192.168.157.11:9213'
+IP_port='xx.xx.xx.xx:9213'
 
 BASE_HOME=$HOME/.es_alert
 
