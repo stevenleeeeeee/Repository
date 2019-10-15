@@ -54,6 +54,8 @@ do
 
     index=$index+1
 done
+
 -----------------------------------------------------------------
+
 #旧版本删除仓库镜像的方式: 
 https://github.com/burnettk/delete-docker-registry-image

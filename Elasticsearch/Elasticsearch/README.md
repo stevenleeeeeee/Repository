@@ -106,7 +106,7 @@ MAX_OPEN_FILES=65535
 vim ~/elasticsearch-x.x.0/config/elasticsearch.yml
 
 cluster.name: ES-Cluster                # Elastic Cluster Name
-node.name: "node1"                      # Node Name
+node.name: "node1"                      # 节点名称可在后期修改配置文件进行重置
 node.master: true                       # 是否Master节点
 node.data: false                        # 是否Data节点 ( 是否允许该节点存储数据 )
 # node.max_local_storage_nodes: 3       # 限制单节点上可以开启的ES存储实例的最大数
@@ -134,28 +134,30 @@ discovery.seed_hosts:                   # 传递初始主节点列表以在启�
     - "node3:9300"
 cluster.initial_master_nodes:           # 设置一系列符合主节点条件的节点的主机名或IP来负责引导启动集群（7.X版）初始化一个新的集群时需要此配置来选举Master
     - "node1:9300"                      # 写入候选主节点的设备地址，来开启服务时就可以被选为主节点
-    - "node2:9300"                      # 只在首次形成集群时才需要（新节点加入集群可忽略此配置?）
-    - "node3:9300"
+    - "node2:9300"                      # 只在首次形成集群时才需要（重启群集或将新节点添加到现有群集时不应使用此设置）
+    - "node3:9300"              
 xpack.security.enabled: true                    # 启用X-pack的安全认证功能 ( 7.x版本后X-pack安全功能默认免费开放 ) 
+xpack.monitoring.collection.enabled: true       # 收集关于Elasticsearch集群的监控数据
 xpack.security.transport.ssl.enabled: true      # 启用传输层安全通信功能
 xpack.security.transport.ssl.verification_mode: certificate
 xpack.security.transport.ssl.keystore.path: elastic-certificates.p12        # 包含私钥和证书的Java Keystore文件的路径
 xpack.security.transport.ssl.truststore.path: elastic-certificates.p12      # 包含要信任的证书的Java Keystore文件的路
 xpack.security.audit.enabled: false             # 是否启用审计日志，默认路径：ES_HOME/logs/<clustername>_audit.json
 action.destructive_requires_name: true
-cluster.routing.allocation.node_initial_primaries_recoveries: 16   # 初始化数据恢复时并发恢复线程数,默认 4 
-cluster.routing.allocation.node_concurrent_recoveries: 8           # 添加/删除节点或负载均衡时并发恢复线程数,默认 2 
+cluster.routing.allocation.node_initial_primaries_recoveries: 16    # 初始化数据恢复时并发恢复线程数,默认 4 
+cluster.routing.allocation.node_concurrent_recoveries: 8            # 添加/删除节点或负载均衡时并发恢复线程数,默认 2 
 # xpack.watcher.enabled: false
-# xpack.monitoring.exporters.my_local:
+# xpack.monitoring.exporters.my_local:          # The local exporter is the default exporter used by Monitoring.
 #   type: local
 #   index.name.time_format: YYYY.MM
 # index.number_of_shards:3           #
 # index.number_of_replicas:1         #
 # index.refresh_interval:120s        #
+# reindex.remote.whitelist: "otherhost:9200, 127.0.10.*:9200"       # 使用跨集群复制索引的reindex功能时，需在执行_reindex操作的新集群中设置此选项以允许访问的白名单
 
 # 在 Elasticsearch 主节点启动之前配置 TLS，其他主节点可使用此节点生成的 "elastic-certificates.p12" 其内含公私钥:
 cd ~/elasticsearch-x.x.0/bin
-./elasticsearch-certutil cert -out config/elastic-certificates.p12 -pass ""     # 此文件拷贝到所有节点的config下
+./elasticsearch-certutil cert -out config/elastic-certificates.p12 -pass ""     # 此文件拷贝到所有节点的config下 (权限640)
 ./elasticsearch-users useradd NAME -p PASS -r superuser                         # 新增ES用户（必须在所有节点执行）
 ./elasticsearch-users list                                                      # 查看用户列表
 

@@ -122,79 +122,9 @@ for line in $(curl -s "http://${IP_PORT}/_cat/shards" | fgrep UNASSIGNED); do
   }'  
 done 
 
-
-# 将旧节点索引分片迁移至新节点，命令样例如下：
-curl -XPOST '192.168.xx.xx:9200/_cluster/reroute' -d '{  
-    "commands" : [ {  
-        "move" :   
-            {  
-              "index" : "test", "shard" : 2,   
-              "from_node" : "node1", "to_node" : "node2"  
-            }  
-        }
-    ]  
-}'
-
-
 # 对段进行合并 Segments
 # 要定时对索引进行合并优化，不然segment越多，占用的segment memory越多，查询的性能也越差
 POST /applog-prod-2016.12.18/_forcemerge?max_num_segments=1
-
-#在Kibana执行数据迁移 ( 先创建Mapping )
-#必须使用该reindex.remote.whitelist属性在elasticsearch.yaml中将远程主机明确列入白名单
-#它可设为逗号分隔的允许远程host和port组合列表（如 otherhost:9200, another:9200, 127.0.10.*:9200, localhost:*）
-POST _reindex
-{
-  "source": {
-    "remote": {
-      "host": "http://172.19.72.219:9200",		#源INDEX所在集群地址
-      "username": "elastic",
-      "password": "x^sqzb%1"
-    },
-    "index": "isc_identrecords_2018_12",
-    "query": {
-        "bool": {
-            "must": [
-                {
-                    "match_all": {}
-                }
-            ]
-        }
-      }
-  },
-  "dest": {
-    "index": "isc_identrecords_2018_12"
-  }
-}
-
-#在Logstash执行数据迁移 ( 先创建Mapping )
-input {
-  elasticsearch {
-    hosts => ["XX.XX.XX.XX:9212","XX.XX.XX.XX:9212","XX.XX.XX.XX:9212"]
-    index => "<INDEX>"
-    size => 1250
-    scroll => "5m"
-    docinfo => true
-    user => 'username...'
-    password => "pass...."
-  }
-}
-
-filter {
-  mutate {
-    remove_field => ["@version"]
-  }
-}
-
-output {
-  elasticsearch {
-    hosts => ["XX.XX.XX.XX:9212","XX.XX.XX.XX:9212","XX.XX.XX.XX:9212"] 
-    index => "<INDEX>"  
-    document_type => "<type>"
-    flush_size => 250
-    codec => "json"
-  }
-}
 
 #查看集群所有节点磁盘使用率
 curl -XGET -s  '192.168.157.11:9212/_cat/allocation?v' | head -n 3
@@ -257,9 +187,6 @@ yellow open   filebeat-2015.12.24   5   1       3182            0        1mb    
 yellow open   logstash-2015.12.23   5   1        100            0    235.8kb        235.8kb 
 yellow open   logstash-2015.12.22   5   1         41            0    126.5kb        126.5kb 
 yellow open   .kibana               1   1         94            0    102.3kb        102.3kb 
-
-#删除索引文件以释放空间
-curl -XDELETE http://10.0.0.3:9200/filebeat-2016.12.28
 
 #查看ES集群中各节点的磁盘使用率
 [wangyu@localhost ~]$ curl -XGET 10.0.0.3:9200/_cat/allocation?v
@@ -414,32 +341,6 @@ $curl -XPOST 'http://localhost:9200/_cluster/reroute' -d '{
     }]
 }'
 
-#排除写入某节点（不必要的参数要省略掉）
-#index.routing.allocation.require.	【必须】
-#index.routing.allocation.include. 	【允许】
-#index.routing.allocation.exclude.	【排除】
-"settings": {
-  "index":{
-    "routing":{
-      "allocation":{
-        "exclude":{
-          "_ip": "192.168.157.19"
-        },
-        "total_shards_per_node": "5"
-      }
-    },
-  "refresh_interval":"60s",
-  "number_of_shards":"200",
-  "provided_name":"log4x_trace_2018_11_24",
-  "creation_date":"1542988801497",
-  "number_of_replicas":"0",
-  "uuid":"kjsdfhjksdhfjksdhjfhsdfsdjkfhsdjk",
-  "version":{
-    "created":"5050099"
-  }
-  }
-}
-
 #集群设置 慢查询
 PUT /_cluster/settings
 {
@@ -452,12 +353,12 @@ PUT /_cluster/settings
 #索引级别慢查询（query：获取索引内的数据，fetch：ORZ....   如果需要取消这些设置，将它们的值设为-1即可）
 PUT /<INDEX>/_settings
 {
-    "index.search.slowlog.threshold.query.warn": "10s",   	#查询大于10s即属于WARN级别以上的
-    "index.search.slowlog.threshold.query.info": "6s",    	#查询大于6s属于INFO级别...
-    "index.search.slowlog.threshold.fetch.warn": "1800ms",	#获取数据大于1800ms属于WARN级别 	
-    "index.search.slowlog.threshold.fetch.info": "1s", 		#获取数据大于1s属于INFO级别
-    "index.indexing.slowlog.threshold.index.info": "5s",	#索引慢于5s属于INFO级别
-    "index.indexing.slowlog.threshold.index.warn": 10s		#超过10s属于WARN
+    "index.search.slowlog.threshold.query.warn": "10s",   	# 查询大于10s即属于WARN级别以上的
+    "index.search.slowlog.threshold.query.info": "6s",    	# 查询大于6s属于INFO级别...
+    "index.search.slowlog.threshold.fetch.warn": "1800ms",	# 获取数据大于1800ms属于WARN级别 	
+    "index.search.slowlog.threshold.fetch.info": "1s", 		# 获取数据大于1s属于INFO级别
+    "index.indexing.slowlog.threshold.index.info": "5s",	# 索引慢于5s属于INFO级别
+    "index.indexing.slowlog.threshold.index.warn": 10s		# 超过10s属于WARN
 }
 
 #查看索引的数据在ES节点内执行段合并的信息（将小数据文件合并成大文件，提高查询效率）
