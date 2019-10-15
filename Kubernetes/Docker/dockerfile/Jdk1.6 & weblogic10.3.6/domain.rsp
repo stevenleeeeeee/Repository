@@ -5,27 +5,27 @@ set ServerStartMode "prod";
 
 find Server "AdminServer" as AdminServer;
 set AdminServer.ListenAddress "";
-set AdminServer.ListenPort "17001";
+set AdminServer.ListenPort "7001";
 set AdminServer.SSL.Enabled "false";
-//set AdminServer.SSL.ListenPort "17002";
+//set AdminServer.SSL.ListenPort "7002";
 
 //We can directly create a new managed server.
 create Server "base" as BASE;
 //set BASE.ListenAddress "";
-//set BASE.ListenPort "17003";
+//set BASE.ListenPort "7003";
 //set BASE.SSL.Enabled "true";
-//set BASE.SSL.ListenPort "17004″;
+//set BASE.SSL.ListenPort "7004″;
 
 //Create Machine
 create Machine "base" as Machinename;
 
 //use templates default weblogic user
 find User "weblogic" as u1;
-set u1.password "pdw_W_4962";
+set u1.password "******";
 
 //create a new user
 create User "weblogic2" as u2;
-set u2.password "pdw_W_4962";
+set u2.password "******";
 
 write domain to "/app/weblogic/Oracle/Middleware/user_projects/domains/base_domain/";
 

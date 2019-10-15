@@ -8,7 +8,7 @@ LABEL JAVA_VERSION='jdk1.6.0_43' \
       WORKDIR='/app/weblogic/Oracle/Middleware/wlserver_10.3'
           
 ARG USERNAME=weblogic
-ARG PASSWORD=pdw_W_4962
+ARG PASSWORD=*********
 ARG DOMAIN_PATH=/app/weblogic/Oracle/Middleware/user_projects/domains/base_domain
 ARG TZ="Asia/Shanghai"
 
