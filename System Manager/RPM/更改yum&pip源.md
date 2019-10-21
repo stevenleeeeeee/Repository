@@ -3,7 +3,7 @@
 mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
 ```
 
-#### 下载对应 repo
+#### 下载对应OS版本的 yum repo
 ``` bash
 #CentOS 5
 wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-5.repo
@@ -18,7 +18,7 @@ wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-
 ```bash
 wget -O /etc/yum.repos.d/epel-7.repo http://mirrors.aliyun.com/repo/epel-7.repo
 ```
-####  pip
+#### pip
 ```bash
 mkdir ~/.pip
 cat > ~/.pip/pip.conf << EOF

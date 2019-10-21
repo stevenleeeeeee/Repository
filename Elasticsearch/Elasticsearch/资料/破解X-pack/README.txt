@@ -15,5 +15,5 @@ curl -XPUT -u elastic:changeme 'http://192.168.86.128:9200/_xpack/license?acknow
         auth_user : args["auth_user"] || "",
         auth_password : args["auth_password"],
     改为：
-        auth_password : "changeme",       #账号
-        dashboard: args["dashboard"]      #密码
+        auth_user : "elasticseach",     #账号
+        auth_password: "changeme"       #密码

@@ -1,4 +1,3 @@
-
 ```bash
 # Elasticsearch是实时的分布式搜索和分析引擎，可用于全文搜索，结构化搜索以及分析。
 # 建立在全文搜索引擎 Apache Lucene 基础上，使用 Java 编写。
@@ -42,6 +41,7 @@ Download: https://www.elastic.co/cn/downloads/
 # 在配置文件中使用Zen发现"Zen discovery"机制来管理不同节点，Zen发现是ES自带的默认发现机制，其用多播发现其它节点
 # 只要启动1个新的Elastic节点并设置和集群相同的名称，此节点即被加入到集群
 # ES需运行在非Root用户下
+# 新版ES7+使用默认的_doc作为type就可以了。注意: type会在8.X版本彻底移除
 
 tar -zxf jdk.tar.gz -C /                # ES 7.x 不需要本地 JDK 环境支持！
 ln -s /jdk1.8.0_101 /jdk
@@ -82,7 +82,6 @@ cat >> /etc/security/limits.d/90-nproc.conf <<'EOF'
 EOF
 
 sysctl -p
-
 
 #部署 Master Node
 tar -zxf elasticsearch-x.x.0.tar.gz -C ~/
@@ -125,7 +124,8 @@ path.logs: /home/elastic/elasticsearch-5.5.0/logs     # 日志存储路径
 bootstrap.memory_lock: true             # 设置memory_lock来锁定进程的物理内存地址,JVM会在开启时锁定堆大小 (Xms==Xmx)
 # discovery.zen.ping.timeout: 3s        # 设置Ping其他节点时的超时时间，网络比较慢时可将该值设大
 # discovery.type: single-node           # 使用单节点模式运行Elasticsearch，主要用于测试
-# discovery.zen.minimum_master_nodes: 2 # Master最小存活数, 应是有资格成为master的node数的/2+1，用于防止脑裂 / discovery.zen.* 属性集合构成了zen发现协议。单/多播均是发现协议的有效组成部分（7.X版本中移除）
+# discovery.zen.minimum_master_nodes: 2 # Master最小存活数, 应是有资格成为master的node数的/2+1，用于防止脑裂（7.X版本中移除）
+                                        # discovery.zen.* 属性集合构成了zen发现协议。单/多播均是发现协议的有效组成部分（7.X版本中移除）
 # cluster.fault_detection.leader_check.interval: 5s      # ES7新增，设置每个节点在选中的主节点的检查之间等待的时间。默认1秒
 # discovery.cluster_formation_warning_timeout: 30s       # ES7新增，启动后30秒如果集群未形成，那将会记录一条警告信息，警告信息为Master not fount开始，默认10秒
 discovery.seed_hosts:                   # 传递初始主节点列表以在启动此节点时执行发现（此配置为7.X版本，相当于旧配置中的："discovery.zen.ping.unicast.hosts"）
@@ -136,18 +136,18 @@ cluster.initial_master_nodes:           # 设置一系列符合主节点条件�
     - "node1:9300"                      # 写入候选主节点的设备地址，来开启服务时就可以被选为主节点
     - "node2:9300"                      # 只在首次形成集群时才需要（重启群集或将新节点添加到现有群集时不应使用此设置）
     - "node3:9300"              
-xpack.security.enabled: true                    # 启用X-pack的安全认证功能 ( 7.x版本后X-pack安全功能默认免费开放 ) 
-xpack.monitoring.collection.enabled: true       # 收集关于Elasticsearch集群的监控数据
-xpack.security.transport.ssl.enabled: true      # 启用传输层安全通信功能
+xpack.security.enabled: true                        # 启用X-pack的安全认证功能 ( 7.x版本后X-pack安全功能默认免费开放 ) 
+xpack.monitoring.collection.enabled: true           # 收集关于Elasticsearch集群的监控数据
+xpack.security.transport.ssl.enabled: true          # 启用传输层安全通信功能
 xpack.security.transport.ssl.verification_mode: certificate
 xpack.security.transport.ssl.keystore.path: elastic-certificates.p12        # 包含私钥和证书的Java Keystore文件的路径
 xpack.security.transport.ssl.truststore.path: elastic-certificates.p12      # 包含要信任的证书的Java Keystore文件的路
-xpack.security.audit.enabled: false             # 是否启用审计日志，默认路径：ES_HOME/logs/<clustername>_audit.json
+xpack.security.audit.enabled: false                 # 是否启用审计日志，默认路径：ES_HOME/logs/<clustername>_audit.json
 action.destructive_requires_name: true
 cluster.routing.allocation.node_initial_primaries_recoveries: 16    # 初始化数据恢复时并发恢复线程数,默认 4 
 cluster.routing.allocation.node_concurrent_recoveries: 8            # 添加/删除节点或负载均衡时并发恢复线程数,默认 2 
 # xpack.watcher.enabled: false
-# xpack.monitoring.exporters.my_local:          # The local exporter is the default exporter used by Monitoring.
+# xpack.monitoring.exporters.my_local:              # The local exporter is the default exporter used by Monitoring
 #   type: local
 #   index.name.time_format: YYYY.MM
 # index.number_of_shards:3           #

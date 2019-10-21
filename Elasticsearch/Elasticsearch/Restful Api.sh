@@ -84,7 +84,7 @@ _cat/shards?h=index,shard,prirep,state,unassigned.reason | grep UNASSIGNED
 curl -s 'X.X.X.X:XX/_cat/recovery?v&h=index,shard,time,type,stage,source_host,target_host,files,files_recovered,\
 files_percent,bytes_recovered,bytes_percent,bytes_total,translog_ops_percent' | grep -v 'done' | sort -rn -k 10
 
-#修改节点脱离集群后主节点等待时间，超过此时间之后将开始对unassigned状态的分配进行分配 （ 延时分配时间，默认为1分钟 ） 
+#修改节点脱离集群后主节点等待时间，超过此时间之后将开始对unassigned状态的分配进行分配 （ 延时分配时间，默认1分钟 ） 
 PUT /_all/_settings
 {
   "settings": {
@@ -92,9 +92,36 @@ PUT /_all/_settings
   }
 }
 
-#分片分配是分配分片给节点的处理过程，这可能发生在初始恢复、副本分配或再平衡的过程中，也可能发生在添加/删除节点时。
-#该值默认为2，意思是任何时间点只能有2个分片被移动
-cluster.routing.allocation.cluster_concurrent_rebalance:6
+# 分片分配是分配分片给节点的处理过程，这可能发生在初始恢复、副本分配或再平衡的过程中，也可能发生在添加/删除节点时
+# 该值默认为2，意思是任何时间点只能有2个分片被移动
+cluster.routing.allocation.cluster_concurrent_rebalance: 6
+
+# Example:
+PUT _cluster/settings
+{ 
+    "persistent" :
+    { 
+        # .......
+        "cluster.routing.rebalance.enable": "none",
+
+        # 允许在一个节点上发生多少并发传入分片恢复。 默认2。
+        "cluster.routing.allocation.node_concurrent_incoming_recoveries":2，
+
+        # 允许在一个节点上发生多少并发传出分片恢复，默认为2.
+        "cluster.routing.allocation.node_concurrent_outgoing_recoveries":2,
+
+        # 为上面两个的统一简写
+        "cluster.routing.allocation.node_concurrent_recoveries":2,
+
+        # 在通过网络恢复副本时，节点重新启动后未分配的主节点的恢复使用来自本地磁盘的数据。 
+        # 这些应该很快，因此更多初始主要恢复可以在同一节点上并行发生。默认为4。
+        "cluster.routing.allocation.node_initial_primaries_recoveries":4,
+
+        # 允许执行检查以防止基于主机名和主机地址在单个主机上分配同一分片的多个实例。 
+        # 默认为false，表示默认不执行检查。 此设置仅适用于在同一台计算机上启动多个节点的情况。
+        "cluster.routing.allocation.same_shard.host": true
+    }  
+}
 
 #!/bin/bash
 #批量处理未注册的shard信息 (node对应的值需要更改为自己节点的名称)   ------------ （ 5.0 可以使用）
@@ -127,10 +154,10 @@ done
 POST /applog-prod-2016.12.18/_forcemerge?max_num_segments=1
 
 #查看集群所有节点磁盘使用率
-curl -XGET -s  '192.168.157.11:9212/_cat/allocation?v' | head -n 3
+curl -XGET -s  '192.168.157.11:9212/_cat/allocation?v'
 shards disk.indices disk.used disk.avail disk.total disk.percent host            ip              node
-    27      988.1gb    14.8tb     11.7tb     26.6tb           55 192.168.157.11  192.168.157.11  157.11data-2
-    28      866.8gb      14tb     12.5tb     26.6tb           52 192.168.157.14  192.168.157.14  157.14data-4
+    27      988.1gb    14.8tb     11.7tb     26.6tb           55 192.168.xx.11  192.168.xx.11  xx.11data-2
+    28      866.8gb      14tb     12.5tb     26.6tb           52 192.168.xx.14  192.168.xx.14  xx.14data-4
 
 #index/分片数 / 主分片还是副本分片 / 是否处于 unassigned 状态 / unassigned 的原因
 curl -XGET -s  '192.168.157.11:9212/_cat/shards?v&h=index,shard,prirep,state,unassigned.reason' \
@@ -153,16 +180,9 @@ frontanalysis_2018_12_29       9     r      UNASSIGNED INDEX_CREATED
   "tasks" : []
 }
 
-#查看未分配的分片信息
-[wangyu@localhost Test]$ curl -s -u 'elastic:241yftest' '192.168.157.11:9213/_cat/shards?v' | grep UNASSIGNED
-index shard prirep state      docs store ip           node   
-users 1     r      UNASSIGNED                                
-users 2     r      UNASSIGNED                                
-users 0     r      UNASSIGNED
-
-#修改集群配置 ( transient 表示临时的，persistent表示永久的 )
-#举例：
-[wangyu@localhost Test]$ curl -XPUT localhost:9200/_cluster/settings -d '{
+#修改集群配置 ( transient 表示临时的，persistent表示永久的 ) 举例：
+[wangyu@localhost Test]$ curl -XPUT localhost:9200/_cluster/settings -d '
+{
     "persistent" : {
         "discovery.zen.minimum_master_nodes" : 2
     }
@@ -187,11 +207,6 @@ yellow open   filebeat-2015.12.24   5   1       3182            0        1mb    
 yellow open   logstash-2015.12.23   5   1        100            0    235.8kb        235.8kb 
 yellow open   logstash-2015.12.22   5   1         41            0    126.5kb        126.5kb 
 yellow open   .kibana               1   1         94            0    102.3kb        102.3kb 
-
-#查看ES集群中各节点的磁盘使用率
-[wangyu@localhost ~]$ curl -XGET 10.0.0.3:9200/_cat/allocation?v
-shards disk.indices disk.used disk.avail disk.total disk.percent host     ip       node
-     7      173.1kb       3gb     14.4gb     17.4gb           17 10.0.0.3 10.0.0.3 node1
 
 #返回状态非404的
 curl -XGET 'localhost:9200/logstash-2015.12.23/_search?q=response=404&pretty'
@@ -265,8 +280,8 @@ GET http://localhost:9200/_cluster/pending_tasks
 #某些情况下节点很快将重新启动，因此不需要此I/O，可以通过在关闭节点之前禁用分配来避免时钟竞争：
 PUT _cluster/settings
 {
-  "persistent": {     //persistent ---> 即永久生效，重启仍可用
-    "cluster.routing.allocation.enable": "none"
+  "persistent": {    
+    "cluster.routing.allocation.enable": "none"     # persistent ---> 即永久生效，重启仍可用
   }
 }
 #集群重启后再改回配置：curl -XPUT http://127.0.0.1:9200/_cluster/settings -d 
@@ -317,29 +332,6 @@ PUT twitter
 GET my_index/_stats
 GET my_index,another_index/_stats
 GET _all/_stats
-
-移动分片：（当本机存储不够用，负载高时）
-$curl -XPOST 'http://localhost:9200/_cluster/reroute' -d '{
-    "commands":[{
-        "move":{
-            "index":"filebeat-ali-hk-fd-tss1",
-            "shard":1,
-            "from_node":"ali-hk-ops-elk1",
-            "to_node":"ali-hk-ops-elk2"
-        }
-    }]
-}'
-
-#分配分片：( 如down机后启动时本机分片未加入索引中的情况 )
-$curl -XPOST 'http://localhost:9200/_cluster/reroute' -d '{
-    "commands":[{
-            "allocate":{
-            "index":"filebeat-ali-hk-fd-tss1",
-            "shard":1,
-            "node":"ali-hk-ops-elk1"
-        }
-    }]
-}'
 
 #集群设置 慢查询
 PUT /_cluster/settings

@@ -158,3 +158,6 @@ elasticsearch.tribe.requestHeadersWhitelist:
 elasticsearch.tribe.customHeaders:
 # 默认值: {} 发往 Elasticsearch的头体和值，不管 elasticsearch.tribe.requestHeadersWhitelist 如何配置，任何自定义的头体不会被客户端头体覆盖。
 
+xpack.monitoring.elasticsearch.logFetchCount: 50
+# 指定在监视UI中显示的ES自身的日志条数，默认10，最大值为50
+
