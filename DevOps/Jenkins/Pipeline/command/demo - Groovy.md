@@ -34,5 +34,5 @@ node {
 #### 调用本地命令
 ```txt
 Process p = "cmd /c dir".execute()  
-println "${p.text}"  
+println "${p.text}"
 ```

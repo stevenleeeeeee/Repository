@@ -2,7 +2,7 @@
 ```bash
 wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz
 tar -zxvf GeoLite2-City.tar.gz
-cp GeoLite2-City.mmdb /data/logstash/       #注:"/data/logstash"是Logstash的安装目录
+cp GeoLite2-City.mmdb /data/logstash/       # 注:"/data/logstash"是Logstash的安装目录
 ```
 #### Logstash-filter-geoip
 ```bash
@@ -142,11 +142,10 @@ grok {          #其中的 "message" 这个key，特指从名为 "message" 的ke
     duration: 0.043
 }
 
-#注：有时logstash没有需要的模式。为此，可以有几个选择
+#注：有时logstash没有需要的模式。为此可以有几个选择
 #使用Oniguruma语法进行命名捕获，它可以匹配一段文本并将其保存为字段，格式：(?<field_name>自定义模式）
 #例如后缀日志具有queue id10或11个字符的十六进制值。可以像这样轻松捕获：(?<queue_id>[0-9A-F] {10,11})
 #这样经过过滤之后会多一个标识符为queue_id的json字段：queue_id: BEF25A72965
-
 #注：一般的正则表达式只能匹配单行文本，如果一个Event的内容为多行，可以在pattern前加 (?m)
 
 #如果把"message"里所有的信息通过grok匹配成不同的字段，数据实质上就相当于是重复存储了两份。

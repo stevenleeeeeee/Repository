@@ -31,18 +31,7 @@ source ~/.bash_profile
 cd /home/jenkins/deploy_ngquality/yml
 
 ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol01 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol02 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol03 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol04 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol05 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol06 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol07 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol08 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol09 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol10 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol11 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol12 prod_name='ngqualitypfcontrol'" && \
-ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol13 prod_name='ngqualitypfcontrol'"
+ansible-playbook deploy.yml -i ./hosts --extra-var "host_cluster=ngqualitypfcontrol02 prod_name='ngqualitypfcontrol'"
 
 exit 0
 ```

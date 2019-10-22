@@ -1,5 +1,8 @@
 ```bash
-# 参考：https://www.cnblogs.com/111testing/p/9721424.html
+# 参考：
+# https://www.cnblogs.com/111testing/p/9721424.html
+# https://www.jianshu.com/p/7a852d58d9a9
+
 # pipeline 是一套运行于jenkins上的工作流框架
 # 将原本独立运行于单个或者多个节点的任务连接起来，实现单个任务难以完成的复杂流程编排与可视化。
 # 是jenkins2.X最核心的特性，帮助jenkins实现从CI到CD与DevOps的转变
@@ -36,7 +39,7 @@
 - 执行脚本式pipeline, 如：script{}
 ```
 #### Demo
-```groovy
+```javascript
 Jenkinsfile (Declarative Pipeline)
 
 pipeline {
@@ -44,14 +47,24 @@ pipeline {
     agent none  
     
     options {
+        // 设置构建超时时间为1小时
         timeout(time:1, unit: 'HOURS')
+        skipStagesAfterUnstable()
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        preserveStashes(5)
+        retry(2)
     }
 
     parameters {
 
-        // 下列选项设置将在Jenkins的 Build with Parameters
+        // 定义参数化构建的参数（下列选项设置将在Jenkins的 Build with Parameters）
         choice(name:'PerformMavenRelease',choices:'False\nTrue',description:'desc')
         // password(name:'CredsToUse',defaultValue:'',description:'A password to build with')
+        // string(name: 'DEPLOY_ENV', defaultValue: 'staging', description: '')
+        // text(name: 'DEPLOY_TEXT', defaultValue: 'One\nTwo\nThree\n', description: '')
+        // booleanParam(name: 'DEBUG_BUILD', defaultValue: true, description: '')
+        // choice(name: 'CHOICES', choices: ['one', 'two', 'three'], description: '')
+        // file(name: 'FILE', description: 'Some file to upload')
 
     }
 
@@ -65,6 +78,7 @@ pipeline {
             steps {
                 echo "${SONAR_SERVER}"
                 echo "${JAVA_HOME}"
+                echo "Hello ${params.DEPLOY_ENV}"
             }
         }
         stage('javahome') {
@@ -115,6 +129,24 @@ pipeline {
             '''
         }
     }
+
+    stages {
+        stage('Example') {
+            input { 
+                message "Should we continue?" 
+                ok "Yes, we should." 
+                submitter "alice,bob" 
+                parameters {
+                    string(name: 'PERSON', defaultValue: 'Mr Jenkins', description: 'Who should I say hello to?') 
+                } 
+            } 
+            
+            steps { 
+                echo "Hello, ${PERSON}, nice to meet you." 
+            } 
+        } 
+    }
+
 
     post {
         always {
