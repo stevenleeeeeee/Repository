@@ -1,5 +1,5 @@
 #### logstash 中调用ruby对数据处理
-```logstash
+```bash
 input {
     ......
 }
@@ -7,7 +7,6 @@ input {
 filter {
 
   ruby {
-    
     path => "/mnt/elastic/logstash-6.5.1/config/test.rb"    # Cancel 90% of events
     # script_params => { "message" => "%{message}" }
   }
@@ -18,12 +17,13 @@ filter {
   }
 
   mutate {
-    join => { "model" => ","
-                          "versionCode" => ","
-                          "appKey" => ","
-                          "vendor" => ","
-                          "clientVersion" => ","
-                        }
+    join => {
+        "model" => ","
+        "versionCode" => ","
+        "appKey" => ","
+        "vendor" => ","
+        "clientVersion" => ","
+    }
 }
 
 #  date {
@@ -40,10 +40,11 @@ filter {
 }
 
 output {
-  #elasticsearch {
-  #  hosts => ["http://localhost:9200"]
-  #  index => "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
-  #}
+    # elasticsearch {
+    #   hosts => ["http://localhost:9200"]
+    #   index => "%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}"
+    # }
+
  # source_type是在filebeat中配置的，用于区分解析和创建elasticsearch索引
  if [fields][source_type] == "test" {
     stdout{
